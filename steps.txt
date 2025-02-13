@@ -1,0 +1,14 @@
+sudo apt.postgresql.org.sh -i -v "$PGVERSION"
+
+-- use sh to create cluster with the specified version (start)
+sudo pg_createcluster --start "$PGVERSION" test -p "${PGPORT:-5432}" ${CREATE_OPTIONS:-} -- -A trust
+-- apply current migration and get the last migration version
+-- generate migration scripts
+---- for each table? if file per table then generate migration files per table otherwise we use the same file
+
+-- we will use bash to call the python script
+-- bash to create cluster
+-- bash to create objects
+-- bash to call python script to generate migrations
+-- we will need to validate the schema
+-- then dictionary parsed as object (dataclass)

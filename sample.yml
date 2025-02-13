@@ -1,0 +1,90 @@
+
+backend:
+  connection:
+    dbname: adjust_backend
+    user: postgres
+    port: 9432
+    replication_lag:        # required
+      replay_lag_threshold_mb: 10
+      replay_lag_threshold_mins: 10   # must-have when using delayed replicas
+      lag_naptime_mins: 0.1
+      abort_threshold_mins: 1
+  strategies:
+    - label: last-two-month-sessions
+      target:
+        type: partition-match
+        table_match_pattern: 'sessions_\d{4}_\d{2}_\d{2}'
+        date_match_pattern: '(\d{4})_(\d{2})_(\d{2})'
+        date_match_format: 'yyyymmdd'
+        precision: 'day'
+        from_interval: '-2 months'
+        to_interval: '0 months'
+      analyze:
+        options: {}
+      vacuum:
+        options:
+          full:
+          freeze:
+          analyze:
+      # FYI: conf values should be given in the same units as the stored value in pg_class.reloptions
+      #   so that it's easier to diff values to ascertain if the table must be Altered
+      session_settings:
+        statement_timeout: 0             # required
+        vacuum_freeze_table_age: 2000
+        vacuum_multixact_freeze_table_age: 999
+      table_settings:                  # APPLIED to tables e.g. for autovacuum
+        autovacuum_vacuum_threshold: 5000
+        autovacuum_vacuum_scale_factor: 0.5
+        autovacuum_analyze_threshold: 5000
+        autovacuum_analyze_scale_factor: 0.02
+        autovacuum_vacuum_cost_delay: 0
+    - label: top-20-huge-tables
+      target:
+        type: top-n-size
+        limit: 20
+        threshold: 10737418240
+        exclude_schemas:
+          - pg_catalog
+          - stray
+      vacuum: {}
+      session_settings:
+        statement_timeout: 1h             # required
+    - label: top-10-aged-tables
+      target:
+        type: top-n-age
+        limit: 10
+      vacuum: {}
+      session_settings:
+        statement_timeout: 1h             # required
+    - label: top-30-bloated-tables
+      target:
+        type: top-n-percent-bloat
+        limit: 30
+        threshold: 10
+        include_schemas:
+          - pg_catalog
+          - public
+          - stray
+      vacuum: {}
+      session_settings:
+        statement_timeout: 1h             # required
+    - label: my-special-tables
+      target:
+        type: table-list
+        tables:
+          - partitions.sessions_2022_03_04
+          - partitions.sessions_2022_03_05_expire
+      vacuum: {}
+      session_settings:
+        statement_timeout: 1h             # required
+another:
+  connection:
+    dbname: backend_settings
+    user: postgres
+    port: 9432
+    replication_lag:
+      replay_lag_threshold_mb: 10
+      replay_lag_threshold_mins: 10
+      lag_naptime_mins: 0.1
+      abort_threshold_mins: 1
+  strategies: []

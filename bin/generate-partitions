@@ -1,0 +1,58 @@
+#!/bin/bash
+
+usage()
+{
+cat <<-EOF
+    ${0##*/}
+    
+    Generates partitions for a partitioned table.
+
+    Takes 2 parameters, all of which are required.
+
+    OPTIONS:
+    -v  the postgres version to use
+    -c  the config file in yaml
+    -h  show this help message.
+
+    SAMPLE USAGE:
+        ${0##*/} -v 12 -c config.yaml
+EOF
+}
+
+while getopts "v:c:h" OPTION
+do
+    case $OPTION in
+        v)
+            PGVERSION="$OPTARG"
+            ;;
+        c)
+            CONFIG="$OPTARG"
+            ;;
+        h | *)
+            usage
+            exit 0
+            ;;
+    esac
+done
+
+set -eu -o pipefail
+
+PGVERSION=${PGVERSION:-}
+CONFIG=${CONFIG:-}
+
+# Check if the required arguments are provided
+if [[ -z "$PGVERSION" || -z "$CONFIG" ]]; then
+  usage
+  exit 1
+fi
+
+# Append .0 if PGVERSION is a single-digit version e.g 9
+[[ $PGVERSION =~ ^[0-9]$ ]] && PGVERSION+=.0
+
+sudo apt.postgresql.org.sh -i -v "$PGVERSION"
+
+sudo pg_createcluster --start "$PGVERSION" pgpartium -- -A trust
+
+ls sql/*.sql | sort | xargs -I {} sudo psql --quiet --username=postgres --dbname=postgres -f "{}"
+
+sudo psql -U postgres -d postgres -c "SELECT * from pgpartium.table_exists ('public', 'table')"
