@@ -19,7 +19,7 @@ generates:
           storage_parameters:
             fillfactor: 90
             autovacuum_enabled: false
-        suffix: "YYYY_MM_DD"
+        suffix: "__YYYY_MM_DD"
         resolution: "daily"
         template_table: "users_template"
         past: 2

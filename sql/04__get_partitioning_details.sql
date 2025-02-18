@@ -10,7 +10,7 @@ RETURNS TABLE (
 )
 LANGUAGE SQL
 AS $BODY$
-    SELECT p.partnatts AS number_of_keys
+    SELECT p.partnatts AS number_of_keys, partrelid::regclass
          , CASE p.partstrat
              WHEN 'r'
                THEN 'RANGE'
@@ -34,5 +34,5 @@ AS $BODY$
      GROUP BY n.nspname
             , c.relname
             , p.partnatts
-            , p.partstrat;
+            , p.partstrat, partrelid;
 $BODY$;
