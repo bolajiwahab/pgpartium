@@ -21,18 +21,20 @@ generates:
             autovacuum_enabled: false
         suffix: "__YYYY_MM_DD"
         resolution: "daily"
-        template_table: "users_template"
+        template:
+           schema: "public"
+           table: "users_template"
         past: 2
         future: 1
         retention: 24
         create-default: true
-        fall-back-to-latest-partition-for-template: true # fall back to latest partition if template table doesn't exist
+        # fall-back-to-latest-partition-for-template: true # fall back to latest partition if template table doesn't exist
       transactions:
         schema: "partitions"
         suffix: "YYYY_MM_DD"
         resolution: "daily"
-        template_table: "transactions_template"
-        fall-back-to-default-for-template: true # fall back to default if template table doesn't exist
+        template: "CURRENT_PARTITION" # CURRENT_PARTITION, LATEST_PARTITION, DEFAULT_PARTITION
+        # fall-back-to-default-for-template: true # fall back to default if template table doesn't exist
         past: 2
         future: 1
         retention: 24
