@@ -1,12 +1,34 @@
-CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (table_schema text, table_name text, p_interval interval, past integer, future integer, prefix text, suffix text, partition_schema text DEFAULT 'public' , timezone text DEFAULT 'UTC')
+-- get parent constraint
+-- get parent triggers
+-- get parent indexes
+-- get template constraints
+-- get template triggers
+-- get template indexes
+-- we then sort/merge them, if an index already exist on the parent, we skip it on the child
+-- we have to generate conname, indexname, triggername according to the postgresql namning conventions
+CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
+    table_schema text
+  , table_name text
+  , p_interval text
+  , past integer
+  , future integer
+  , prefix text
+  , suffix text
+  , template_table_schema text = NULL
+  , template_table_name text = NULL
+  , partition_schema text = 'public'
+  , timezone text = 'UTC'
+)
 RETURNS SETOF text
 LANGUAGE plpgsql
 AS $BODY$
 DECLARE
     partitions record;
     _table_exists boolean;
+    _template_exists boolean;
     _is_table_partitioned boolean;
     _partitioning_details record;
+    constraints record;
     ddl                       text := '';
     ddl_indexes               text;
     ddl_constraints           text;
@@ -16,37 +38,22 @@ BEGIN
     PERFORM set_config('timezone', timezone, true);
 
     _table_exists := pgpartium.table_exists(table_schema, table_name);
+    _template_exists := pgpartium.table_exists(template_table_schema, template_table_name);
     _is_table_partitioned := pgpartium.is_table_partitioned(table_schema, table_name);
     _partitioning_details := pgpartium.get_partitioning_details(table_schema, table_name);
 
-  CREATE TEMPORARY TABLE current_bounds ON COMMIT DROP AS
-SELECT case _partitioning_details.keys_data_types 
-when 'timestamp with time zone' then matches[1]::timestamptz 
-when 'timestamp without time zone' then matches[1]::timestamptz
-when 'date' then matches[1]::date
-when 'integer' then to_timestamp(matches[1]::integer)
-when 'bigint' then to_timestamp(matches[1]::bigint / 1000)
-end as lowerbound,
-case _partitioning_details.keys_data_types 
-when 'timestamp with time zone' then matches[2]::timestamptz
-when 'timestamp without time zone' then matches[2]::timestamptz
-when 'date' then matches[2]::date
-when 'integer' then to_timestamp(matches[2]::integer)
-when 'bigint' then to_timestamp(matches[2]::bigint / 1000)
-end as upperbound
-FROM pg_catalog.pg_inherits       AS i
-INNER JOIN pg_catalog.pg_class     AS p  ON i.inhparent = p.oid
-INNER JOIN pg_catalog.pg_class     AS c  ON i.inhrelid = c.oid
-INNER JOIN pg_catalog.pg_namespace AS pn ON pn.oid = p.relnamespace
-INNER JOIN pg_catalog.pg_namespace AS cn ON cn.oid = c.relnamespace
-CROSS JOIN regexp_matches(pg_get_expr(c.relpartbound, c.oid), $bound$\(\'?(.+?)\'?\).+\(\'?(.+?)\'?\)$bound$) AS matches
-WHERE c.relispartition
-  AND c.relkind = 'r'
-  AND p.relname = table_name
-  AND pn.nspname = table_schema;
+    CREATE TEMPORARY TABLE current_bounds ON COMMIT DROP AS
+    SELECT lowerbound
+         , upperbound
+      FROM pgpartium.get_partition_bounds(table_schema, table_name, _partitioning_details.keys_data_types);
 
     IF NOT _table_exists THEN
         RAISE 'table "%"."%" does not exist', table_schema, table_name
+        USING ERRCODE = 'undefined_table';
+    END IF;
+
+    IF NOT (num_nulls(template_table_schema, template_table_name) = 2) AND NOT _template_exists THEN
+        RAISE 'template table "%"."%" does not exist', template_table_schema, template_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
 
@@ -73,16 +80,29 @@ WHERE c.relispartition
                  HINT = 'supported data types are date, timestamp with time zone, timestamp without time zone, integer, and bigint';
     END IF;
 
+    CREATE TEMPORARY TABLE template_constraints ON COMMIT DROP AS
+    SELECT columns
+         , constraint_definition
+      FROM pgpartium.get_constraints(template_table_schema, template_table_name);
+    
+    FOR constraints IN
+        SELECT columns
+             , constraint_definition
+          FROM template_constraints
+    LOOP
+        RAISE NOTICE 'constraints: %', constraints.columns;
+    END LOOP;
+
     FOR partitions IN
         WITH dateset AS (
             SELECT "date"
-            FROM generate_series(date_trunc('month', 'today'::date) - (p_interval * past), 'today'::date + (p_interval * future), p_interval) AS "date"
+            FROM generate_series(date_trunc(substring(p_interval FROM '\d+\s*(\w+)'), now()) - (p_interval::interval * past), now() + (p_interval::interval * future), p_interval::interval) AS "date"
         ),
         daterange AS (
             -- generate partition bounds
             SELECT to_char("date", suffix) AS part_suffix,
                     "date" AS exclusive_start_time,
-                "date" + p_interval AS exclusive_end_time
+                "date" + p_interval::interval AS exclusive_end_time
         FROM dateset
         )
         SELECT
@@ -128,12 +148,3 @@ $SQL$,          partition_schema,
 
 END;
 $BODY$;
-
--- get parent constraint
--- get parent triggers
--- get parent indexes
--- get template constraints
--- get template triggers
--- get template indexes
-
--- we then sort/merge them, if an index already exist on the parent, we skip it on the child
