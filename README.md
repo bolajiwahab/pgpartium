@@ -1,0 +1,3 @@
+-- weekly -> dow in the year
+-- monthly -> start of the month 01 of the month
+-- yearly -> start of the year that is January 01
