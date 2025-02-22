@@ -81,17 +81,53 @@ BEGIN
     END IF;
 
     CREATE TEMPORARY TABLE template_constraints ON COMMIT DROP AS
-    SELECT columns
+    SELECT constraint_name
+         , contype
+         , columns
          , constraint_definition
       FROM pgpartium.get_constraints(template_table_schema, template_table_name);
-    
-    FOR constraints IN
-        SELECT columns
-             , constraint_definition
-          FROM template_constraints
-    LOOP
-        RAISE NOTICE 'constraints: %', constraints.columns;
-    END LOOP;
+
+    CREATE TEMPORARY TABLE parent_constraints ON COMMIT DROP AS
+    SELECT constraint_name
+         , contype
+         , columns
+         , constraint_definition
+      FROM pgpartium.get_constraints(table_schema, table_name);
+
+    CREATE TEMPORARY TABLE partition_constraints ON COMMIT DROP AS
+    SELECT template_constraints.constraint_name
+         , template_constraints.contype
+         , template_constraints.columns
+         , template_constraints.constraint_definition
+      FROM template_constraints
+      LEFT JOIN parent_constraints
+        ON template_constraints.constraint_definition = parent_constraints.constraint_definition
+     WHERE parent_constraints.constraint_definition IS NULL;
+
+    -- -- Get Constraint definition
+    -- SELECT string_agg(
+    --     replace(
+    --         E'        CONSTRAINT ' || constraint_name || ' ' || constraint_definition,
+    --         template_table_name,
+    --         partitions.partition_name,
+    --     ),
+    --     E',\n'
+    --     ORDER BY CASE contype
+    --         WHEN 'p' THEN 0
+    --         WHEN 'u' THEN 1
+    --         ELSE 2
+    --     END, contype, conname
+    -- ) INTO ddl_constraints
+    -- FROM partition_constraints;
+
+    -- FOR constraints IN
+    --     SELECT constraint_name
+    --          , columns
+    --          , constraint_definition
+    --       FROM partition_constraints
+    -- LOOP
+    --     RAISE NOTICE 'constraints: %, %, %', constraints.constraint_name, constraints.columns, constraints.constraint_definition;
+    -- END LOOP;
 
     FOR partitions IN
         WITH dateset AS (
@@ -112,18 +148,34 @@ BEGIN
         FROM daterange
     LOOP
         IF NOT EXISTS (SELECT 1 FROM current_bounds WHERE current_bounds.lowerbound = partitions.exclusive_start_time AND current_bounds.upperbound = partitions.exclusive_end_time) THEN
+        -- Get Constraint definition
+        SELECT string_agg(
+            replace(
+                E'        CONSTRAINT ' || constraint_name || ' ' || constraint_definition,
+                template_table_name,
+                partitions.partition_name
+            ),
+            E',\n'
+            ORDER BY CASE contype
+                WHEN 'p' THEN 0
+                WHEN 'u' THEN 1
+                ELSE 2
+            END, contype, constraint_name
+        ) INTO ddl_constraints
+        FROM partition_constraints;
+
         ddl := ddl || format(
 /* This alignment is needed to have the right indentation in the generated migration scripts */
 $SQL$CREATE TABLE %1$I.%2$I
-    PARTITION OF %3$I.%4$I FOR VALUES FROM (%5$L) TO (%6$L);
+    PARTITION OF %3$I.%4$I%5$s FOR VALUES FROM (%6$L) TO (%7$L);
 $SQL$,          partition_schema,
                 partitions.partition_name,
                 table_schema,
                 table_name,
-                -- CASE
-                --     WHEN ddl_constraints IS NULL THEN E'\n   '
-                --     ELSE  E' (\n' || ddl_constraints || E'\n    )'
-                -- END,
+                CASE
+                    WHEN ddl_constraints IS NULL THEN E'\n   '
+                    ELSE  E' (\n' || ddl_constraints || E'\n    )'
+                END,
                 CASE _partitioning_details.keys_data_types
                     WHEN 'timestamp with time zone'     THEN partitions.exclusive_start_time::text
                     WHEN 'timestamp without time zone'  THEN partitions.exclusive_start_time::text

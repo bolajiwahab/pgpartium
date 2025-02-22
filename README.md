@@ -1,3 +1,4 @@
--- weekly -> dow in the year
--- monthly -> start of the month 01 of the month
+-- weekly -> dow in the year: calendar week
+-- monthly -> start of the month: 01 of the month
 -- yearly -> start of the year that is January 01
+-- hourly -> current hour: 01:00:00

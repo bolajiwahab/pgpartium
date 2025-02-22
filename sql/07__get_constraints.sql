@@ -3,13 +3,17 @@ CREATE OR REPLACE FUNCTION pgpartium.get_constraints (
   , table_name text
 )
 RETURNS TABLE (
-    columns text
+    constraint_name text
+  , contype text
+  , columns text
   , constraint_definition text
 )
 LANGUAGE SQL
 AS $BODY$
-    SELECT a.columns
-         , pg_catalog.pg_get_constraintdef(c.oid) AS constraint_definition
+    SELECT c.conname
+         , c.contype
+         , a.columns
+         , pg_catalog.pg_get_constraintdef(c.oid, TRUE) AS constraint_definition
       FROM pg_catalog.pg_namespace AS n
      INNER JOIN pg_catalog.pg_class AS p
         ON n.oid = p.relnamespace
