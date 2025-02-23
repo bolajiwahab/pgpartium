@@ -1,11 +1,6 @@
--- get parent constraint
 -- get parent triggers
--- get parent indexes
--- get template constraints
 -- get template triggers
--- get template indexes
--- we then sort/merge them, if an index already exist on the parent, we skip it on the child
--- we have to generate conname, indexname, triggername according to the postgresql namning conventions
+-- we need to set the tablespace of the partition as the tablespace for the partition from the template table
 CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
     table_schema text
   , table_name text
@@ -14,9 +9,11 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
   , future integer
   , prefix text
   , suffix text
+  , partition_schema text = 'public'
+  , partition_tablespace text = NULL
+  , storage_parameters jsonb = NULL
   , template_table_schema text = NULL
   , template_table_name text = NULL
-  , partition_schema text = 'public'
   , timezone text = 'UTC'
 )
 RETURNS SETOF text
@@ -33,6 +30,7 @@ DECLARE
     ddl_indexes               text;
     ddl_constraints           text;
     ddl_triggers              text;
+    storage_clause text := '';
 BEGIN
 
     PERFORM set_config('timezone', timezone, true);
@@ -80,21 +78,21 @@ BEGIN
                  HINT = 'supported data types are date, timestamp with time zone, timestamp without time zone, integer, and bigint';
     END IF;
 
-    CREATE TEMPORARY TABLE template_constraints ON COMMIT DROP AS
-    SELECT constraint_name
-         , contype
-         , columns
-         , constraint_definition
-      FROM pgpartium.get_constraints(template_table_schema, template_table_name);
-
-    CREATE TEMPORARY TABLE parent_constraints ON COMMIT DROP AS
-    SELECT constraint_name
-         , contype
-         , columns
-         , constraint_definition
-      FROM pgpartium.get_constraints(table_schema, table_name);
-
     CREATE TEMPORARY TABLE partition_constraints ON COMMIT DROP AS
+    WITH template_constraints AS (
+        SELECT constraint_name
+             , contype
+             , columns
+             , constraint_definition
+          FROM pgpartium.get_constraints(template_table_schema, template_table_name)
+    )
+    , parent_constraints AS (
+        SELECT constraint_name
+             , contype
+             , columns
+             , constraint_definition
+          FROM pgpartium.get_constraints(table_schema, table_name)
+    )
     SELECT template_constraints.constraint_name
          , template_constraints.contype
          , template_constraints.columns
@@ -104,30 +102,26 @@ BEGIN
         ON template_constraints.constraint_definition = parent_constraints.constraint_definition
      WHERE parent_constraints.constraint_definition IS NULL;
 
-    -- -- Get Constraint definition
-    -- SELECT string_agg(
-    --     replace(
-    --         E'        CONSTRAINT ' || constraint_name || ' ' || constraint_definition,
-    --         template_table_name,
-    --         partitions.partition_name,
-    --     ),
-    --     E',\n'
-    --     ORDER BY CASE contype
-    --         WHEN 'p' THEN 0
-    --         WHEN 'u' THEN 1
-    --         ELSE 2
-    --     END, contype, conname
-    -- ) INTO ddl_constraints
-    -- FROM partition_constraints;
-
-    -- FOR constraints IN
-    --     SELECT constraint_name
-    --          , columns
-    --          , constraint_definition
-    --       FROM partition_constraints
-    -- LOOP
-    --     RAISE NOTICE 'constraints: %, %, %', constraints.constraint_name, constraints.columns, constraints.constraint_definition;
-    -- END LOOP;
+    CREATE TEMPORARY TABLE partition_indexes ON COMMIT DROP AS
+    WITH template_indexes AS (
+        SELECT index_name
+             , index_definition
+             , index_create_statment
+          FROM pgpartium.get_indexes(template_table_schema, template_table_name)
+    )
+    , parent_indexes AS (
+        SELECT index_name
+             , index_definition
+             , index_create_statment
+          FROM pgpartium.get_indexes(table_schema, table_name)
+    )
+    SELECT template_indexes.index_name
+         , template_indexes.index_definition
+         , template_indexes.index_create_statment
+      FROM template_indexes
+      LEFT JOIN parent_indexes
+        ON template_indexes.index_definition = parent_indexes.index_definition
+     WHERE parent_indexes.index_definition IS NULL;
 
     FOR partitions IN
         WITH dateset AS (
@@ -148,7 +142,7 @@ BEGIN
         FROM daterange
     LOOP
         IF NOT EXISTS (SELECT 1 FROM current_bounds WHERE current_bounds.lowerbound = partitions.exclusive_start_time AND current_bounds.upperbound = partitions.exclusive_end_time) THEN
-        -- Get Constraint definition
+        -- Get constraint definition
         SELECT string_agg(
             replace(
                 E'        CONSTRAINT ' || constraint_name || ' ' || constraint_definition,
@@ -164,10 +158,30 @@ BEGIN
         ) INTO ddl_constraints
         FROM partition_constraints;
 
+        -- Get index create statement
+        SELECT string_agg(
+            replace(
+                index_create_statment,
+                template_table_name,
+                partitions.partition_name
+            ) || E';\n', E'\n'
+        ) INTO ddl_indexes
+        FROM partition_indexes;
+
+        -- Get storage parameters
+        SELECT COALESCE(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
+          INTO storage_clause
+          FROM jsonb_each_text(storage_parameters);
+
+        -- Get table definition
+        IF ddl != '' THEN
+            ddl := ddl || E'\n';
+        END IF;
+
         ddl := ddl || format(
 /* This alignment is needed to have the right indentation in the generated migration scripts */
 $SQL$CREATE TABLE %1$I.%2$I
-    PARTITION OF %3$I.%4$I%5$s FOR VALUES FROM (%6$L) TO (%7$L);
+    PARTITION OF %3$I.%4$I%5$s FOR VALUES FROM (%6$L) TO (%7$L)%8$s%9$s;
 $SQL$,          partition_schema,
                 partitions.partition_name,
                 table_schema,
@@ -189,8 +203,16 @@ $SQL$,          partition_schema,
                     WHEN 'date'                         THEN partitions.exclusive_end_time::date::text
                     WHEN 'integer' THEN (EXTRACT(EPOCH FROM partitions.exclusive_end_time)::integer)::text
                     WHEN 'bigint'  THEN (EXTRACT(EPOCH FROM partitions.exclusive_end_time)::bigint * 1000)::text
-                END
+                END,
+                storage_clause,
+                -- string_agg(WITH (fillfactor = 100))
+                COALESCE(format(E'\nTABLESPACE %I', partition_tablespace), '')
+                -- COALESCE(E'\nTABLESPACE ' || partition_tablespace, '')
             );
+
+            IF ddl_indexes IS NOT NULL THEN
+                ddl := ddl || E'\n' || ddl_indexes;
+            END IF;
 
             RAISE NOTICE 'ddl: "%"', ddl;
 
