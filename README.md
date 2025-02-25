@@ -2,3 +2,7 @@
 -- monthly -> start of the month: 01 of the month
 -- yearly -> start of the year that is January 01
 -- hourly -> current hour: 01:00:00
+
+-- we do not support access method on partitions since that is inherited from the parent
+-- see docs: When creating a partition, the table access method is the access method of its partitioned table, if set.
+https://www.postgresql.org/docs/current/sql-createtable.html#:~:text=When%20creating%20a%20partition%2C%20the%20table%20access%20method%20is%20the%20access%20method%20of%20its%20partitioned%20table%2C%20if%20set.

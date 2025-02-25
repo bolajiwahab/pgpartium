@@ -20,14 +20,14 @@ generates:
             fillfactor: 90
             autovacuum_enabled: false
           privileges:
-            - type: "SELECT"
+            - types: ["SELECT", "INSERT", "UPDATE", "DELETE"]
               roles: ["user1", "user2"]
-              with_grant: true
-            - type: "INSERT"
+              # with_grant: true
+            - types: ["INSERT"]
               roles: ["user1", "user2"]
-            - type: "UPDATE"
+            - types: ["UPDATE"]
               roles: ["user1", "user2"]
-            - type: "DELETE"
+            - types: ["DELETE"]
               roles: ["user1", "user2"]
           past: 2
           future: 1

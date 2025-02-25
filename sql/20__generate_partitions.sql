@@ -1,6 +1,7 @@
 -- get parent triggers
 -- get template triggers
--- we need to set the tablespace of the partition as the tablespace for the partition from the template table
+-- we need to set the tablespace of the partition as the tablespace for the indexes from the template table
+-- we need append partition schema to index table and not just partition name
 CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
     table_schema text
   , table_name text
@@ -18,6 +19,7 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
+SET search_path = ''
 AS $BODY$
 DECLARE
     partitions record;
@@ -106,18 +108,18 @@ BEGIN
     WITH template_indexes AS (
         SELECT index_name
              , index_definition
-             , index_create_statment
+             , index_create_statement
           FROM pgpartium.get_indexes(template_table_schema, template_table_name)
     )
     , parent_indexes AS (
         SELECT index_name
              , index_definition
-             , index_create_statment
+             , index_create_statement
           FROM pgpartium.get_indexes(table_schema, table_name)
     )
     SELECT template_indexes.index_name
          , template_indexes.index_definition
-         , template_indexes.index_create_statment
+         , template_indexes.index_create_statement
       FROM template_indexes
       LEFT JOIN parent_indexes
         ON template_indexes.index_definition = parent_indexes.index_definition
@@ -145,7 +147,7 @@ BEGIN
         -- Get constraint definition
         SELECT string_agg(
             replace(
-                E'        CONSTRAINT ' || constraint_name || ' ' || constraint_definition,
+                '        CONSTRAINT ' || constraint_name || ' ' || constraint_definition,
                 template_table_name,
                 partitions.partition_name
             ),
@@ -160,16 +162,27 @@ BEGIN
 
         -- Get index create statement
         SELECT string_agg(
-            replace(
-                index_create_statment,
-                template_table_name,
-                partitions.partition_name
-            ) || E';\n', E'\n'
+            -- regexp_replace(
+                replace(
+                    replace(
+                        index_create_statement
+                      , template_table_schema
+                      , partition_schema
+                    )
+                  , template_table_name
+                  , partitions.partition_name
+                )
+            --   , '(WHERE .*)$|$'
+            --   , '\s(WHERE\s+.*)$|$'
+            --   , 'TABLESPACE ' || partition_tablespace || E' \\1', 'g'
+            -- )
+            || E';\n'
+          , E'\n'
         ) INTO ddl_indexes
-        FROM partition_indexes;
+          FROM partition_indexes;
 
         -- Get storage parameters
-        SELECT COALESCE(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
+        SELECT coalesce(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
           INTO storage_clause
           FROM jsonb_each_text(storage_parameters);
 
@@ -206,8 +219,7 @@ $SQL$,          partition_schema,
                 END,
                 storage_clause,
                 -- string_agg(WITH (fillfactor = 100))
-                COALESCE(format(E'\nTABLESPACE %I', partition_tablespace), '')
-                -- COALESCE(E'\nTABLESPACE ' || partition_tablespace, '')
+                coalesce(format(E'\nTABLESPACE %I', partition_tablespace), '')
             );
 
             IF ddl_indexes IS NOT NULL THEN
