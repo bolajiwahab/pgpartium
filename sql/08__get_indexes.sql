@@ -4,19 +4,21 @@ CREATE OR REPLACE FUNCTION pgpartium.get_indexes (
 )
 RETURNS TABLE (
     index_name text
+  , is_unique_index boolean
   , index_definition text
-  , index_create_statement text
+  , index_predicate text
 )
 LANGUAGE SQL
 AS $BODY$
     SELECT ix.relname AS index_name
+         , indisunique AS is_unique_index
          , substring(pg_catalog.pg_get_indexdef(i.indexrelid, 0, TRUE) FROM 'USING .*') AS index_definition
-         , pg_catalog.pg_get_indexdef(i.indexrelid, 0, TRUE) AS index_create_statement
+         , 'WHERE ' || pg_catalog.pg_get_expr(i.indpred, i.indrelid, TRUE) AS index_predicate
       FROM pg_catalog.pg_namespace AS n
      INNER JOIN pg_catalog.pg_class AS t
         ON n.oid = t.relnamespace
      INNER JOIN pg_catalog.pg_index AS i
-        ON i.indrelid = t.oid
+        ON i.indrelid = t.oid AND i.indisvalid
      INNER JOIN pg_catalog.pg_class AS ix
         ON i.indexrelid = ix.oid
       LEFT JOIN pg_catalog.pg_constraint AS c
@@ -25,3 +27,6 @@ AS $BODY$
        AND t.relname = table_name
        AND c.conindid IS NULL;
 $BODY$;
+
+
+--- what of unique indexes

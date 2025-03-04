@@ -1,7 +1,3 @@
--- get parent triggers
--- get template triggers
--- we need to set the tablespace of the partition as the tablespace for the indexes from the template table
--- we need append partition schema to index table and not just partition name
 CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
     table_schema text
   , table_name text
@@ -27,7 +23,6 @@ DECLARE
     _template_exists boolean;
     _is_table_partitioned boolean;
     _partitioning_details record;
-    constraints record;
     ddl                       text := '';
     ddl_indexes               text;
     ddl_constraints           text;
@@ -107,23 +102,55 @@ BEGIN
     CREATE TEMPORARY TABLE partition_indexes ON COMMIT DROP AS
     WITH template_indexes AS (
         SELECT index_name
+             , is_unique_index
              , index_definition
-             , index_create_statement
+             , index_predicate
           FROM pgpartium.get_indexes(template_table_schema, template_table_name)
     )
     , parent_indexes AS (
         SELECT index_name
+             , is_unique_index
              , index_definition
-             , index_create_statement
+             , index_predicate
           FROM pgpartium.get_indexes(table_schema, table_name)
     )
     SELECT template_indexes.index_name
+         , template_indexes.is_unique_index
          , template_indexes.index_definition
-         , template_indexes.index_create_statement
+         , template_indexes.index_predicate
       FROM template_indexes
       LEFT JOIN parent_indexes
         ON template_indexes.index_definition = parent_indexes.index_definition
      WHERE parent_indexes.index_definition IS NULL;
+
+    CREATE TEMPORARY TABLE partition_triggers ON COMMIT DROP AS
+    WITH template_triggers AS (
+        SELECT trigger_name
+             , is_constraint_trigger
+             , event_timing
+             , trigger_event
+             , trigger_body
+          FROM pgpartium.get_triggers(template_table_schema, template_table_name)
+    )
+    , parent_triggers AS (
+        SELECT trigger_name
+             , is_constraint_trigger
+             , event_timing
+             , trigger_event
+             , trigger_body
+          FROM pgpartium.get_triggers(table_schema, table_name)
+    )
+    SELECT template_triggers.trigger_name
+         , template_triggers.is_constraint_trigger
+         , template_triggers.event_timing
+         , template_triggers.trigger_event
+         , template_triggers.trigger_body
+      FROM template_triggers
+      LEFT JOIN parent_triggers
+        ON template_triggers.event_timing = parent_triggers.event_timing
+       AND template_triggers.trigger_event = parent_triggers.trigger_event
+       AND template_triggers.trigger_body = parent_triggers.trigger_body
+     WHERE parent_triggers.trigger_body IS NULL;
 
     FOR partitions IN
         WITH dateset AS (
@@ -143,53 +170,73 @@ BEGIN
             exclusive_end_time
         FROM daterange
     LOOP
-        IF NOT EXISTS (SELECT 1 FROM current_bounds WHERE current_bounds.lowerbound = partitions.exclusive_start_time AND current_bounds.upperbound = partitions.exclusive_end_time) THEN
-        -- Get constraint definition
-        SELECT string_agg(
-            replace(
-                '        CONSTRAINT ' || constraint_name || ' ' || constraint_definition,
-                template_table_name,
-                partitions.partition_name
-            ),
-            E',\n'
-            ORDER BY CASE contype
-                WHEN 'p' THEN 0
-                WHEN 'u' THEN 1
-                ELSE 2
-            END, contype, constraint_name
-        ) INTO ddl_constraints
-        FROM partition_constraints;
+        IF NOT EXISTS (
+            SELECT 1
+              FROM current_bounds
+             WHERE current_bounds.lowerbound = partitions.exclusive_start_time
+               AND current_bounds.upperbound = partitions.exclusive_end_time
+        ) THEN
+            -- Get constraint definition
+            SELECT string_agg(
+                '        CONSTRAINT '
+                || format('%1$I', replace(constraint_name, template_table_name, partitions.partition_name))
+                || ' '
+                || constraint_definition,
+                E',\n'
+                ORDER BY CASE contype
+                    WHEN 'p' THEN 0
+                    WHEN 'u' THEN 1
+                    ELSE 2
+                END, contype
+            ) INTO ddl_constraints
+            FROM partition_constraints;
 
-        -- Get index create statement
-        SELECT string_agg(
-            -- regexp_replace(
+            -- Get index create statement
+            SELECT string_agg(
                 replace(
-                    replace(
-                        index_create_statement
-                      , template_table_schema
-                      , partition_schema
-                    )
-                  , template_table_name
-                  , partitions.partition_name
+                    'CREATE '
+                    || CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END
+                    || format('%1$I', replace(index_name, template_table_name, partitions.partition_name))
+                    || E'\n    ON '
+                    || format('%1$I.%2$I', partition_schema, partitions.partition_name)
+                    || E'\n '
+                    || index_definition
+                , coalesce(index_predicate, '')
+                , 'TABLESPACE ' || partition_tablespace || ' ' || coalesce(index_predicate, '')
                 )
-            --   , '(WHERE .*)$|$'
-            --   , '\s(WHERE\s+.*)$|$'
-            --   , 'TABLESPACE ' || partition_tablespace || E' \\1', 'g'
-            -- )
-            || E';\n'
-          , E'\n'
-        ) INTO ddl_indexes
-          FROM partition_indexes;
+                || CASE WHEN index_predicate IS NULL THEN E'\nTABLESPACE ' || partition_tablespace ELSE '' END
+                || E';\n'
+              , E'\n'
+            ) INTO ddl_indexes
+            FROM partition_indexes;
 
-        -- Get storage parameters
-        SELECT coalesce(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
-          INTO storage_clause
-          FROM jsonb_each_text(storage_parameters);
+            -- Get create trigger statement
+            SELECT string_agg(
+                'CREATE '
+                || CASE WHEN is_constraint_trigger THEN 'CONSTRAINT TRIGGER ' ELSE 'TRIGGER ' END
+                || format('%1$I', replace(trigger_name, template_table_name, partitions.partition_name))
+                || ' '
+                || event_timing
+                || ' '
+                || trigger_event
+                || E'\n    ON '
+                || format('%1$I.%2$I', partition_schema, partitions.partition_name)
+                || ' '
+                || trigger_body
+                || E';\n'
+              , E'\n' ORDER BY trigger_name
+            ) INTO ddl_triggers
+            FROM partition_triggers;
 
-        -- Get table definition
-        IF ddl != '' THEN
-            ddl := ddl || E'\n';
-        END IF;
+            -- Get storage parameters
+            SELECT coalesce(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
+              INTO storage_clause
+              FROM jsonb_each_text(storage_parameters);
+
+            -- Get table definition
+            IF ddl != '' THEN
+                ddl := ddl || E'\n';
+            END IF;
 
         ddl := ddl || format(
 /* This alignment is needed to have the right indentation in the generated migration scripts */
@@ -218,7 +265,6 @@ $SQL$,          partition_schema,
                     WHEN 'bigint'  THEN (EXTRACT(EPOCH FROM partitions.exclusive_end_time)::bigint * 1000)::text
                 END,
                 storage_clause,
-                -- string_agg(WITH (fillfactor = 100))
                 coalesce(format(E'\nTABLESPACE %I', partition_tablespace), '')
             );
 
@@ -226,9 +272,12 @@ $SQL$,          partition_schema,
                 ddl := ddl || E'\n' || ddl_indexes;
             END IF;
 
+            IF ddl_triggers IS NOT NULL THEN
+                ddl := ddl || E'\n' || ddl_triggers;
+            END IF;
+
             RAISE NOTICE 'ddl: "%"', ddl;
 
-            -- RAISE NOTICE 'partition "%", "%", "%"', partitions.partition_name, partitions.exclusive_start_time, partitions.exclusive_end_time;
         END IF;
     END LOOP;
 
