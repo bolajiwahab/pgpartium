@@ -1,98 +1,97 @@
 CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
-    table_schema text
-  , table_name text
+    p_table_schema text
+  , p_table_name text
   , p_interval text
-  , past integer
-  , future integer
-  , prefix text
-  , suffix text
-  , partition_schema text = 'public'
-  , partition_tablespace text = NULL
-  , storage_parameters jsonb = NULL
-  , template_table_schema text = NULL
-  , template_table_name text = NULL
-  , timezone text = 'UTC'
+  , p_past integer
+  , p_future integer
+  , p_prefix text
+  , p_suffix_format text
+  , p_partition_schema text = 'public'
+  , p_partition_tablespace text = NULL
+  , p_storage_parameters jsonb = NULL
+  , p_template_table_schema text = NULL
+  , p_template_table_name text = NULL
+  , p_timezone text = 'UTC'
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
 SET search_path = ''
 AS $BODY$
 DECLARE
-    partitions record;
-    _table_exists boolean;
-    _template_exists boolean;
-    _is_table_partitioned boolean;
-    _partitioning_details record;
-    ddl                       text := '';
-    ddl_indexes               text;
-    ddl_constraints           text;
-    ddl_triggers              text;
-    storage_clause text := '';
+    v_partitions               record;
+    v_parent_exists            boolean;
+    v_template_exists          boolean;
+    v_is_parent_partitioned    boolean;
+    v_partitioning_details     record;
+    v_ddl                      text := '';
+    v_indexes                  text;
+    v_constraints              text;
+    v_triggers                 text;
+    v_storage_clause           text;
+
 BEGIN
 
-    PERFORM set_config('timezone', timezone, true);
+    PERFORM set_config('timezone', p_timezone, true);
 
-    _table_exists := pgpartium.table_exists(table_schema, table_name);
-    _template_exists := pgpartium.table_exists(template_table_schema, template_table_name);
-    _is_table_partitioned := pgpartium.is_table_partitioned(table_schema, table_name);
-    _partitioning_details := pgpartium.get_partitioning_details(table_schema, table_name);
+    v_parent_exists := pgpartium.table_exists(p_table_schema, p_table_name);
+    v_template_exists := pgpartium.table_exists(p_template_table_schema, p_template_table_name);
+    v_is_parent_partitioned := pgpartium.is_table_partitioned(p_table_schema, p_table_name);
+    v_partitioning_details := pgpartium.get_partitioning_details(p_table_schema, p_table_name);
 
-    CREATE TEMPORARY TABLE current_bounds ON COMMIT DROP AS
-    SELECT lowerbound
-         , upperbound
-      FROM pgpartium.get_partition_bounds(table_schema, table_name, _partitioning_details.keys_data_types);
-
-    IF NOT _table_exists THEN
-        RAISE 'table "%"."%" does not exist', table_schema, table_name
+    IF NOT v_parent_exists THEN
+        RAISE 'table "%"."%" does not exist', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
 
-    IF NOT (num_nulls(template_table_schema, template_table_name) = 2) AND NOT _template_exists THEN
-        RAISE 'template table "%"."%" does not exist', template_table_schema, template_table_name
+    IF (num_nulls(p_template_table_schema, p_template_table_name) != 2) AND NOT v_template_exists THEN
+        RAISE 'template table "%"."%" does not exist', p_template_table_schema, p_template_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
 
-    IF NOT _is_table_partitioned THEN
-        RAISE 'table "%"."%" is not partitioned', table_schema, table_name
+    IF NOT v_is_parent_partitioned THEN
+        RAISE 'table "%"."%" is not partitioned', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
 
-    IF NOT _partitioning_details.strategy = 'RANGE' THEN
-        RAISE 'table "%"."%" is not partitioned on range', table_schema, table_name
-        USING ERRCODE = 'undefined_table';
+    IF v_partitioning_details.strategy != 'RANGE' THEN
+        RAISE '"%" partitioning is not supported', v_partitioning_details.strategy
+        USING ERRCODE = 'undefined_table',
+                 HINT = 'table ' || '"' || p_table_schema || '"' || '.' || '"' || p_table_name || '"' || ' must be partitioned by range';
     END IF;
 
-    IF NOT _partitioning_details.number_of_keys = 1 THEN
+    IF v_partitioning_details.number_of_keys > 1 THEN
         RAISE 'multi column partitioned tables are not supported'
         USING ERRCODE = 'undefined_table',
-                 HINT = 'table ' || '"' || table_schema || '"' || '.' || '"' || table_name || '"' || ' is partitioned on more than one column';
+                 HINT = 'table ' || '"' || p_table_schema || '"' || '.' || '"' || p_table_name || '"' || ' is partitioned on more than one column';
     END IF;
 
-    IF NOT _partitioning_details.keys_data_types IN ('date', 'timestamp with time zone', 'timestamp without time zone', 'integer', 'bigint') THEN
-        RAISE 'partitioning on data type "%" is not supported', _partitioning_details.keys_data_types
+    IF v_partitioning_details.keys_data_types NOT IN ('date', 'timestamptz', 'timestamp', 'int4', 'int8') THEN
+        RAISE 'partitioning on data type "%" is not supported', v_partitioning_details.keys_data_types
         USING ERRCODE = 'undefined_table',
-               DETAIL = 'table ' || '"' || table_schema || '"' || '.' || '"' || table_name || '"' || ' is partitioned on a data type that is not supported',
-                 HINT = 'supported data types are date, timestamp with time zone, timestamp without time zone, integer, and bigint';
+               DETAIL = 'table ' || '"' || p_table_schema || '"' || '.' || '"' || p_table_name || '"' || ' is partitioned on a data type that is not supported',
+                 HINT = 'supported data types are: date, timestamp with time zone, timestamp without time zone, integer, and bigint';
     END IF;
+
+    CREATE TEMPORARY TABLE current_bounds ON COMMIT DROP AS
+    SELECT lower_bound
+         , upper_bound
+      FROM pgpartium.get_partition_bounds(p_table_schema, p_table_name, v_partitioning_details.keys_data_types);
 
     CREATE TEMPORARY TABLE partition_constraints ON COMMIT DROP AS
     WITH template_constraints AS (
         SELECT constraint_name
-             , contype
-             , columns
+             , constraint_type
              , constraint_definition
-          FROM pgpartium.get_constraints(template_table_schema, template_table_name)
+          FROM pgpartium.get_constraints(p_template_table_schema, p_template_table_name)
     )
     , parent_constraints AS (
         SELECT constraint_name
-             , contype
-             , columns
+             , constraint_type
              , constraint_definition
-          FROM pgpartium.get_constraints(table_schema, table_name)
+          FROM pgpartium.get_constraints(p_table_schema, p_table_name)
     )
     SELECT template_constraints.constraint_name
-         , template_constraints.contype
-         , template_constraints.columns
+         , template_constraints.constraint_type
          , template_constraints.constraint_definition
       FROM template_constraints
       LEFT JOIN parent_constraints
@@ -105,14 +104,14 @@ BEGIN
              , is_unique_index
              , index_definition
              , index_predicate
-          FROM pgpartium.get_indexes(template_table_schema, template_table_name)
+          FROM pgpartium.get_indexes(p_template_table_schema, p_template_table_name)
     )
     , parent_indexes AS (
         SELECT index_name
              , is_unique_index
              , index_definition
              , index_predicate
-          FROM pgpartium.get_indexes(table_schema, table_name)
+          FROM pgpartium.get_indexes(p_table_schema, p_table_name)
     )
     SELECT template_indexes.index_name
          , template_indexes.is_unique_index
@@ -130,7 +129,7 @@ BEGIN
              , event_timing
              , trigger_event
              , trigger_body
-          FROM pgpartium.get_triggers(template_table_schema, template_table_name)
+          FROM pgpartium.get_triggers(p_template_table_schema, p_template_table_name)
     )
     , parent_triggers AS (
         SELECT trigger_name
@@ -138,7 +137,7 @@ BEGIN
              , event_timing
              , trigger_event
              , trigger_body
-          FROM pgpartium.get_triggers(table_schema, table_name)
+          FROM pgpartium.get_triggers(p_table_schema, p_table_name)
     )
     SELECT template_triggers.trigger_name
          , template_triggers.is_constraint_trigger
@@ -152,134 +151,140 @@ BEGIN
        AND template_triggers.trigger_body = parent_triggers.trigger_body
      WHERE parent_triggers.trigger_body IS NULL;
 
-    FOR partitions IN
+    FOR v_partitions IN
         WITH dateset AS (
             SELECT "date"
-            FROM generate_series(date_trunc(substring(p_interval FROM '\d+\s*(\w+)'), now()) - (p_interval::interval * past), now() + (p_interval::interval * future), p_interval::interval) AS "date"
-        ),
-        daterange AS (
-            -- generate partition bounds
-            SELECT to_char("date", suffix) AS part_suffix,
-                    "date" AS exclusive_start_time,
-                "date" + p_interval::interval AS exclusive_end_time
-        FROM dateset
+              FROM generate_series((date_trunc(substring(p_interval FROM '\d+\s*(\w+)'), now()) - (p_interval::interval * p_past)), (now() + (p_interval::interval * p_future)), p_interval::interval) AS "date"
         )
-        SELECT
-            table_name || part_suffix as partition_name,
-            exclusive_start_time,
-            exclusive_end_time
-        FROM daterange
+        , daterange AS (
+            -- generate partition bounds
+            SELECT to_char("date", p_suffix_format) AS partition_suffix
+                 , "date" AS exclusive_start_time
+                 , ("date" + p_interval::interval) AS exclusive_end_time
+              FROM dateset
+        )
+        SELECT p_table_name || partition_suffix AS partition_name
+             , exclusive_start_time
+             , exclusive_end_time
+          FROM daterange
     LOOP
         IF NOT EXISTS (
             SELECT 1
               FROM current_bounds
-             WHERE current_bounds.lowerbound = partitions.exclusive_start_time
-               AND current_bounds.upperbound = partitions.exclusive_end_time
+             WHERE current_bounds.lower_bound = v_partitions.exclusive_start_time
+               AND current_bounds.upper_bound = v_partitions.exclusive_end_time
         ) THEN
+
             -- Get constraint definition
             SELECT string_agg(
                 '        CONSTRAINT '
-                || format('%1$I', replace(constraint_name, template_table_name, partitions.partition_name))
+                || format('%1$I', replace(constraint_name, p_template_table_name, v_partitions.partition_name))
                 || ' '
                 || constraint_definition,
                 E',\n'
-                ORDER BY CASE contype
+                ORDER BY CASE constraint_type
                     WHEN 'p' THEN 0
                     WHEN 'u' THEN 1
                     ELSE 2
-                END, contype
-            ) INTO ddl_constraints
+                END
+            ) INTO v_constraints
             FROM partition_constraints;
 
             -- Get index create statement
             SELECT string_agg(
-                replace(
-                    'CREATE '
-                    || CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END
-                    || format('%1$I', replace(index_name, template_table_name, partitions.partition_name))
-                    || E'\n    ON '
-                    || format('%1$I.%2$I', partition_schema, partitions.partition_name)
-                    || E'\n '
-                    || index_definition
-                , coalesce(index_predicate, '')
-                , 'TABLESPACE ' || partition_tablespace || ' ' || coalesce(index_predicate, '')
-                )
-                || CASE WHEN index_predicate IS NULL THEN E'\nTABLESPACE ' || partition_tablespace ELSE '' END
-                || E';\n'
-              , E'\n'
-            ) INTO ddl_indexes
-            FROM partition_indexes;
+                    replace(
+                        'CREATE '
+                        || CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END
+                        || format('%1$I', replace(index_name, p_template_table_name, v_partitions.partition_name))
+                        || E'\n    ON '
+                        || format('%1$I.%2$I', p_partition_schema, v_partitions.partition_name)
+                        || E'\n '
+                        || index_definition
+                        , coalesce(index_predicate, '')
+                        , E'\nTABLESPACE ' || p_partition_tablespace || E'\n ' || coalesce(index_predicate, '')
+                    )
+                    || CASE WHEN index_predicate IS NULL THEN E'\nTABLESPACE ' || p_partition_tablespace ELSE '' END
+                    || E';\n'
+                    , E'\n'
+                   ) INTO v_indexes
+              FROM partition_indexes;
 
             -- Get create trigger statement
             SELECT string_agg(
-                'CREATE '
-                || CASE WHEN is_constraint_trigger THEN 'CONSTRAINT TRIGGER ' ELSE 'TRIGGER ' END
-                || format('%1$I', replace(trigger_name, template_table_name, partitions.partition_name))
-                || ' '
-                || event_timing
-                || ' '
-                || trigger_event
-                || E'\n    ON '
-                || format('%1$I.%2$I', partition_schema, partitions.partition_name)
-                || ' '
-                || trigger_body
-                || E';\n'
-              , E'\n' ORDER BY trigger_name
-            ) INTO ddl_triggers
-            FROM partition_triggers;
+                    'CREATE '
+                    || CASE WHEN is_constraint_trigger THEN 'CONSTRAINT TRIGGER ' ELSE 'TRIGGER ' END
+                    || format('%1$I', replace(trigger_name, p_template_table_name, v_partitions.partition_name))
+                    || ' '
+                    || event_timing
+                    || ' '
+                    || trigger_event
+                    || E'\n    ON '
+                    || format('%1$I.%2$I', p_partition_schema, v_partitions.partition_name)
+                    || ' '
+                    || trigger_body
+                    || E';\n'
+                    , E'\n'
+                    ORDER BY trigger_name
+                   ) INTO v_triggers
+              FROM partition_triggers;
 
             -- Get storage parameters
             SELECT coalesce(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
-              INTO storage_clause
-              FROM jsonb_each_text(storage_parameters);
+              INTO v_storage_clause
+              FROM jsonb_each_text(p_storage_parameters);
 
-            -- Get table definition
-            IF ddl != '' THEN
-                ddl := ddl || E'\n';
+            -- Table definition
+            IF v_ddl != '' THEN
+                v_ddl := v_ddl || E'\n';
             END IF;
 
-        ddl := ddl || format(
+            v_ddl := v_ddl || format(
 /* This alignment is needed to have the right indentation in the generated migration scripts */
 $SQL$CREATE TABLE %1$I.%2$I
     PARTITION OF %3$I.%4$I%5$s FOR VALUES FROM (%6$L) TO (%7$L)%8$s%9$s;
-$SQL$,          partition_schema,
-                partitions.partition_name,
-                table_schema,
-                table_name,
+$SQL$,          p_partition_schema,
+                v_partitions.partition_name,
+                p_table_schema,
+                p_table_name,
                 CASE
-                    WHEN ddl_constraints IS NULL THEN E'\n   '
-                    ELSE  E' (\n' || ddl_constraints || E'\n    )'
+                    WHEN v_constraints IS NULL THEN E'\n   '
+                    ELSE  E' (\n' || v_constraints || E'\n    )'
                 END,
-                CASE _partitioning_details.keys_data_types
-                    WHEN 'timestamp with time zone'     THEN partitions.exclusive_start_time::text
-                    WHEN 'timestamp without time zone'  THEN partitions.exclusive_start_time::text
-                    WHEN 'date'                         THEN partitions.exclusive_start_time::date::text
-                    WHEN 'integer' THEN (EXTRACT(EPOCH FROM partitions.exclusive_start_time)::integer)::text
-                    WHEN 'bigint'  THEN (EXTRACT(EPOCH FROM partitions.exclusive_start_time)::bigint * 1000)::text
+                CASE v_partitioning_details.keys_data_types
+                    WHEN 'timestamp with time zone'    THEN v_partitions.exclusive_start_time::text
+                    WHEN 'timestamp without time zone' THEN v_partitions.exclusive_start_time::text
+                    WHEN 'date'                        THEN v_partitions.exclusive_start_time::date::text
+                    WHEN 'integer' THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_start_time)::integer)::text
+                    WHEN 'bigint'  THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_start_time)::bigint * 1000)::text
                 END,
-                CASE _partitioning_details.keys_data_types
-                    WHEN 'timestamp with time zone'     THEN partitions.exclusive_end_time::text
-                    WHEN 'timestamp without time zone'  THEN partitions.exclusive_end_time::text
-                    WHEN 'date'                         THEN partitions.exclusive_end_time::date::text
-                    WHEN 'integer' THEN (EXTRACT(EPOCH FROM partitions.exclusive_end_time)::integer)::text
-                    WHEN 'bigint'  THEN (EXTRACT(EPOCH FROM partitions.exclusive_end_time)::bigint * 1000)::text
+                CASE v_partitioning_details.keys_data_types
+                    WHEN 'timestamp with time zone'    THEN v_partitions.exclusive_end_time::text
+                    WHEN 'timestamp without time zone' THEN v_partitions.exclusive_end_time::text
+                    WHEN 'date'                        THEN v_partitions.exclusive_end_time::date::text
+                    WHEN 'integer' THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_end_time)::integer)::text
+                    WHEN 'bigint'  THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_end_time)::bigint * 1000)::text
                 END,
-                storage_clause,
-                coalesce(format(E'\nTABLESPACE %I', partition_tablespace), '')
+                v_storage_clause,
+                coalesce(format(E'\nTABLESPACE %I', p_partition_tablespace), '')
             );
 
-            IF ddl_indexes IS NOT NULL THEN
-                ddl := ddl || E'\n' || ddl_indexes;
+            IF v_indexes IS NOT NULL THEN
+                v_ddl := v_ddl || E'\n' || v_indexes;
             END IF;
 
-            IF ddl_triggers IS NOT NULL THEN
-                ddl := ddl || E'\n' || ddl_triggers;
+            IF v_triggers IS NOT NULL THEN
+                v_ddl := v_ddl || E'\n' || v_triggers;
             END IF;
-
-            RAISE NOTICE 'ddl: "%"', ddl;
 
         END IF;
+
     END LOOP;
+
+    IF v_ddl != '' THEN
+        RETURN NEXT v_ddl;
+    END IF;
+
+    RETURN;
 
 END;
 $BODY$;

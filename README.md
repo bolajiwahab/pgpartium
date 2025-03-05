@@ -6,3 +6,11 @@
 -- we do not support access method on partitions since that is inherited from the parent
 -- see docs: When creating a partition, the table access method is the access method of its partitioned table, if set.
 https://www.postgresql.org/docs/current/sql-createtable.html#:~:text=When%20creating%20a%20partition%2C%20the%20table%20access%20method%20is%20the%20access%20method%20of%20its%20partitioned%20table%2C%20if%20set.
+
+
+select regexp_replace('CREATE INDEX tbl_con_ledger_id_idx2 ON partitions.enrichment__2025_02 USING btree (ledger_id)', '(WHERE .*)$', E'TABLESPACE ' || 'tablespace_name' || E' \\1', 'g')
+
+
+select substring('CREATE INDEX tbl_con_ledger_id_idx2 ON partitions.enrichment__2025_02 USING btree (ledger_id) WHERE expires_at > 1' FROM '(WHERE .*)$') AS index_definition
+
+needs to adjust queries to start from pg_namespace

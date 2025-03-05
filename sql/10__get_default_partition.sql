@@ -22,5 +22,5 @@ AS $BODY$
      WHERE c.relispartition
        AND p.relname = table_name
        AND pn.nspname = table_schema
-       AND pg_catalog.pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT'
+       AND pg_catalog.pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT';
 $BODY$;

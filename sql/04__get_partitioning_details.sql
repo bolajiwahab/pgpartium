@@ -20,7 +20,7 @@ AS $BODY$
                THEN 'HASH'
            END AS strategy
          , string_agg(a.attname, ', ') AS keys
-         , string_agg(format_type(a.atttypid, a.atttypmod), ', ') AS keys_data_types
+         , string_agg(t.typname, ', ') AS keys_data_types
       FROM pg_catalog.pg_partitioned_table AS p
      INNER JOIN pg_catalog.pg_class AS c
         ON c.oid = p.partrelid
@@ -29,10 +29,13 @@ AS $BODY$
      INNER JOIN pg_catalog.pg_attribute AS a
         ON p.partrelid = a.attrelid
        AND a.attnum = ANY(CAST(p.partattrs AS integer[]))
+     INNER JOIN pg_catalog.pg_type AS t
+        ON t.oid = a.atttypid
      WHERE n.nspname = table_schema
        AND c.relname = table_name
      GROUP BY n.nspname
             , c.relname
             , p.partnatts
-            , p.partstrat, partrelid;
+            , p.partstrat
+            , partrelid;
 $BODY$;

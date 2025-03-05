@@ -7,17 +7,16 @@ CREATE OR REPLACE FUNCTION pgpartium.get_expired_partitions (
 RETURNS TABLE (
     partition_schema text
   , partition_name text
-  , lowerbound text
-  , upperbound text
+  , lower_bound text
+  , upper_bound text
   , age interval
 )
 LANGUAGE SQL
 AS $BODY$
-    --    AND c.relkind = 'r'
     SELECT cn.nspname AS partition_schema
          , c.relname AS partition_name
-         , (matches)[1] AS lowerbound
-         , (matches)[2] AS upperbound
+         , (matches)[1] AS lower_bound
+         , (matches)[2] AS upper_bound
          , CASE key_data_type
              WHEN 'timestamp with time zone'
                THEN age(now(), CAST((matches)[2] AS timestamptz))

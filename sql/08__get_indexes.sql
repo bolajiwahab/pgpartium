@@ -27,6 +27,3 @@ AS $BODY$
        AND t.relname = table_name
        AND c.conindid IS NULL;
 $BODY$;
-
-
---- what of unique indexes

@@ -6,25 +6,25 @@ CREATE OR REPLACE FUNCTION pgpartium.get_partition_bounds (
 RETURNS TABLE (
     partition_schema text
   , partition_name text
-  , lowerbound timestamptz
-  , upperbound timestamptz
+  , lower_bound timestamptz
+  , upper_bound timestamptz
 )
 LANGUAGE SQL
 AS $BODY$
     SELECT cn.nspname AS partition_schema
          , c.relname AS partition_name
          , CASE key_data_type
-             WHEN 'timestamp with time zone'
+             WHEN 'timestamptz'
                THEN CAST((matches)[1] AS timestamptz)
-             WHEN 'timestamp without time zone'
+             WHEN 'timestamp'
                THEN CAST((matches)[1] AS timestamptz)
              WHEN 'date'
                THEN CAST((matches)[1] AS date)
-             WHEN 'integer'
+             WHEN 'int4'
                THEN to_timestamp(CAST((matches)[1] AS integer))
-             WHEN 'bigint'
+             WHEN 'int8'
                THEN to_timestamp(CAST((matches)[1] AS bigint) / 1000)
-           END AS lowerbound
+           END AS lower_bound
          , CASE key_data_type
              WHEN 'timestamp with time zone'
                THEN CAST((matches)[2] AS timestamptz)
@@ -36,7 +36,7 @@ AS $BODY$
                THEN to_timestamp(CAST((matches)[2] AS integer))
              WHEN 'bigint'
                THEN to_timestamp(CAST((matches)[2] AS bigint) / 1000)
-           END AS upperbound
+           END AS upper_bound
       FROM pg_catalog.pg_inherits AS i
      INNER JOIN pg_catalog.pg_class AS p
         ON i.inhparent = p.oid

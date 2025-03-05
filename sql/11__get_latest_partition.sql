@@ -23,6 +23,6 @@ AS $BODY$
      WHERE c.relispartition
        AND p.relname = table_name
        AND pn.nspname = table_schema
-       ORDER BY (matches)[1] DESC
-       LIMIT 1
+     ORDER BY (matches)[1] DESC
+     LIMIT 1;
 $BODY$;
