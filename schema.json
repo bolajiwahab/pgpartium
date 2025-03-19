@@ -1,0 +1,242 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "generates": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "migration-tool": {
+                        "type": "string",
+                        "enum": [
+                            "flyway"
+                        ]
+                    },
+                    "directory": {
+                        "type": "string"
+                    },
+                    "suffix": {
+                        "type": "string"
+                    },
+                    "interval": {
+                        "type": "string"
+                    },
+                    "past": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "future": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "retention": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "create-default": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "tables": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "partition": {
+                                    "type": "object",
+                                    "properties": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "tablespace": {
+                                            "type": "string"
+                                        },
+                                        "storage_parameters": {
+                                            "type": "object",
+                                            "properties": {
+                                                "fillfactor": {
+                                                    "type": "integer",
+                                                    "minimum": 0,
+                                                    "maximum": 100
+                                                },
+                                                "autovacuum_enabled": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "additionalProperties": false,
+                                            "minProperties": 1
+                                        },
+                                        "past": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        },
+                                        "future": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        },
+                                        "retention": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        },
+                                        "create-default": {
+                                            "type": "boolean"
+                                        },
+                                        "prefix": {
+                                            "type": "string"
+                                        },
+                                        "suffix": {
+                                            "type": "string"
+                                        },
+                                        "interval": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "schema"
+                                    ]
+                                },
+                                "template": {
+                                    "type": [
+                                        "object",
+                                        "string"
+                                    ],
+                                    "properties": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "table": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "schema",
+                                        "table"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "schema",
+                                "partition"
+                            ],
+                            "additionalProperties": false
+                        }
+                    },
+                    "groups": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                                "patterns": {
+                                    "description": "",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                    },
+                                    "uniqueItems": true,
+                                    "minItems": 1
+                                },
+                                "exclude-patterns": {
+                                    "description": "",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "minLength": 1
+                                    },
+                                    "uniqueItems": true,
+                                    "minItems": 1
+                                }
+                            },
+                            "anyOf": [
+                                {
+                                    "required": [
+                                        "patterns"
+                                    ]
+                                },
+                                {
+                                    "required": [
+                                        "exclude-patterns"
+                                    ]
+                                }
+                            ],
+                            "additionalProperties": false
+                        },
+                        "minProperties": 1
+                    },
+                    "schedule": {
+                        "type": "object",
+                        "properties": {
+                            "interval": {
+                                "type": "string",
+                                "enum": [
+                                    "daily",
+                                    "weekly",
+                                    "monthly",
+                                    "yearly",
+                                    "hourly"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "interval"
+                        ]
+                    }
+                },
+                "required": [
+                    "migration-tool",
+                    "directory",
+                    "tables"
+                ]
+            }
+        }
+    },
+"if": {
+    "properties": {
+      "generates": {
+        "items": {
+          "properties": {
+            "past": {
+              "not": { "type": "integer" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "generates": {
+        "items": {
+          "properties": {
+            "tables": {
+              "type": "object",
+              "patternProperties": {
+                "^.*$": {
+                  "type": "object",
+                  "properties": {
+                    "partition": {
+                      "type": "object",
+                      "properties": {
+                        "past": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": ["past"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+    "required": [
+        "generates"
+    ]
+}

@@ -1,0 +1,47 @@
+version: 2 # schema version
+
+generates:
+  - migration-tool: "flyway" # migration tool so we can generate versioned migration scripts
+    directory: "/" # directory to generate migration scripts in
+    suffix: "YYYY_MM_DD" # suffix to append to the table name
+    interval: "1 day" # daily, weekly, monthly, yearly, hourly, table might currently have daily partitions but you could decide to switch to say monthly
+    past: 2 # how many partitions to create in the past, if we find such partitions already and they are still part of the
+    # partition tree after the retention then we don't create migration scripts for them
+    future: 1 # how many partitions to create in the future, current plus number of future
+    retention: 24 # how many partitions to keep altogether, if a partition is older then we generate drop statement for it
+    create-default: true # if you want to create a default partition or not (if not exists by default)
+    tables:
+      users:
+        schema: "public"
+        partition:
+          schema: "partitions" # useful if partition schema is different from the parent schema
+          tablespace: "tablespace"
+          storage_parameters:
+            fillfactor: 90
+            autovacuum_enabled: false
+          past: 2
+          future: 1
+          retention: 24
+          create-default: true
+          prefix: "users_"
+          suffix: "__YYYY_MM_DD"
+          interval: "1 year"
+        template:
+           schema: "public"
+           table: "users_template"
+      transactions:
+        schema: "partitions"
+        suffix: "YYYY_MM_DD"
+        interval: "1 month"
+        template: "CURRENT_PARTITION" # CURRENT_PARTITION, LATEST_PARTITION, DEFAULT_PARTITION
+        past: 2
+        future: 1
+        retention: 24
+        create-default: true
+    groups: # by default we create one file per partitioned table, this controls if you want everything in one file (*) or you want specific partitioned table partitions in one file
+      audit-tables:
+        patterns:
+          - "audit" # audit tables and user partition in one file
+          - "users"
+    schedule:
+      interval: "weekly"

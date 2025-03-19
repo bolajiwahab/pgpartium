@@ -1,0 +1,260 @@
+#!/usr/bin/env python3
+import json
+import jsonschema
+import yaml
+import pathlib
+import psycopg2
+import psycopg2.extras
+
+SCHEMA = {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "version": {"type": "integer", "enum": [2]},
+        "generates": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "migration-tool": {"type": "string", "enum": ["flyway"]},
+                    "directory": {"type": "string"},
+                    "suffix": {"type": "string"},
+                    "interval": {"type": "string"},
+                    "past": {"type": "integer", "minimum": 0},
+                    "future": {"type": "integer", "minimum": 0},
+                    "retention": {"type": "integer", "minimum": 0},
+                    "create-default": {"type": "boolean"},
+                    "tables": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                                "schema": {"type": "string"},
+                                "partition": {
+                                    "type": "object",
+                                    "properties": {
+                                        "schema": {"type": "string"},
+                                        "tablespace": {"type": "string"},
+                                        "storage_parameters": {
+                                            "type": "object",
+                                            "properties": {
+                                                "fillfactor": {
+                                                    "type": "integer",
+                                                    "minimum": 0,
+                                                    "maximum": 100,
+                                                },
+                                                "autovacuum_enabled": {
+                                                    "type": "boolean"
+                                                },
+                                            },
+                                            "additionalProperties": False,
+                                        },
+                                        "past": {"type": "integer", "minimum": 0},
+                                        "future": {"type": "integer", "minimum": 0},
+                                        "retention": {"type": "integer", "minimum": 0},
+                                        "create-default": {"type": "boolean"},
+                                        "prefix": {"type": "string"},
+                                        "suffix": {"type": "string"},
+                                        "interval": {"type": "string"},
+                                    },
+                                    "required": ["schema", "interval"],
+                                    "additionalProperties": False,
+                                },
+                                "template": {
+                                    "oneOf": [
+                                        {
+                                            "type": "string",
+                                            "enum": [
+                                                "CURRENT_PARTITION",
+                                                "LATEST_PARTITION",
+                                                "DEFAULT_PARTITION",
+                                            ],
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "schema": {"type": "string"},
+                                                "table": {"type": "string"},
+                                            },
+                                            "required": ["schema", "table"],
+                                            "additionalProperties": False,
+                                        },
+                                    ]
+                                },
+                            },
+                            "required": ["schema"],
+                            "additionalProperties": False,
+                        },
+                    },
+                    "groups": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                                "patterns": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                }
+                            },
+                            "required": ["patterns"],
+                            "additionalProperties": False,
+                        },
+                    },
+                },
+                "required": [
+                    "migration-tool",
+                    "directory",
+                    "suffix",
+                    "interval",
+                    "past",
+                    "future",
+                    "retention",
+                    "create-default",
+                    "tables",
+                ],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["version", "generates"],
+    "additionalProperties": False,
+}
+
+
+def validate_schema(yaml_path):
+    # with open(schema_path, 'r') as schema_file:
+    #     schema = json.load(schema_file)
+    with open(yaml_path, "r") as yaml_file:
+        data = yaml.safe_load(yaml_file)
+    jsonschema.validate(instance=data, schema=SCHEMA)
+    print("YAML is valid against the schema")
+
+
+# conn = psycopg2.connect(**dsn, sslmode='require')
+
+conn = psycopg2.connect(
+    # host="localhost",
+    # port=5432,
+    # dbname="pgpartium",
+    user="postgres",
+    password="postgres",
+    sslmode="prefer",
+    # application_name="PROJECT_NAME",
+)
+
+exceptions = []
+
+cur = conn.cursor(cursor_factory=psycopg2.extras.NamedTupleCursor)
+
+try:
+    cur.execute(
+        "SELECT pgpartium.generate_partitions(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        (
+            "public",
+            "enrichment",
+            "1 mons",
+            0,
+            1,
+            "public",
+            "__YYYY_MM",
+            "partitions",
+            "pg_default",
+            json.dumps({"fillfactor": 70, "autovacuum_enabled": "true"}),
+            "public",
+            "tbl_con",
+        ),
+    )
+except Exception as e:
+    exceptions.append(e)
+
+print(exceptions)
+
+# Write DDL into file
+pathlib.Path("/tmp/migrations").mkdir(parents=True, exist_ok=True)
+
+if cur.rowcount:
+    with pathlib.Path("/tmp/migrations/enrichment.sql").open(
+        "w",
+        encoding="utf-8",
+    ) as sf:
+        sf.writelines(cur.fetchone())
+    
+    # dest_file = "/migrations" / file.name
+    # file.rename(dest_file)
+
+
+    # with pathlib.Path.open(
+    #     "/migrations/enrichment.sql",
+    #     "w",
+    # ) as file:
+    #     file.writelines(cur.fetchone())
+
+    # migration_file_name = os.path.join(
+    #     args.output_dir_path,
+    #     service_name + "__" + parent.table_name + ".sql"
+    # )
+    # with open(migration_file_name, 'w', encoding='UTF-8') as f:
+    #     f.writelines(cur.fetchone())
+
+# cur.execute("select pgpartium.generate_partitions()")
+# select pgpartium.generate_partitions ('public', 'enrichment', '1 mons', 0, 1, 'public', '__YYYY_MM', 'partitions', 'pg_default', '{"fillfactor": 70, "autovacuum_enabled": "true"}'::jsonb, 'public', 'tbl_con');
+# validate_schema("example.yaml")
+# Sample YAML
+# yaml_example = """
+# version: 2
+# generates:
+#   - migration-tool: "flyway"
+#     directory: "/"
+#     suffix: "YYYY_MM_DD"
+#     interval: "1 day"
+#     past: 2
+#     future: 1
+#     retention: 24
+#     create-default: true
+#     tables:
+#       users:
+#         schema: "public"
+#         partition:
+#           schema: "partitions"
+#           tablespace: "tablespace"
+#           storage_parameters:
+#             fillfactor: 90
+#             autovacuum_enabled: false
+#           past: 2
+#           future: 1
+#           retention: 24
+#           create-default: true
+#           prefix: "users_"
+#           suffix: "__YYYY_MM_DD"
+#           interval: "1 year"
+#         template:
+#           schema: "public"
+#           table: "users_template"
+#       transactions:
+#         schema: "partitions"
+#         suffix: "YYYY_MM_DD"
+#         interval: "1 month"
+#         template: "CURRENT_PARTITION"
+#         past: 2
+#         future: 1
+#         retention: 24
+#         create-default: true
+#     groups:
+#       audit-tables:
+#         patterns:
+#           - "audit"
+#           - "users"
+# """
+
+# with open("example.yaml", "w") as f:
+#     f.write(yaml_example)
+
+print("Sample YAML written to example.yaml")
+
+# try:
+
+#     jsonschema.validate(schema=self._schema, instance=instance)
+
+# except jsonschema.exceptions.ValidationError as err:
+
+#     raise errors.SchemaValidationError(err.message) from None
