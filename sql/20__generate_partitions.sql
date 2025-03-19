@@ -251,18 +251,18 @@ $SQL$,          p_partition_schema,
                     ELSE  E' (\n' || v_constraints || E'\n    )'
                 END,
                 CASE v_partitioning_details.keys_data_types
-                    WHEN 'timestamp with time zone'    THEN v_partitions.exclusive_start_time::text
-                    WHEN 'timestamp without time zone' THEN v_partitions.exclusive_start_time::text
-                    WHEN 'date'                        THEN v_partitions.exclusive_start_time::date::text
-                    WHEN 'integer' THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_start_time)::integer)::text
-                    WHEN 'bigint'  THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_start_time)::bigint * 1000)::text
+                    WHEN 'timestamptz' THEN v_partitions.exclusive_start_time::text
+                    WHEN 'timestamp'   THEN v_partitions.exclusive_start_time::text
+                    WHEN 'date'        THEN v_partitions.exclusive_start_time::date::text
+                    WHEN 'int4'        THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_start_time)::integer)::text
+                    WHEN 'int8'        THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_start_time)::bigint * 1000)::text
                 END,
                 CASE v_partitioning_details.keys_data_types
-                    WHEN 'timestamp with time zone'    THEN v_partitions.exclusive_end_time::text
-                    WHEN 'timestamp without time zone' THEN v_partitions.exclusive_end_time::text
-                    WHEN 'date'                        THEN v_partitions.exclusive_end_time::date::text
-                    WHEN 'integer' THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_end_time)::integer)::text
-                    WHEN 'bigint'  THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_end_time)::bigint * 1000)::text
+                    WHEN 'timestamptz' THEN v_partitions.exclusive_end_time::text
+                    WHEN 'timestamp'   THEN v_partitions.exclusive_end_time::text
+                    WHEN 'date'        THEN v_partitions.exclusive_end_time::date::text
+                    WHEN 'int4'        THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_end_time)::integer)::text
+                    WHEN 'int8'        THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_end_time)::bigint * 1000)::text
                 END,
                 v_storage_clause,
                 coalesce(format(E'\nTABLESPACE %I', p_partition_tablespace), '')

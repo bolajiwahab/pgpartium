@@ -14,3 +14,5 @@ select regexp_replace('CREATE INDEX tbl_con_ledger_id_idx2 ON partitions.enrichm
 select substring('CREATE INDEX tbl_con_ledger_id_idx2 ON partitions.enrichment__2025_02 USING btree (ledger_id) WHERE expires_at > 1' FROM '(WHERE .*)$') AS index_definition
 
 needs to adjust queries to start from pg_namespace
+
+-- yq -o=json '.' config.yaml | jsonschema schema.json

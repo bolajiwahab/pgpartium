@@ -1,10 +1,8 @@
-version: 2 # schema version
-
 generates:
   - migration-tool: "flyway" # migration tool so we can generate versioned migration scripts
     directory: "/" # directory to generate migration scripts in
     suffix: "YYYY_MM_DD" # suffix to append to the table name
-    resolution: "daily" # daily, weekly, monthly, yearly, hourly, table might currently have daily partitions but you could decide to switch to say monthly
+    interval: "1 day" # daily, weekly, monthly, yearly, hourly, table might currently have daily partitions but you could decide to switch to say monthly
     past: 2 # how many partitions to create in the past, if we find such partitions already and they are still part of the
     # partition tree after the retention then we don't create migration scripts for them
     future: 1 # how many partitions to create in the future, current plus number of future
@@ -19,47 +17,33 @@ generates:
           storage_parameters:
             fillfactor: 90
             autovacuum_enabled: false
-          privileges:
-            - types: ["SELECT", "INSERT", "UPDATE", "DELETE"]
-              roles: ["user1", "user2"]
-              # with_grant: true
-            - types: ["INSERT"]
-              roles: ["user1", "user2"]
-            - types: ["UPDATE"]
-              roles: ["user1", "user2"]
-            - types: ["DELETE"]
-              roles: ["user1", "user2"]
-          past: 2
+          #past: 2
           future: 1
           retention: 24
           create-default: true
           prefix: "users_"
           suffix: "__YYYY_MM_DD"
-          resolution: "daily"
-        # suffix: "__YYYY_MM_DD"
-        # resolution: "daily"
+          interval: "1 year"
         template:
            schema: "public"
            table: "users_template"
-        # past: 2
-        # future: 1
-        # retention: 24
-        # create-default: true
-        # fall-back-to-latest-partition-for-template: true # fall back to latest partition if template table doesn't exist
       transactions:
-        schema: "partitions"
-        suffix: "YYYY_MM_DD"
-        resolution: "daily"
-        template: "CURRENT_PARTITION" # CURRENT_PARTITION, LATEST_PARTITION, DEFAULT_PARTITION
-        # fall-back-to-default-for-template: true # fall back to default if template table doesn't exist
-        past: 2
-        future: 1
-        retention: 24
-        create-default: true
-    schedule:
-      interval: "weekly"
+        schema: "public"
+        partition:
+          schema: "partitions"
+          suffix: "YYYY_MM_DD"
+          interval: "1 month"
+          template: "CURRENT_PARTITION" # CURRENT_PARTITION, LATEST_PARTITION, DEFAULT_PARTITION
+          past: 2
+          future: 1
+          retention: 24
+          create-default: true
     groups: # by default we create one file per partitioned table, this controls if you want everything in one file (*) or you want specific partitioned table partitions in one file
       audit-tables:
         patterns:
           - "audit" # audit tables and user partition in one file
           - "users"
+        exclude-patterns:
+          - "users_template"
+    schedule:
+      interval: "weekly"

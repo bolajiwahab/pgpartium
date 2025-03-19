@@ -55,4 +55,10 @@ sudo pg_createcluster --start "$PGVERSION" pgpartium -- -A trust
 
 ls sql/*.sql | sort | xargs -I {} sudo psql --quiet --username=postgres --dbname=postgres -f "{}"
 
-sudo psql -U postgres -d postgres -c "SELECT * from pgpartium.table_exists ('public', 'table')"
+echo "executing pgpartium"
+
+jsonschema
+
+sudo partium
+
+# sudo psql -U postgres -d postgres -c "SELECT * from pgpartium.table_exists ('public', 'table')"

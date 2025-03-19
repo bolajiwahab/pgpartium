@@ -8,13 +8,15 @@ COPY createcluster.conf /etc/postgresql-common/createcluster.conf
 
 COPY bin/* /usr/local/bin/
 
+# RUN chmod +x /usr/local/bin/partium
+
 WORKDIR /app
 
 COPY sql sql
 
 # Install apt dependencies
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates gnupg2 sudo \
+    && apt-get install -y --no-install-recommends yq python3-yaml python3-jsonschema python3-psycopg2 ca-certificates gnupg2 sudo \
     && apt-get clean \
     && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
 
