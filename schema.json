@@ -8,124 +8,178 @@
                 "type": "object",
                 "properties": {
                     "migration-tool": {
+                        "description": "The migration tool used to apply migrations to the database.",
                         "type": "string",
                         "enum": [
                             "flyway"
                         ]
                     },
                     "directory": {
-                        "type": "string"
+                        "description": "The directory to generate migrations in.",
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "prefix": {
+                        "description": "The prefix for partition names.",
+                        "type": "string",
+                        "minLength": 1
                     },
                     "suffix": {
-                        "type": "string"
+                        "description": "The suffix for partition names.",
+                        "type": "string",
+                        "minLength": 1
                     },
                     "interval": {
-                        "type": "string"
+                        "description": "The partition interval.",
+                        "type": "string",
+                        "minLength": 1
                     },
                     "past": {
+                        "description": "The number of past partitions to generate.",
                         "type": "integer",
                         "minimum": 0
                     },
                     "future": {
+                        "description": "The number of future partitions to generate.",
                         "type": "integer",
                         "minimum": 0
                     },
-                    "retention": {
-                        "type": "integer",
-                        "minimum": 0
-                    },
-                    "create-default": {
+                    "create_default": {
+                        "description": "Whether to create default partition.",
                         "type": "boolean",
                         "default": false
                     },
+                    "retention_interval": {
+                        "description": "The interval for which data/partition is retained.",
+                        "type": "string",
+                        "minLength": 1
+                    },
                     "tables": {
-                        "type": "object",
-                        "additionalProperties": {
+                        "description": "List of tables to generate partitions for.",
+                        "type": "array",
+                        "items": {
+                            "description": "The table to generate partitions for.",
                             "type": "object",
                             "properties": {
-                                "schema": {
-                                    "type": "string"
+                                "schema_name": {
+                                    "description": "The schema of the table.",
+                                    "type": "string",
+                                    "minLength": 1
+                                },
+                                "table_name": {
+                                    "description": "The name of the table.",
+                                    "type": "string",
+                                    "minLength": 1
                                 },
                                 "partition": {
                                     "type": "object",
+                                    "description": "The partition configuration for the table.",
                                     "properties": {
-                                        "schema": {
-                                            "type": "string"
+                                        "schema_name": {
+                                            "description": "The schema of the partitions.",
+                                            "type": "string",
+                                            "minLength": 1
                                         },
                                         "tablespace": {
-                                            "type": "string"
+                                            "description": "The tablespace for the partitions.",
+                                            "type": "string",
+                                            "minLength": 1
                                         },
                                         "storage_parameters": {
+                                            "description": "The storage parameters for the partitions.",
                                             "type": "object",
                                             "properties": {
                                                 "fillfactor": {
+                                                    "description": "The fillfactor for the partitions.",
                                                     "type": "integer",
                                                     "minimum": 0,
                                                     "maximum": 100
                                                 },
                                                 "autovacuum_enabled": {
-                                                    "type": "boolean"
+                                                    "description": "Whether to enable autovacuum for the partitions.",
+                                                    "type": "boolean",
+                                                    "default": false
                                                 }
                                             },
                                             "additionalProperties": false,
                                             "minProperties": 1
                                         },
+                                        "prefix": {
+                                            "description": "The prefix for partition names.",
+                                            "type": "string",
+                                            "minLength": 1
+                                        },
+                                        "suffix": {
+                                            "description": "The suffix for partition names.",
+                                            "type": "string",
+                                            "minLength": 1
+                                        },
+                                        "interval": {
+                                            "description": "The partition interval.",
+                                            "type": "string",
+                                            "minLength": 1
+                                        },
                                         "past": {
+                                            "description": "The number of past partitions to generate.",
                                             "type": "integer",
                                             "minimum": 0
                                         },
                                         "future": {
+                                            "description": "The number of future partitions to generate.",
                                             "type": "integer",
                                             "minimum": 0
                                         },
-                                        "retention": {
-                                            "type": "integer",
-                                            "minimum": 0
+                                        "create_default": {
+                                            "description": "Whether to create default partition.",
+                                            "type": "boolean",
+                                            "default": false
                                         },
-                                        "create-default": {
-                                            "type": "boolean"
-                                        },
-                                        "prefix": {
-                                            "type": "string"
-                                        },
-                                        "suffix": {
-                                            "type": "string"
-                                        },
-                                        "interval": {
-                                            "type": "string"
+                                        "retention_interval": {
+                                            "description": "The interval for which data/partition is retained.",
+                                            "type": "string",
+                                            "minLength": 1
                                         }
                                     },
                                     "required": [
-                                        "schema"
+                                        "schema_name"
                                     ]
                                 },
                                 "template": {
+                                    "description": "The template table to generate partitions from.",
                                     "type": [
                                         "object",
                                         "string"
                                     ],
                                     "properties": {
-                                        "schema": {
-                                            "type": "string"
+                                        "schema_name": {
+                                            "description": "Schema of the template table.",
+                                            "type": "string",
+                                            "minLength": 1
                                         },
-                                        "table": {
-                                            "type": "string"
+                                        "table_name": {
+                                            "description": "Name of the template table.",
+                                            "type": "string",
+                                            "minLength": 1
                                         }
                                     },
                                     "required": [
-                                        "schema",
-                                        "table"
-                                    ]
+                                        "schema_name",
+                                        "table_name"
+                                    ],
+                                    "additionalProperties": false
                                 }
                             },
                             "required": [
-                                "schema",
+                                "schema_name",
+                                "table_name",
                                 "partition"
                             ],
                             "additionalProperties": false
-                        }
+                        },
+                        "minItems": 1
                     },
                     "groups": {
+                        "description": "Configure groups for tables. By default we create one file per partitioned table, this controls if you want everything in one file (*) or you want specific table partitions in one file ",
                         "type": "object",
                         "additionalProperties": {
                             "type": "object",
@@ -166,77 +220,65 @@
                             "additionalProperties": false
                         },
                         "minProperties": 1
-                    },
-                    "schedule": {
-                        "type": "object",
-                        "properties": {
-                            "interval": {
-                                "type": "string",
-                                "enum": [
-                                    "daily",
-                                    "weekly",
-                                    "monthly",
-                                    "yearly",
-                                    "hourly"
-                                ]
-                            }
-                        },
-                        "required": [
-                            "interval"
-                        ]
                     }
                 },
                 "required": [
                     "migration-tool",
                     "directory",
                     "tables"
-                ]
+                ],
+                "additionalProperties": false
             }
         }
     },
-"if": {
-    "properties": {
-      "generates": {
-        "items": {
-          "properties": {
-            "past": {
-              "not": { "type": "integer" }
-            }
-          }
-        }
-      }
-    }
-  },
-  "then": {
-    "properties": {
-      "generates": {
-        "items": {
-          "properties": {
-            "tables": {
-              "type": "object",
-              "patternProperties": {
-                "^.*$": {
-                  "type": "object",
-                  "properties": {
-                    "partition": {
-                      "type": "object",
-                      "properties": {
+    "if": {
+        "properties": {
+            "generates": {
+                "type": "array",
+                "items": {
+                    "properties": {
                         "past": {
-                          "type": "integer"
+                            "not": {
+                                "type": "integer"
+                            }
                         }
-                      },
-                      "required": ["past"]
                     }
-                  }
                 }
-              }
             }
-          }
         }
-      }
-    }
-  },
+    },
+    "then": {
+        "properties": {
+            "generates": {
+                "type": "array",
+                "items": {
+                    "properties": {
+                        "tables": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "partition": {
+                                        "type": "object",
+                                        "properties": {
+                                            "past": {
+                                                "type": "integer"
+                                            }
+                                        },
+                                        "required": [
+                                            "past"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
     "required": [
         "generates"
-    ]
+    ],
+    "additionalProperties": false
 }
