@@ -18,10 +18,13 @@ jobs:
 
     name: 🐘 PostgreSQL ${{ matrix.postgresql }}
     runs-on: ubuntu-latest
-    container: ghcr.io/bolajiwahab/pgpartium:0.0.1@sha256:eb9f509bddbbec88573811491c23a47cab7bf83388020910b3f7a0933172b86e
+    container: pgxn/pgxn-tools
     steps:
+      - name: Start PostgreSQL ${{ matrix.postgresql }}
+        run: pg-start -v ${{ matrix.postgresql }}
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Start PostgreSQL ${{ matrix.postgresql }}
-        run: generate-partitions -v ${{ matrix.postgresql }} -c config.yml
+      - name: Build and test extension on PostgreSQL ${{ matrix.postgresql }}
+        run: generate-partitions -c config.yml
