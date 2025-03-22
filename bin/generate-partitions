@@ -57,8 +57,11 @@ ls sql/*.sql | sort | xargs -I {} sudo psql --quiet --username=postgres --dbname
 
 echo "executing pgpartium"
 
-jsonschema
+# validate schema
+echo "validating schema"
+cat ./"$CONFIG"
+yq -o=json ./"$CONFIG" | jsonschema schema.json
 
-sudo partium
+# sudo partium
 
 # sudo psql -U postgres -d postgres -c "SELECT * from pgpartium.table_exists ('public', 'table')"

@@ -14,13 +14,18 @@ WORKDIR /app
 
 COPY sql sql
 
+COPY schema.json schema.json
+
 # Install apt dependencies
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends yq python3-yaml python3-jsonschema python3-psycopg2 ca-certificates gnupg2 sudo \
+    && apt-get install -y wget python3-jsonschema python3-psycopg2 ca-certificates gnupg2 sudo \
     && apt-get clean \
     && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
 
 ENV LC_ALL=C.UTF-8 LANG=C.UTF-8 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+RUN wget --no-verbose https://github.com/mikefarah/yq/releases/download/v4.45.1/yq_linux_amd64 --output-document=/usr/bin/yq && \
+    chmod +x /usr/bin/yq
 
 # Add non-root user
 RUN useradd pgpartium && adduser pgpartium sudo
