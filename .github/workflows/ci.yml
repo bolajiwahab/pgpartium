@@ -18,7 +18,7 @@ jobs:
 
     name: 🐘 PostgreSQL ${{ matrix.postgresql }}
     runs-on: ubuntu-latest
-    container: pgxn/pgxn-tools
+    container: ghcr.io/bolajiwahab/pgpartium:0.0.2@sha256:bd2f3c88b4f2b9f05241551642dee7517ca670eff282efca4310d2e4b0ae685e
     steps:
       - name: Start PostgreSQL ${{ matrix.postgresql }}
         run: pg-start -v ${{ matrix.postgresql }}
