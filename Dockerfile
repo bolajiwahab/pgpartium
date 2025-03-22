@@ -18,7 +18,7 @@ COPY schema.json schema.json
 
 # Install apt dependencies
 RUN apt-get update \
-    && apt-get install -y wget python3-jsonschema python3-psycopg2 ca-certificates gnupg2 sudo \
+    && apt-get install -y wget python3-jsonschema python3-psycopg2 ca-certificates gnupg2 \
     && apt-get clean \
     && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
 
@@ -28,8 +28,9 @@ RUN wget --no-verbose https://github.com/mikefarah/yq/releases/download/v4.45.1/
     chmod +x /usr/bin/yq
 
 # Add non-root user
-RUN useradd pgpartium && adduser pgpartium sudo
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-USER pgpartium
+# RUN useradd pgpartium && adduser pgpartium sudo
+# RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+# Switch to non-root user.
+USER 5000
 
 CMD ["/bin/bash"]
