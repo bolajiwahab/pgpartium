@@ -59,8 +59,8 @@ echo "executing pgpartium"
 
 # validate schema
 echo "validating schema"
-cat ./"$CONFIG"
-yq -o=json ./"$CONFIG" | jsonschema schema.json
+cat "$CONFIG"
+yq -o=json '.' "$CONFIG" | jsonschema schema.json
 
 # sudo partium
 
