@@ -1,0 +1,103 @@
+#!/bin/bash
+
+usage()
+{
+cat <<-EOF
+    ${0##*/}
+    
+    Generates partitions for partitioned tables.
+
+    OPTIONS:
+    -c  the config file in yaml (Required)
+    -h  show this help message.
+
+    SAMPLE USAGE:
+        ${0##*/} -c config.yaml
+EOF
+}
+
+while getopts "c:h" OPTION
+do
+    case $OPTION in
+        c)
+            CONFIG="$OPTARG"
+            ;;
+        h | *)
+            usage
+            exit 0
+            ;;
+    esac
+done
+
+set -eu -o pipefail
+
+CONFIG=${CONFIG:-}
+
+# Ensure config is provided
+if [[ -z "$CONFIG" ]]; then
+  usage
+  exit 1
+fi
+
+# Setup infrastructure
+ls sql/*.sql | sort | xargs -I {} psql --quiet --username=postgres --dbname=postgres -f "{}"
+
+# Validate schema
+yq -o=json '.' "$CONFIG" | jsonschema schema.json
+
+# GLOBAL_PAST=$(yq '.generates[].past // ""' "$CONFIG")
+export GLOBAL_PAST=$(yq '.generates[].past // ""' "$CONFIG")
+# echo "Global Past: $GLOBAL_PAST"
+# tables=$(yq '.generates[].tables[]' "$CONFIG")
+# echo "Global Past: $GLOBAL_PAST"
+# echo "Tables: $tables"
+
+# readarray tables < <(yq e -o=j -I=0 '.generates[].tables[]' "$CONFIG" )
+
+# for table in "${tables[@]}"; do
+#     # identity mapping is a yaml snippet representing a single entry
+#     table_name=$(echo "$table" | yq e '.table_name' -)
+#     echo "table_name: $table_name"
+# done
+
+# while IFS=$'\t' read -r schema_name table_name  _; do
+#   echo "Schema:  $schema_name"
+#   echo "Table: $table_name"
+# done < <(yq '.generates[].tables[] | [.schema_name, .table_name, .partition] | @tsv' "$CONFIG")
+
+# Extract table-specific partition past values
+yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
+    # SCHEMA_NAME=$(echo "$table" | yq '.schema_name')
+    # TABLE_NAME=$(echo "$table" | yq '.table_name')
+    SCHEMA_NAME=$(echo "$table" | yq '.schema_name')
+    TABLE_NAME=$(echo "$table" | yq '.table_name')
+    PARTITION=$(echo "$table" | yq '.partition.suffix')
+
+    # Extract table-specific partition past value
+    # TABLE_PAST=$(echo "$table" | yq '.partition.past')
+    # yq '.a // .b' sample.yml
+    TABLE_PAST=$(echo "$table" | yq '.partition.past // strenv(GLOBAL_PAST)')
+
+    # Use table-level past if set, otherwise fallback to global past (if set)
+    # if [[ -n "$TABLE_PAST" ]]; then
+    #     PAST=$TABLE_PAST
+    # else
+    #     PAST=$GLOBAL_PAST
+    # fi
+
+    echo "Table: $SCHEMA_NAME.$TABLE_NAME"
+    echo "  Past: $TABLE_PAST"
+    echo "  Partition: $PARTITION"
+
+    psql --username=postgres \
+         --dbname=postgres \
+         --tuples-only \
+         --no-align \
+         --quiet \
+         --output=enrichment1.sql \
+         --command="select * from pgpartium.generate_partitions('public', 'enrichment', '1 mon', 0, 1, 'public__', 'YYYY_MM', 'partitions', 'pg', '{}')" \
+    | awk 'NF'
+
+done
+
+# sudo psql -U postgres -d postgres -c "SELECT * from pgpartium.table_exists ('public', 'table')"

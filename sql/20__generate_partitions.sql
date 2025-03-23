@@ -7,15 +7,16 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
   , p_prefix text
   , p_suffix_format text
   , p_partition_schema text = 'public'
-  , p_partition_tablespace text = NULL
-  , p_storage_parameters jsonb = NULL
-  , p_template_table_schema text = NULL
-  , p_template_table_name text = NULL
+  , p_partition_tablespace text = 'pg_default'
+  , p_storage_parameters jsonb = '{}'
+  , p_template_table_schema text = ''
+  , p_template_table_name text = ''
   , p_timezone text = 'UTC'
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
-SET search_path = ''
+RETURNS NULL ON NULL INPUT
+SET search_path TO ''
 AS $BODY$
 DECLARE
     v_partitions               record;
@@ -43,7 +44,7 @@ BEGIN
         USING ERRCODE = 'undefined_table';
     END IF;
 
-    IF (num_nulls(p_template_table_schema, p_template_table_name) != 2) AND NOT v_template_exists THEN
+    IF (p_template_table_schema > '' OR p_template_table_name > '') AND NOT v_template_exists THEN
         RAISE 'template table "%"."%" does not exist', p_template_table_schema, p_template_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
@@ -157,7 +158,7 @@ BEGIN
               FROM generate_series((date_trunc(substring(p_interval FROM '\d+\s*(\w+)'), now()) - (p_interval::interval * p_past)), (now() + (p_interval::interval * p_future)), p_interval::interval) AS "date"
         )
         , daterange AS (
-            -- generate partition bounds
+            -- Generate partition bounds
             SELECT to_char("date", p_suffix_format) AS partition_suffix
                  , "date" AS exclusive_start_time
                  , ("date" + p_interval::interval) AS exclusive_end_time
@@ -201,9 +202,18 @@ BEGIN
                         || E'\n '
                         || index_definition
                         , coalesce(index_predicate, '')
-                        , E'\nTABLESPACE ' || p_partition_tablespace || E'\n ' || coalesce(index_predicate, '')
+                        , CASE
+                            WHEN p_partition_tablespace != 'pg_default'
+                              THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
+                            ELSE ''
+                          END
+                          || E'\n ' || coalesce(index_predicate, '')
                     )
-                    || CASE WHEN index_predicate IS NULL THEN E'\nTABLESPACE ' || p_partition_tablespace ELSE '' END
+                    || CASE
+                         WHEN index_predicate IS NULL AND p_partition_tablespace != 'pg_default'
+                           THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
+                           ELSE ''
+                       END
                     || E';\n'
                     , E'\n'
                    ) INTO v_indexes
@@ -233,11 +243,11 @@ BEGIN
               INTO v_storage_clause
               FROM jsonb_each_text(p_storage_parameters);
 
-            -- Table definition
             IF v_ddl != '' THEN
                 v_ddl := v_ddl || E'\n';
             END IF;
 
+            -- Partition definition
             v_ddl := v_ddl || format(
 /* This alignment is needed to have the right indentation in the generated migration scripts */
 $SQL$CREATE TABLE %1$I.%2$I
@@ -265,7 +275,11 @@ $SQL$,          p_partition_schema,
                     WHEN 'int8'        THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_end_time)::bigint * 1000)::text
                 END,
                 v_storage_clause,
-                coalesce(format(E'\nTABLESPACE %I', p_partition_tablespace), '')
+                CASE
+                  WHEN p_partition_tablespace != 'pg_default'
+                    THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
+                    ELSE ''
+                END
             );
 
             IF v_indexes IS NOT NULL THEN

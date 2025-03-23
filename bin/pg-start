@@ -5,29 +5,23 @@ usage()
 cat <<-EOF
     ${0##*/}
     
-    Generates partitions for a partitioned table.
-
-    Takes 2 parameters, all of which are required.
+    Creates a postgres cluster for a postgres version and start it.
 
     OPTIONS:
-    -v  the postgres version to use
-    -c  the config file in yaml
+    -v  the postgres version to use (Required)
     -h  show this help message.
 
     SAMPLE USAGE:
-        ${0##*/} -v 12 -c config.yaml
+        ${0##*/} -v 17
 EOF
 }
 
-while getopts "v:c:h" OPTION
+while getopts "v:h" OPTION
 do
     case $OPTION in
         v)
             PGVERSION="$OPTARG"
             ;;
-        # c)
-        #     CONFIG="$OPTARG"
-        #     ;;
         h | *)
             usage
             exit 0
@@ -38,9 +32,8 @@ done
 set -eu -o pipefail
 
 PGVERSION=${PGVERSION:-}
-# CONFIG=${CONFIG:-}
 
-# Check if the required arguments are provided
+# Ensure version is provided
 if [[ -z "$PGVERSION" ]]; then
   usage
   exit 1
@@ -49,6 +42,6 @@ fi
 # Append .0 if PGVERSION is a single-digit version e.g 9
 [[ $PGVERSION =~ ^[0-9]$ ]] && PGVERSION+=.0
 
-sudo apt.postgresql.org.sh -i -v "$PGVERSION"
+apt.postgresql.org.sh -i -v "$PGVERSION"
 
-sudo pg_createcluster --start "$PGVERSION" pgpartium -- -A trust
+pg_createcluster --start "$PGVERSION" pgpartium -- -A trust
