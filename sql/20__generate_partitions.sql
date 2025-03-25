@@ -1,11 +1,12 @@
 CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
     p_table_schema text
   , p_table_name text
-  , p_interval text
-  , p_past integer
-  , p_future integer
-  , p_prefix text
-  , p_suffix_format text
+  , p_interval text = '0'
+  , p_past integer = 0
+  , p_future integer = 0
+  , p_prefix text = ''
+  , p_suffix_format text = ''
+  , p_create_default boolean = false
   , p_partition_schema text = 'public'
   , p_partition_tablespace text = 'pg_default'
   , p_storage_parameters jsonb = '{}'
@@ -29,6 +30,7 @@ DECLARE
     v_constraints              text;
     v_triggers                 text;
     v_storage_clause           text;
+    v_default_partition_name text;
 
 BEGIN
 
@@ -159,7 +161,7 @@ BEGIN
         )
         , daterange AS (
             -- Generate partition bounds
-            SELECT to_char("date", p_suffix_format) AS partition_suffix
+            SELECT coalesce(to_char("date", p_suffix_format), '') AS partition_suffix
                  , "date" AS exclusive_start_time
                  , ("date" + p_interval::interval) AS exclusive_end_time
               FROM dateset
@@ -204,14 +206,14 @@ BEGIN
                         , coalesce(index_predicate, '')
                         , CASE
                             WHEN p_partition_tablespace != 'pg_default'
-                              THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
+                              THEN format(E'\nTABLESPACE %1$I', p_partition_tablespace)
                             ELSE ''
                           END
                           || E'\n ' || coalesce(index_predicate, '')
                     )
                     || CASE
                          WHEN index_predicate IS NULL AND p_partition_tablespace != 'pg_default'
-                           THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
+                           THEN format(E'\nTABLESPACE %1$I', p_partition_tablespace)
                            ELSE ''
                        END
                     || E';\n'
@@ -230,7 +232,7 @@ BEGIN
                     || trigger_event
                     || E'\n    ON '
                     || format('%1$I.%2$I', p_partition_schema, v_partitions.partition_name)
-                    || ' '
+                    || E'\n   '
                     || trigger_body
                     || E';\n'
                     , E'\n'
@@ -239,7 +241,7 @@ BEGIN
               FROM partition_triggers;
 
             -- Get storage parameters
-            SELECT coalesce(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
+            SELECT coalesce(E'\nWITH (' || string_agg(format('%1$I = %2$L', key, value), ', ') || ')', '')
               INTO v_storage_clause
               FROM jsonb_each_text(p_storage_parameters);
 
@@ -251,31 +253,32 @@ BEGIN
             v_ddl := v_ddl || format(
 /* This alignment is needed to have the right indentation in the generated migration scripts */
 $SQL$CREATE TABLE %1$I.%2$I
-    PARTITION OF %3$I.%4$I%5$s FOR VALUES FROM (%6$L) TO (%7$L)%8$s%9$s;
-$SQL$,          p_partition_schema,
-                v_partitions.partition_name,
-                p_table_schema,
-                p_table_name,
-                CASE
-                    WHEN v_constraints IS NULL THEN E'\n   '
+    PARTITION OF %3$I.%4$I%5$s
+    FOR VALUES FROM (%6$L) TO (%7$L)%8$s%9$s;
+$SQL$,          p_partition_schema                                                                                           -- <1>
+              , v_partitions.partition_name                                                                                  -- <2>
+              , p_table_schema                                                                                               -- <3>
+              , p_table_name                                                                                                 -- <4>
+              , CASE                                                                                                         -- <5>
+                    WHEN v_constraints IS NULL THEN E''
                     ELSE  E' (\n' || v_constraints || E'\n    )'
-                END,
-                CASE v_partitioning_details.keys_data_types
+                END
+              , CASE v_partitioning_details.keys_data_types                                                                  -- <6>
                     WHEN 'timestamptz' THEN v_partitions.exclusive_start_time::text
                     WHEN 'timestamp'   THEN v_partitions.exclusive_start_time::text
                     WHEN 'date'        THEN v_partitions.exclusive_start_time::date::text
                     WHEN 'int4'        THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_start_time)::integer)::text
                     WHEN 'int8'        THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_start_time)::bigint * 1000)::text
-                END,
-                CASE v_partitioning_details.keys_data_types
+                END
+              , CASE v_partitioning_details.keys_data_types                                                                  -- <7>
                     WHEN 'timestamptz' THEN v_partitions.exclusive_end_time::text
                     WHEN 'timestamp'   THEN v_partitions.exclusive_end_time::text
                     WHEN 'date'        THEN v_partitions.exclusive_end_time::date::text
                     WHEN 'int4'        THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_end_time)::integer)::text
                     WHEN 'int8'        THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_end_time)::bigint * 1000)::text
-                END,
-                v_storage_clause,
-                CASE
+                END
+              , v_storage_clause                                                                                             -- <8>
+              , CASE                                                                                                         -- <9>
                   WHEN p_partition_tablespace != 'pg_default'
                     THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
                     ELSE ''
@@ -293,6 +296,117 @@ $SQL$,          p_partition_schema,
         END IF;
 
     END LOOP;
+
+   -- Create default partition: START
+    IF p_create_default
+    AND NOT EXISTS (
+        SELECT pgpartium.get_default_partition(p_table_schema, p_table_name)
+    ) THEN
+        SELECT p_table_name || '__default'
+          INTO v_default_partition_name;
+        -- Get constraint definition
+        SELECT string_agg(
+            '        CONSTRAINT '
+            || format('%1$I', replace(constraint_name, p_template_table_name, v_default_partition_name))
+            || ' '
+            || constraint_definition,
+            E',\n'
+            ORDER BY CASE constraint_type
+                WHEN 'p' THEN 0
+                WHEN 'u' THEN 1
+                ELSE 2
+            END
+        ) INTO v_constraints
+        FROM partition_constraints;
+
+        -- Get index create statement
+        SELECT string_agg(
+                replace(
+                    'CREATE '
+                    || CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END
+                    || format('%1$I', replace(index_name, p_template_table_name, v_default_partition_name))
+                    || E'\n    ON '
+                    || format('%1$I.%2$I', p_partition_schema, v_default_partition_name)
+                    || E'\n '
+                    || index_definition
+                    , coalesce(index_predicate, '')
+                    , CASE
+                        WHEN p_partition_tablespace != 'pg_default'
+                            THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
+                        ELSE ''
+                        END
+                        || E'\n ' || coalesce(index_predicate, '')
+                )
+                || CASE
+                        WHEN index_predicate IS NULL AND p_partition_tablespace != 'pg_default'
+                        THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
+                        ELSE ''
+                    END
+                || E';\n'
+                , E'\n'
+                ) INTO v_indexes
+            FROM partition_indexes;
+
+        -- Get create trigger statement
+        SELECT string_agg(
+                'CREATE '
+                || CASE WHEN is_constraint_trigger THEN 'CONSTRAINT TRIGGER ' ELSE 'TRIGGER ' END
+                || format('%1$I', replace(trigger_name, p_template_table_name, v_default_partition_name))
+                || ' '
+                || event_timing
+                || ' '
+                || trigger_event
+                || E'\n    ON '
+                || format('%1$I.%2$I', p_partition_schema, v_default_partition_name)
+                || E'\n   '
+                || trigger_body
+                || E';\n'
+                , E'\n'
+                ORDER BY trigger_name
+                ) INTO v_triggers
+            FROM partition_triggers;
+
+        -- Get storage parameters
+        SELECT coalesce(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
+            INTO v_storage_clause
+            FROM jsonb_each_text(p_storage_parameters);
+
+        IF v_ddl != '' THEN
+            v_ddl := v_ddl || E'\n';
+        END IF;
+
+        v_ddl := v_ddl || format(
+
+/* This alignment is needed to have the right indentation in the generated migration scripts */
+$SQL$CREATE TABLE %1$I.%2$I
+    PARTITION OF %3$I.%4$I%5$s
+    DEFAULT%6$s%7$s;
+$SQL$,      p_partition_schema                                              -- <1>
+          , v_default_partition_name                                        -- <2>
+          , p_table_schema                                                  -- <3>
+          , p_table_name                                                    -- <4>
+          , CASE                                                            -- <5>
+                WHEN v_constraints IS NULL THEN E''
+                ELSE  E' (\n' || v_constraints || E'\n    )'
+            END,
+            v_storage_clause                                                -- <6>
+          , CASE                                                            -- <7>
+                WHEN p_partition_tablespace != 'pg_default'
+                THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
+                ELSE ''
+            END
+        );
+    END IF;
+
+    IF v_indexes IS NOT NULL THEN
+        v_ddl := v_ddl || E'\n' || v_indexes;
+    END IF;
+
+    IF v_triggers IS NOT NULL THEN
+        v_ddl := v_ddl || E'\n' || v_triggers;
+    END IF;
+
+    -- Create default partition: END
 
     IF v_ddl != '' THEN
         RETURN NEXT v_ddl;

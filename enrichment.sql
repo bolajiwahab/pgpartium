@@ -1,23 +1,20 @@
-CREATE TABLE partitions.enrichment__2025_03
-    PARTITION OF public.enrichment (
-        CONSTRAINT chk CHECK (1 = 1)
-    ) FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00')
-WITH (fillfactor = '70', autovacuum_enabled = 'true')
-TABLESPACE pg_default;
+CREATE TABLE partitions.enrichment
+    PARTITION OF public.enrichment
+    FOR VALUES FROM ('2023-01-01 00:00:00+00') TO ('2024-01-01 00:00:00+00');
 
-CREATE INDEX enrichment__2025_03_created_expires_at_idx
-    ON partitions.enrichment__2025_03
- USING btree (created, expires_at)
-TABLESPACE pg_default;
+CREATE TABLE partitions.enrichment
+    PARTITION OF public.enrichment
+    FOR VALUES FROM ('2024-01-01 00:00:00+00') TO ('2025-01-01 00:00:00+00');
 
-CREATE TABLE partitions.enrichment__2025_04
-    PARTITION OF public.enrichment (
-        CONSTRAINT chk CHECK (1 = 1)
-    ) FOR VALUES FROM ('2025-04-01 00:00:00+00') TO ('2025-05-01 00:00:00+00')
-WITH (fillfactor = '70', autovacuum_enabled = 'true')
-TABLESPACE pg_default;
+CREATE TABLE partitions.enrichment
+    PARTITION OF public.enrichment
+    FOR VALUES FROM ('2025-01-01 00:00:00+00') TO ('2026-01-01 00:00:00+00');
 
-CREATE INDEX enrichment__2025_04_created_expires_at_idx
-    ON partitions.enrichment__2025_04
- USING btree (created, expires_at)
-TABLESPACE pg_default;
+CREATE TABLE partitions.enrichment
+    PARTITION OF public.enrichment
+    FOR VALUES FROM ('2026-01-01 00:00:00+00') TO ('2027-01-01 00:00:00+00');
+
+CREATE TABLE partitions.enrichment__default
+    PARTITION OF public.enrichment
+    DEFAULT;
+

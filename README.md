@@ -16,3 +16,5 @@ select substring('CREATE INDEX tbl_con_ledger_id_idx2 ON partitions.enrichment__
 needs to adjust queries to start from pg_namespace
 
 -- yq -o=json '.' config.yaml | jsonschema schema.json
+
+we need to prevent creating file on failure

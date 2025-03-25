@@ -45,38 +45,47 @@ ls sql/*.sql | sort | xargs -I {} psql --quiet --username=postgres --dbname=post
 # Validate schema
 yq -o=json '.' "$CONFIG" | jsonschema schema.json
 
-# GLOBAL_PAST=$(yq '.generates[].past // ""' "$CONFIG")
-export GLOBAL_PAST=$(yq '.generates[].past // ""' "$CONFIG")
-# echo "Global Past: $GLOBAL_PAST"
-# tables=$(yq '.generates[].tables[]' "$CONFIG")
-# echo "Global Past: $GLOBAL_PAST"
-# echo "Tables: $tables"
+# Set defaults
+export DEFAULT_TABLESPACE="pg_default"
+export DEFAULT_SCHEMA="public"
+export DEFAULT_PAST=0
+export DEFAULT_FUTURE=0
+export DEFAULT_INTERVAL="0"
+export DEFAULT_PREFIX=""
+export DEFAULT_SUFFIX=""
+export DEFAULT_RETENTION_INTERVAL="0"
+export DEFAULT_CREATE_DEFAULT=false
 
-# readarray tables < <(yq e -o=j -I=0 '.generates[].tables[]' "$CONFIG" )
+# Extract global configs
+export GLOBAL_TABLESPACE=$(yq '.generates[].tablespace // strenv(DEFAULT_TABLESPACE)' "$CONFIG")
+export GLOBAL_SCHEMA=$(yq '.generates[].schema // strenv(DEFAULT_SCHEMA)' "$CONFIG")
+export GLOBAL_PAST=$(yq '.generates[].past // strenv(DEFAULT_PAST)' "$CONFIG")
+export GLOBAL_FUTURE=$(yq '.generates[].future // strenv(DEFAULT_FUTURE)' "$CONFIG")
+export GLOBAL_INTERVAL=$(yq '.generates[].interval // strenv(DEFAULT_INTERVAL)' "$CONFIG")
+export GLOBAL_PREFIX=$(yq '.generates[].prefix // strenv(DEFAULT_PREFIX)' "$CONFIG")
+export GLOBAL_SUFFIX=$(yq '.generates[].suffix // strenv(DEFAULT_SUFFIX)' "$CONFIG")
+export GLOBAL_RETENTION_INTERVAL=$(yq '.generates[].retention_interval // strenv(DEFAULT_RETENTION_INTERVAL)' "$CONFIG")
+export GLOBAL_CREATE_DEFAULT=$(yq '.generates[].create_default // strenv(DEFAULT_CREATE_DEFAULT)' "$CONFIG")
 
-# for table in "${tables[@]}"; do
-#     # identity mapping is a yaml snippet representing a single entry
-#     table_name=$(echo "$table" | yq e '.table_name' -)
-#     echo "table_name: $table_name"
-# done
-
-# while IFS=$'\t' read -r schema_name table_name  _; do
-#   echo "Schema:  $schema_name"
-#   echo "Table: $table_name"
-# done < <(yq '.generates[].tables[] | [.schema_name, .table_name, .partition] | @tsv' "$CONFIG")
-
-# Extract table-specific partition past values
+# Process  partitioned tableeach
 yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
-    # SCHEMA_NAME=$(echo "$table" | yq '.schema_name')
-    # TABLE_NAME=$(echo "$table" | yq '.table_name')
-    SCHEMA_NAME=$(echo "$table" | yq '.schema_name')
+    TABLE_SCHEMA=$(echo "$table" | yq '.table_schema')
     TABLE_NAME=$(echo "$table" | yq '.table_name')
-    PARTITION=$(echo "$table" | yq '.partition.suffix')
+    PARTITION_SCHEMA=$(echo "$table" | yq '.partition.schema // strenv(GLOBAL_SCHEMA) // strenv(TABLE_SCHEMA)')
+    PAST_PARTITIONS=$(echo "$table" | yq '.partition.past // strenv(GLOBAL_PAST)')
+    FUTURE_PARTITIONS=$(echo "$table" | yq '.partition.future // strenv(GLOBAL_FUTURE)')
+    PARTITION_INTERVAL=$(echo "$table" | yq '.partition.interval // strenv(GLOBAL_INTERVAL)')
+    PARTITION_PREFIX=$(echo "$table" | yq '.partition.prefix // strenv(GLOBAL_PREFIX)')
+    PARTITION_SUFFIX=$(echo "$table" | yq '.partition.suffix // strenv(GLOBAL_SUFFIX)')
+    RETENTION_INTERVAL=$(echo "$table" | yq '.partition.retention_interval // strenv(GLOBAL_RETENTION_INTERVAL)')
+    CREATE_DEFAULT_PARTITION=$(echo "$table" | yq '.partition.create_default // strenv(GLOBAL_CREATE_DEFAULT)')
+    PARTITION_TABLESPACE=$(echo "$table" | yq '.partition.tablespace // strenv(GLOBAL_TABLESPACE)')
+    # PARTITION=$(echo "$table" | yq '.partition.suffix')
 
     # Extract table-specific partition past value
     # TABLE_PAST=$(echo "$table" | yq '.partition.past')
     # yq '.a // .b' sample.yml
-    TABLE_PAST=$(echo "$table" | yq '.partition.past // strenv(GLOBAL_PAST)')
+    # TABLE_PAST=$(echo "$table" | yq '.partition.past // strenv(GLOBAL_PAST)')
 
     # Use table-level past if set, otherwise fallback to global past (if set)
     # if [[ -n "$TABLE_PAST" ]]; then
@@ -85,18 +94,25 @@ yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
     #     PAST=$GLOBAL_PAST
     # fi
 
-    echo "Table: $SCHEMA_NAME.$TABLE_NAME"
-    echo "  Past: $TABLE_PAST"
-    echo "  Partition: $PARTITION"
+    echo "Table: $TABLE_SCHEMA.$TABLE_NAME"
+    echo "Suffix: $PARTITION_SUFFIX"
+    echo "GLlobal suffix: $DEFAULT_SUFFIX"
+    echo "Global past: $CREATE_DEFAULT_PARTITION"
+    # echo "  Partition: $PARTITION"
 
     psql --username=postgres \
          --dbname=postgres \
          --tuples-only \
          --no-align \
          --quiet \
-         --output=enrichment1.sql \
-         --command="select * from pgpartium.generate_partitions('public', 'enrichment', '1 mon', 0, 1, 'public__', 'YYYY_MM', 'partitions', 'pg', '{}')" \
-    | awk 'NF'
+         --output=${TABLE_NAME}.sql \
+         <<EOF
+SELECT *
+  FROM pgpartium.generate_partitions('$TABLE_SCHEMA', '$TABLE_NAME', '$PARTITION_INTERVAL', $PAST_PARTITIONS, $FUTURE_PARTITIONS, '$PARTITION_PREFIX', '$PARTITION_SUFFIX', $GLOBAL_CREATE_DEFAULT, '$PARTITION_SCHEMA', '$PARTITION_TABLESPACE', '{}')
+EOF
+#  --command="SELECT * FROM pgpartium.generate_partitions('public', 'enrichment', '1 mon', 0, 1, 'public__', 'YYYY_MM', 'partitions', 'pg', '{}')"
+    
+    sed -i -z 's/\n$//' enrichment1.sql
 
 done
 

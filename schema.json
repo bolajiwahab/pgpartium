@@ -19,6 +19,35 @@
                         "type": "string",
                         "minLength": 1
                     },
+                    "schema": {
+                        "description": "The schema for the partitions.",
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "tablespace": {
+                        "description": "The tablespace for the partitions.",
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "storage_parameters": {
+                        "description": "The storage parameters for the partitions.",
+                        "type": "object",
+                        "properties": {
+                            "fillfactor": {
+                                "description": "The fillfactor for the partitions.",
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 100
+                            },
+                            "autovacuum_enabled": {
+                                "description": "Whether to enable autovacuum for the partitions.",
+                                "type": "boolean",
+                                "default": false
+                            }
+                        },
+                        "additionalProperties": false,
+                        "minProperties": 1
+                    },
                     "prefix": {
                         "description": "The prefix for partition names.",
                         "type": "string",
@@ -61,7 +90,7 @@
                             "description": "The table to generate partitions for.",
                             "type": "object",
                             "properties": {
-                                "schema_name": {
+                                "table_schema": {
                                     "description": "The schema of the table.",
                                     "type": "string",
                                     "minLength": 1
@@ -75,8 +104,8 @@
                                     "type": "object",
                                     "description": "The partition configuration for the table.",
                                     "properties": {
-                                        "schema_name": {
-                                            "description": "The schema of the partitions.",
+                                        "schema": {
+                                            "description": "The schema for the partitions.",
                                             "type": "string",
                                             "minLength": 1
                                         },
@@ -141,7 +170,7 @@
                                         }
                                     },
                                     "required": [
-                                        "schema_name"
+                                        "schema"
                                     ]
                                 },
                                 "template": {
@@ -151,7 +180,7 @@
                                         "string"
                                     ],
                                     "properties": {
-                                        "schema_name": {
+                                        "table_schema": {
                                             "description": "Schema of the template table.",
                                             "type": "string",
                                             "minLength": 1
@@ -163,14 +192,14 @@
                                         }
                                     },
                                     "required": [
-                                        "schema_name",
+                                        "table_schema",
                                         "table_name"
                                     ],
                                     "additionalProperties": false
                                 }
                             },
                             "required": [
-                                "schema_name",
+                                "table_schema",
                                 "table_name",
                                 "partition"
                             ],
