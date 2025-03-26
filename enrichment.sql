@@ -14,7 +14,3 @@ CREATE TABLE partitions.enrichment
     PARTITION OF public.enrichment
     FOR VALUES FROM ('2026-01-01 00:00:00+00') TO ('2027-01-01 00:00:00+00');
 
-CREATE TABLE partitions.enrichment__default
-    PARTITION OF public.enrichment
-    DEFAULT;
-
