@@ -10,7 +10,7 @@ generates:
     # partition tree after the retention_period then we don't create migration scripts for them
     future: 1 # how many partitions to create in the future, current plus number of future
     retention_interval: "2 years" # interval for which data/partition is dropped 
-    create_default: true # if you want to create a default partition or not (if not exists by default)
+    create_default: false # if you want to create a default partition or not (if not exists by default)
     tables:
       - table_schema: "public"
         table_name: "enrichment"
@@ -23,7 +23,7 @@ generates:
           past: 2
           future: 1
           retention_interval: "2 years" # interval for which data/partition is dropped
-          create_default: false
+          create_default: true
           prefix: "users_"
           #suffix: "__YYYY_MM_DD"
           interval: "1 year"
