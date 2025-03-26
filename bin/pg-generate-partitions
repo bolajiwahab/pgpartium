@@ -100,17 +100,20 @@ yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
          --tuples-only \
          --no-align \
          --quiet \
-         --output=/tmp/${TABLE_NAME}.sql \
-         <<EOF
-SELECT *
-  FROM pgpartium.generate_partitions('$TABLE_SCHEMA', '$TABLE_NAME', '$PARTITION_INTERVAL', $PAST_PARTITIONS, $FUTURE_PARTITIONS, '$PARTITION_PREFIX', '$PARTITION_SUFFIX', $CREATE_DEFAULT_PARTITION, '$PARTITION_SCHEMA', '$PARTITION_TABLESPACE', '{}')
-EOF
+         --command="SELECT * FROM pgpartium.generate_partitions('$TABLE_SCHEMA', '$TABLE_NAME', '$PARTITION_INTERVAL', $PAST_PARTITIONS, $FUTURE_PARTITIONS, '$PARTITION_PREFIX', '$PARTITION_SUFFIX', $CREATE_DEFAULT_PARTITION, '$PARTITION_SCHEMA', '$PARTITION_TABLESPACE', '{}')" \
+    | grep -v "^$" > /tmp/${TABLE_NAME}.sql
+#          <<EOF
+# SELECT *
+#   FROM pgpartium.generate_partitions('$TABLE_SCHEMA', '$TABLE_NAME', '$PARTITION_INTERVAL', $PAST_PARTITIONS, $FUTURE_PARTITIONS, '$PARTITION_PREFIX', '$PARTITION_SUFFIX', $CREATE_DEFAULT_PARTITION, '$PARTITION_SCHEMA', '$PARTITION_TABLESPACE', '{}')
+# EOF
 
 # Move file to directory if it is not empty
 if [[ -s "/tmp/${TABLE_NAME}.sql" ]]; then
     mv /tmp/${TABLE_NAME}.sql ${TABLE_NAME}.sql
 fi
 
+#          --output=/tmp/${TABLE_NAME}.sql \
+# | grep -v "^$" > query.out
 #          --command="SELECT * FROM pgpartium.generate_partitions(null, '$TABLE_NAME', '$PARTITION_INTERVAL', $PAST_PARTITIONS, $FUTURE_PARTITIONS, '$PARTITION_PREFIX', '$PARTITION_SUFFIX', $CREATE_DEFAULT_PARTITION, '$PARTITION_SCHEMA', '$PARTITION_TABLESPACE', '{}')"
 
 #  --command="SELECT * FROM pgpartium.generate_partitions('public', 'enrichment', '1 mon', 0, 1, 'public__', 'YYYY_MM', 'partitions', 'pg', '{}')"
