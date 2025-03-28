@@ -39,3 +39,6 @@ jobs:
 
       - name: Check for uncommitted changes
         run: git status
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
