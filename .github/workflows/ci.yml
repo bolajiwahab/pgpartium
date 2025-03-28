@@ -32,7 +32,7 @@ jobs:
         run: pg-generate-partitions -c config.yml
 
       - name: list files
-        run: ls
+        run: cat enrichment.sql
 
       - name: Install Git
         run: apt-get update && apt-get install -y git
