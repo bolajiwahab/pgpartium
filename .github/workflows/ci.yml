@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        postgresql:
+          - 16
+          - 17
+
+    name: 🐘 PostgreSQL ${{ matrix.postgresql }}
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/bolajiwahab/pgpartium:0.0.5
+      options: --user root
+    steps:
+      - name: Start PostgreSQL ${{ matrix.postgresql }}
+        run: pg-start -v ${{ matrix.postgresql }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Generate partitions using ${{ matrix.postgresql }}
+        run: generate-partitions -c config.yml
