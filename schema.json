@@ -48,14 +48,10 @@
                         "additionalProperties": false,
                         "minProperties": 1
                     },
-                    "prefix": {
-                        "description": "The prefix for partition names.",
+                    "name_template": {
+                        "description": "The name template for the partitions.",
                         "type": "string",
-                        "minLength": 1
-                    },
-                    "suffix": {
-                        "description": "The suffix for partition names.",
-                        "type": "string",
+                        "examples": ["{schema}__{table}__YYYY_MM_DD", "{schema}__{table}__YYYY_MM"],
                         "minLength": 1
                     },
                     "interval": {
@@ -133,14 +129,10 @@
                                             "additionalProperties": false,
                                             "minProperties": 1
                                         },
-                                        "prefix": {
-                                            "description": "The prefix for partition names.",
+                                        "name_template": {
+                                            "description": "The name template for the partitions.",
                                             "type": "string",
-                                            "minLength": 1
-                                        },
-                                        "suffix": {
-                                            "description": "The suffix for partition names.",
-                                            "type": "string",
+                                            "examples": ["{schema}__{table}__YYYY_MM_DD", "{schema}__{table}__YYYY_MM"],
                                             "minLength": 1
                                         },
                                         "interval": {
@@ -169,9 +161,7 @@
                                             "minLength": 1
                                         }
                                     },
-                                    "required": [
-                                        "schema"
-                                    ]
+                                    "additionalProperties": false
                                 },
                                 "template": {
                                     "description": "The template table to generate partitions from.",

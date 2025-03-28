@@ -47,38 +47,35 @@ yq -o=json '.' "$CONFIG" | jsonschema schema.json
 
 # Set defaults
 export DEFAULT_TABLESPACE="pg_default"
-export DEFAULT_SCHEMA="public"
 export DEFAULT_PAST=0
 export DEFAULT_FUTURE=0
-export DEFAULT_INTERVAL="0"
-export DEFAULT_PREFIX=""
-export DEFAULT_SUFFIX=""
 export DEFAULT_RETENTION_INTERVAL="0"
 export DEFAULT_CREATE_DEFAULT=false
 
 # Extract global configs
 export GLOBAL_TABLESPACE=$(yq '.generates[].tablespace // strenv(DEFAULT_TABLESPACE)' "$CONFIG")
-export GLOBAL_SCHEMA=$(yq '.generates[].schema // strenv(DEFAULT_SCHEMA)' "$CONFIG")
+export GLOBAL_SCHEMA=$(yq '.generates[].schema' "$CONFIG")
+export GLOBAL_PARTITION_NAME_TEMPLATE=$(yq '.generates[].name_template' "$CONFIG")
 export GLOBAL_PAST=$(yq '.generates[].past // strenv(DEFAULT_PAST)' "$CONFIG")
 export GLOBAL_FUTURE=$(yq '.generates[].future // strenv(DEFAULT_FUTURE)' "$CONFIG")
-export GLOBAL_INTERVAL=$(yq '.generates[].interval // strenv(DEFAULT_INTERVAL)' "$CONFIG")
-export GLOBAL_PREFIX=$(yq '.generates[].prefix // strenv(DEFAULT_PREFIX)' "$CONFIG")
-export GLOBAL_SUFFIX=$(yq '.generates[].suffix // strenv(DEFAULT_SUFFIX)' "$CONFIG")
+export GLOBAL_INTERVAL=$(yq '.generates[].interval' "$CONFIG")
 export GLOBAL_RETENTION_INTERVAL=$(yq '.generates[].retention_interval // strenv(DEFAULT_RETENTION_INTERVAL)' "$CONFIG")
 export GLOBAL_CREATE_DEFAULT=$(yq '.generates[].create_default // strenv(DEFAULT_CREATE_DEFAULT)' "$CONFIG")
-
-# echo "GLOBAL_CREATE_DEFAULT: $GLOBAL_CREATE_DEFAULT"
 
 # Process each partitioned table
 yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
     TABLE_SCHEMA=$(echo "$table" | yq '.table_schema')
     TABLE_NAME=$(echo "$table" | yq '.table_name')
-    PARTITION_SCHEMA=$(echo "$table" | yq '.partition.schema // strenv(GLOBAL_SCHEMA) // strenv(TABLE_SCHEMA)')
+    PARTITION_SCHEMA=$(echo "$table" | yq '.partition.schema // strenv(GLOBAL_SCHEMA)')
+    # If no schema is provided either in the partition config or in the global config, default to table schema
+    if [[ "$PARTITION_SCHEMA" == "null" ]]; then
+        PARTITION_SCHEMA=$TABLE_SCHEMA
+    fi
+    PARTITION_NAME_TEMPLATE=$(echo "$table" | yq '.partition.name_template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)')
+    PARTITION_TABLESPACE=$(echo "$table" | yq '.partition.tablespace // strenv(GLOBAL_TABLESPACE)')
+    PARTITION_INTERVAL=$(echo "$table" | yq '.partition.interval // strenv(GLOBAL_INTERVAL)')
     PAST_PARTITIONS=$(echo "$table" | yq '.partition.past // strenv(GLOBAL_PAST)')
     FUTURE_PARTITIONS=$(echo "$table" | yq '.partition.future // strenv(GLOBAL_FUTURE)')
-    PARTITION_INTERVAL=$(echo "$table" | yq '.partition.interval // strenv(GLOBAL_INTERVAL)')
-    PARTITION_PREFIX=$(echo "$table" | yq '.partition.prefix // strenv(GLOBAL_PREFIX)')
-    PARTITION_SUFFIX=$(echo "$table" | yq '.partition.suffix // strenv(GLOBAL_SUFFIX)')
     RETENTION_INTERVAL=$(echo "$table" | yq '.partition.retention_interval // strenv(GLOBAL_RETENTION_INTERVAL)')
     # Because yq default value operator is used to provide alternative (or default) values
     # when a particular expression is either null or false, we cannot use it here since create_default is boolean
@@ -87,11 +84,9 @@ yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
     if [[ "$CREATE_DEFAULT_PARTITION" == "null" ]]; then
         CREATE_DEFAULT_PARTITION=$GLOBAL_CREATE_DEFAULT
     fi
-    PARTITION_TABLESPACE=$(echo "$table" | yq '.partition.tablespace // strenv(GLOBAL_TABLESPACE)')
 
     echo "Table: $TABLE_SCHEMA.$TABLE_NAME"
-    echo "Suffix: $PARTITION_SUFFIX"
-    echo "GLlobal suffix: $DEFAULT_SUFFIX"
+    echo "GLlobal suffix: $PARTITION_SCHEMA"
     echo "Create default: $CREATE_DEFAULT_PARTITION"
     # echo "  Partition: $PARTITION"
 
@@ -106,11 +101,10 @@ SELECT *
   FROM pgpartium.generate_partitions(
     '$TABLE_SCHEMA'
   , '$TABLE_NAME'
+  , '$PARTITION_NAME_TEMPLATE'
   , '$PARTITION_INTERVAL'
   , $PAST_PARTITIONS
   , $FUTURE_PARTITIONS
-  , '$PARTITION_PREFIX'
-  , '$PARTITION_SUFFIX'
   , $CREATE_DEFAULT_PARTITION
   , '$PARTITION_SCHEMA'
   , '$PARTITION_TABLESPACE'

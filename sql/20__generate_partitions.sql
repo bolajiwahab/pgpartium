@@ -1,11 +1,10 @@
 CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
     p_table_schema text
   , p_table_name text
-  , p_interval text = '0'
+  , p_partition_name_template text
+  , p_interval text
   , p_past integer = 0
   , p_future integer = 0
-  , p_prefix text = ''
-  , p_suffix_format text = ''
   , p_create_default boolean = false
   , p_partition_schema text = 'public'
   , p_partition_tablespace text = 'pg_default'
@@ -159,17 +158,10 @@ BEGIN
             SELECT "date"
               FROM generate_series((date_trunc(substring(p_interval FROM '\d+\s*(\w+)'), now()) - (p_interval::interval * p_past)), (now() + (p_interval::interval * p_future)), p_interval::interval) AS "date"
         )
-        , daterange AS (
-            -- Generate partition bounds
-            SELECT coalesce(to_char("date", p_suffix_format), '') AS partition_suffix
-                 , "date" AS exclusive_start_time
-                 , ("date" + p_interval::interval) AS exclusive_end_time
-              FROM dateset
-        )
-        SELECT p_table_name || partition_suffix AS partition_name
-             , exclusive_start_time
-             , exclusive_end_time
-          FROM daterange
+        SELECT replace(replace(to_char("date", p_partition_name_template), '{table}', p_table_name), '{schema}', p_table_schema) AS partition_name
+             , "date" AS exclusive_start_time
+             , ("date" + p_interval::interval) AS exclusive_end_time
+          FROM dateset
     LOOP
         IF NOT EXISTS (
             SELECT 1
