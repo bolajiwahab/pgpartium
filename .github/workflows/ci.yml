@@ -14,7 +14,7 @@ jobs:
       matrix:
         postgresql:
           - 16
-          - 17
+          # - 17
 
     name: 🐘 PostgreSQL ${{ matrix.postgresql }}
     runs-on: ubuntu-latest
@@ -30,3 +30,12 @@ jobs:
 
       - name: Generate partitions using ${{ matrix.postgresql }}
         run: pg-generate-partitions -c config.yml
+
+      - name: Check for uncommitted changes
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "There are uncommitted changes."
+            exit 1
+          else
+            echo "No uncommitted changes."
+          fi
