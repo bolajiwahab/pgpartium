@@ -95,6 +95,7 @@ yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
          --tuples-only \
          --no-align \
          --quiet \
+         -v "ON_ERROR_STOP=1" \
          --output=/tmp/${TABLE_NAME}.sql \
          <<EOF
 SELECT *
@@ -111,6 +112,8 @@ SELECT *
   , '{}'
 )
 EOF
+
+echo "Generated partitions for $TABLE_SCHEMA.$TABLE_NAME"
 
 # Move file to directory if it is not empty
 if [[ -s "/tmp/${TABLE_NAME}.sql" ]]; then

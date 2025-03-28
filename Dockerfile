@@ -18,7 +18,7 @@ COPY schema.json schema.json
 
 # Install dependencies
 RUN apt-get update \
-    && apt-get install -y wget python3-jsonschema=4.10.3-1 python3-psycopg2 ca-certificates gnupg2 \
+    && apt-get install -y wget python3-jsonschema=4.10.3-1 git ca-certificates gnupg2 \
     && apt-get clean \
     && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
 
