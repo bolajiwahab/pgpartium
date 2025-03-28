@@ -19,7 +19,7 @@ jobs:
     name: 🐘 PostgreSQL ${{ matrix.postgresql }}
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/bolajiwahab/pgpartium:0.0.5
+      image: ghcr.io/bolajiwahab/pgpartium:0.0.6
       options: --user root
     steps:
       - name: Start PostgreSQL ${{ matrix.postgresql }}
@@ -34,8 +34,8 @@ jobs:
       - name: list files
         run: cat enrichment.sql
 
-      - name: Install Git
-        run: apt-get update && apt-get install -y git
+      # - name: Install Git
+      #   run: apt-get update && apt-get install -y git
 
       - name: Check for uncommitted changes
         run: |
