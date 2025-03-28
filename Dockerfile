@@ -22,6 +22,9 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
 
+# Ensure Git can do stuff in the working directory.
+RUN git config --system --add safe.directory '*'
+
 ENV LC_ALL=C.UTF-8 LANG=C.UTF-8 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 RUN wget --no-verbose https://github.com/mikefarah/yq/releases/download/v4.45.1/yq_linux_amd64 --output-document=/usr/bin/yq && \
