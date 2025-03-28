@@ -31,6 +31,9 @@ jobs:
       - name: Generate partitions using ${{ matrix.postgresql }}
         run: pg-generate-partitions -c config.yml
 
+      - name: Install Git
+        run: apt-get update && apt-get install -y git
+
       - name: Check for uncommitted changes
         run: |
           if [[ -n "$(git status --porcelain)" ]]; then
