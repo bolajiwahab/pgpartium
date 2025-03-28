@@ -8,9 +8,9 @@ on:
     branches:
       - main
 
-permissions:
-  pull-requests: write
-  contents: read
+# permissions:
+#   pull-requests: write
+#   contents: read
 
 jobs:
   test:
