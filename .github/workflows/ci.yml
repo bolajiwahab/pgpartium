@@ -29,4 +29,4 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Generate partitions using ${{ matrix.postgresql }}
-        run: generate-partitions -c config.yml
+        run: pg-generate-partitions -c config.yml
