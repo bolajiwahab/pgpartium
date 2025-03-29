@@ -11,7 +11,8 @@ on:
 permissions:
   pull-requests: write
   packages: read
-  contents: read
+  # contents: read
+  contents: write
 
 jobs:
   test:
