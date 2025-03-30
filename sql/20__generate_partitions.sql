@@ -12,6 +12,7 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
   , p_template_table_schema text = ''
   , p_template_table_name text = ''
   , p_timezone text = 'UTC'
+  , p_skip_overlapping_partitions boolean = false
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
@@ -157,7 +158,7 @@ BEGIN
     SELECT INTO v_start_timestamp
                 COALESCE(
                     (
-                        SELECT upper_bound
+                        SELECT lower_bound
                           FROM pgpartium.get_latest_partition(p_table_schema, p_table_name)
                     )
                   , now()
@@ -166,7 +167,7 @@ BEGIN
     FOR v_partitions IN
         WITH dateset AS (
             SELECT "date"
-              FROM generate_series((date_trunc(substring(p_interval FROM '\d+\s*(\w+)'), v_start_timestamp) - (p_interval::interval * p_past)), (v_start_timestamp + (p_interval::interval * p_future)), p_interval::interval) AS "date"
+              FROM generate_series((date_trunc(substring(p_interval FROM '\d+\s*(\w+)'), v_start_timestamp) - (p_interval::interval * p_past)), (now() + (p_interval::interval * p_future)), p_interval::interval) AS "date"
         )
         SELECT replace(
                     replace(
@@ -181,6 +182,16 @@ BEGIN
              , ("date" + p_interval::interval) AS exclusive_end_time
           FROM dateset
     LOOP
+
+        IF p_skip_overlapping_partitions
+        AND EXISTS (
+            SELECT 1
+              FROM current_bounds
+             WHERE (lower_bound, upper_bound) OVERLAPS (v_partitions.exclusive_start_time, v_partitions.exclusive_end_time)
+        ) THEN
+            CONTINUE;
+        END IF;
+
         IF NOT EXISTS (
             SELECT 1
               FROM current_bounds
