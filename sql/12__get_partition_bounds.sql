@@ -1,7 +1,6 @@
 CREATE OR REPLACE FUNCTION pgpartium.get_partition_bounds (
     table_schema text
   , table_name text
-  , key_data_type anyelement
 )
 RETURNS TABLE (
     partition_schema text
@@ -13,7 +12,7 @@ LANGUAGE SQL
 AS $BODY$
     SELECT cn.nspname AS partition_schema
          , c.relname AS partition_name
-         , CASE key_data_type
+         , CASE keys_data_types
              WHEN 'timestamptz'
                THEN CAST((matches)[1] AS timestamptz)
              WHEN 'timestamp'
@@ -25,16 +24,16 @@ AS $BODY$
              WHEN 'int8'
                THEN to_timestamp(CAST((matches)[1] AS bigint) / 1000)
            END AS lower_bound
-         , CASE key_data_type
-             WHEN 'timestamp with time zone'
+         , CASE keys_data_types
+             WHEN 'timestamptz'
                THEN CAST((matches)[2] AS timestamptz)
-             WHEN 'timestamp without time zone'
+             WHEN 'timestamp'
                THEN CAST((matches)[2] AS timestamptz)
              WHEN 'date'
                THEN CAST((matches)[2] AS date)
-             WHEN 'integer'
+             WHEN 'int4'
                THEN to_timestamp(CAST((matches)[2] AS integer))
-             WHEN 'bigint'
+             WHEN 'int8'
                THEN to_timestamp(CAST((matches)[2] AS bigint) / 1000)
            END AS upper_bound
       FROM pg_catalog.pg_inherits AS i
@@ -47,6 +46,7 @@ AS $BODY$
      INNER JOIN pg_catalog.pg_namespace AS cn
         ON cn.oid = c.relnamespace
      CROSS JOIN regexp_matches(pg_catalog.pg_get_expr(c.relpartbound, c.oid), '\(\''?(.+?)\''?\).+\(\''?(.+?)\''?\)') AS matches
+         , LATERAL (SELECT keys_data_types FROM pgpartium.get_partitioning_details(table_schema, table_name)) AS partitioning_details
      WHERE c.relispartition
        AND p.relname = table_name
        AND pn.nspname = table_schema

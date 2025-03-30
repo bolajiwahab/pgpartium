@@ -22,3 +22,4 @@ we need to prevent creating file on failure
 -- Raise note about usage of to_char internally, any character that should not be transformed needs to be escaped with double quotes
 internally we use to_char for formatting date/time in the generation of the partition names.
 
+-- check for overlaps: WHERE (lower_bound, upper_bound) OVERLAPS (v_partitions.exclusive_start_time, v_partitions.exclusive_end_time)

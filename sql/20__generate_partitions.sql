@@ -29,7 +29,8 @@ DECLARE
     v_constraints              text;
     v_triggers                 text;
     v_storage_clause           text;
-    v_default_partition_name text;
+    v_default_partition_name   text;
+    v_start_timestamp          timestamptz;
 
 BEGIN
 
@@ -77,7 +78,7 @@ BEGIN
     CREATE TEMPORARY TABLE current_bounds ON COMMIT DROP AS
     SELECT lower_bound
          , upper_bound
-      FROM pgpartium.get_partition_bounds(p_table_schema, p_table_name, v_partitioning_details.keys_data_types);
+      FROM pgpartium.get_partition_bounds(p_table_schema, p_table_name);
 
     CREATE TEMPORARY TABLE partition_constraints ON COMMIT DROP AS
     WITH template_constraints AS (
@@ -153,12 +154,29 @@ BEGIN
        AND template_triggers.trigger_body = parent_triggers.trigger_body
      WHERE parent_triggers.trigger_body IS NULL;
 
+    SELECT INTO v_start_timestamp
+                COALESCE(
+                    (
+                        SELECT upper_bound
+                          FROM pgpartium.get_latest_partition(p_table_schema, p_table_name)
+                    )
+                  , now()
+                );
+
     FOR v_partitions IN
         WITH dateset AS (
             SELECT "date"
-              FROM generate_series((date_trunc(substring(p_interval FROM '\d+\s*(\w+)'), now()) - (p_interval::interval * p_past)), (now() + (p_interval::interval * p_future)), p_interval::interval) AS "date"
+              FROM generate_series((date_trunc(substring(p_interval FROM '\d+\s*(\w+)'), v_start_timestamp) - (p_interval::interval * p_past)), (v_start_timestamp + (p_interval::interval * p_future)), p_interval::interval) AS "date"
         )
-        SELECT replace(replace(to_char("date", p_partition_name_template), '{table}', p_table_name), '{schema}', p_table_schema) AS partition_name
+        SELECT replace(
+                    replace(
+                        to_char("date", p_partition_name_template)
+                      , '{table}'
+                      , p_table_name
+                    )
+                  , '{schema}'
+                  , p_table_schema
+               ) AS partition_name
              , "date" AS exclusive_start_time
              , ("date" + p_interval::interval) AS exclusive_end_time
           FROM dateset
