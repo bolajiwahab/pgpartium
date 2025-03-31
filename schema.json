@@ -22,12 +22,14 @@
                     "schema": {
                         "description": "The schema for the partitions.",
                         "type": "string",
-                        "minLength": 1
+                        "minLength": 1,
+                        "default": "public"
                     },
                     "tablespace": {
                         "description": "The tablespace for the partitions.",
                         "type": "string",
-                        "minLength": 1
+                        "minLength": 1,
+                        "default": "pg_default"
                     },
                     "storage_parameters": {
                         "description": "The storage parameters for the partitions.",
@@ -46,12 +48,16 @@
                             }
                         },
                         "additionalProperties": false,
-                        "minProperties": 1
+                        "minProperties": 1,
+                        "default": {}
                     },
                     "name_template": {
                         "description": "The name template for the partitions.",
                         "type": "string",
-                        "examples": ["{schema}__{table}__YYYY_MM_DD", "{schema}__{table}__YYYY_MM"],
+                        "examples": [
+                            "{schema}__{table}__YYYY_MM_DD",
+                            "{schema}__{table}__YYYY_MM"
+                        ],
                         "minLength": 1
                     },
                     "interval": {
@@ -62,20 +68,33 @@
                     "past": {
                         "description": "The number of past partitions to generate.",
                         "type": "integer",
-                        "minimum": 0
+                        "minimum": 0,
+                        "default": 0
                     },
                     "future": {
                         "description": "The number of future partitions to generate.",
                         "type": "integer",
-                        "minimum": 0
+                        "minimum": 0,
+                        "default": 0
                     },
                     "create_default": {
                         "description": "Whether to create default partition.",
                         "type": "boolean",
                         "default": false
                     },
-                    "retention_interval": {
-                        "description": "The interval for which data/partition is retained.",
+                    "retention": {
+                        "description": "The retention time interval to expire partitions containing data older than the given interval.",
+                        "type": "string",
+                        "minLength": 1,
+                        "default": "null"
+                    },
+                    "skip_overlapping": {
+                        "description": "Whether to skip overlapping partitions.",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "timezone": {
+                        "description": "The timezone to use for the partitions.",
                         "type": "string",
                         "minLength": 1
                     },
@@ -132,7 +151,10 @@
                                         "name_template": {
                                             "description": "The name template for the partitions.",
                                             "type": "string",
-                                            "examples": ["{schema}__{table}__YYYY_MM_DD", "{schema}__{table}__YYYY_MM"],
+                                            "examples": [
+                                                "{schema}__{table}__YYYY_MM_DD",
+                                                "{schema}__{table}__YYYY_MM"
+                                            ],
                                             "minLength": 1
                                         },
                                         "interval": {
@@ -155,8 +177,18 @@
                                             "type": "boolean",
                                             "default": false
                                         },
-                                        "retention_interval": {
-                                            "description": "The interval for which data/partition is retained.",
+                                        "retention": {
+                                            "description": "The retention time interval to expire partitions containing data older than the given interval.",
+                                            "type": "string",
+                                            "minLength": 1
+                                        },
+                                        "skip_overlapping": {
+                                            "description": "Whether to skip overlapping partitions.",
+                                            "type": "boolean",
+                                            "default": false
+                                        },
+                                        "timezone": {
+                                            "description": "The timezone to use for the partitions.",
                                             "type": "string",
                                             "minLength": 1
                                         }
@@ -190,8 +222,7 @@
                             },
                             "required": [
                                 "table_schema",
-                                "table_name",
-                                "partition"
+                                "table_name"
                             ],
                             "additionalProperties": false
                         },
@@ -250,43 +281,96 @@
             }
         }
     },
-    "if": {
-        "properties": {
-            "generates": {
-                "type": "array",
-                "items": {
-                    "properties": {
-                        "past": {
-                            "not": {
-                                "type": "integer"
+    "allOf": [
+        {
+            "if": {
+                "properties": {
+                    "generates": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "name_template": {
+                                    "not": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "generates": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "tables": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "partition": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "name_template": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "name_template"
+                                                ]
+                                            }
+                                        },
+                                        "required": ["partition"]
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-    },
-    "then": {
-        "properties": {
-            "generates": {
-                "type": "array",
-                "items": {
-                    "properties": {
-                        "tables": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "partition": {
+        },
+        {
+            "if": {
+                "properties": {
+                    "generates": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "interval": {
+                                    "not": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "generates": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "tables": {
+                                    "type": "array",
+                                    "items": {
                                         "type": "object",
                                         "properties": {
-                                            "past": {
-                                                "type": "integer"
+                                            "partition": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "interval": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "interval"
+                                                ]
                                             }
-                                        },
-                                        "required": [
-                                            "past"
-                                        ]
+                                        }
                                     }
                                 }
                             }
@@ -295,7 +379,7 @@
                 }
             }
         }
-    },
+    ],
     "required": [
         "generates"
     ],

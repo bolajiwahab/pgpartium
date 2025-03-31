@@ -9,14 +9,14 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
   , p_partition_schema text = 'public'
   , p_partition_tablespace text = 'pg_default'
   , p_storage_parameters jsonb = '{}'
-  , p_template_table_schema text = ''
-  , p_template_table_name text = ''
+  , p_template_table_schema text = NULL
+  , p_template_table_name text = NULL
+  , p_retention interval = NULL
   , p_timezone text = 'UTC'
-  , p_skip_overlapping_partitions boolean = false
+  , p_skip_overlapping boolean = false
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
-RETURNS NULL ON NULL INPUT
 SET search_path TO ''
 AS $BODY$
 DECLARE
@@ -47,7 +47,7 @@ BEGIN
         USING ERRCODE = 'undefined_table';
     END IF;
 
-    IF (p_template_table_schema > '' OR p_template_table_name > '') AND NOT v_template_exists THEN
+    IF (p_template_table_schema IS NOT NULL OR p_template_table_name IS NOT NULL) AND NOT v_template_exists THEN
         RAISE 'template table "%"."%" does not exist', p_template_table_schema, p_template_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
@@ -178,25 +178,29 @@ BEGIN
                   , '{schema}'
                   , p_table_schema
                ) AS partition_name
-             , "date" AS exclusive_start_time
-             , ("date" + p_interval::interval) AS exclusive_end_time
+             , "date" AS lower_bound
+             , ("date" + p_interval::interval) AS upper_bound
           FROM dateset
     LOOP
 
-        IF p_skip_overlapping_partitions
+        IF p_skip_overlapping
         AND EXISTS (
             SELECT 1
               FROM current_bounds
-             WHERE (lower_bound, upper_bound) OVERLAPS (v_partitions.exclusive_start_time, v_partitions.exclusive_end_time)
+             WHERE (current_bounds.lower_bound, current_bounds.upper_bound) OVERLAPS (v_partitions.lower_bound, v_partitions.upper_bound)
         ) THEN
             CONTINUE;
         END IF;
 
+        IF age(CAST(v_partitions.upper_bound AS timestamptz)) > p_retention THEN
+            CONTINUE;
+        END IF;
+         
         IF NOT EXISTS (
             SELECT 1
               FROM current_bounds
-             WHERE current_bounds.lower_bound = v_partitions.exclusive_start_time
-               AND current_bounds.upper_bound = v_partitions.exclusive_end_time
+             WHERE current_bounds.lower_bound = v_partitions.lower_bound
+               AND current_bounds.upper_bound = v_partitions.upper_bound
         ) THEN
 
             -- Get constraint definition
@@ -224,13 +228,13 @@ BEGIN
                         || format('%1$I.%2$I', p_partition_schema, v_partitions.partition_name)
                         || E'\n '
                         || index_definition
-                        , coalesce(index_predicate, '')
+                        , COALESCE(index_predicate, '')
                         , CASE
                             WHEN p_partition_tablespace != 'pg_default'
                               THEN format(E'\nTABLESPACE %1$I', p_partition_tablespace)
                             ELSE ''
                           END
-                          || E'\n ' || coalesce(index_predicate, '')
+                          || E'\n ' || COALESCE(index_predicate, '')
                     )
                     || CASE
                          WHEN index_predicate IS NULL AND p_partition_tablespace != 'pg_default'
@@ -262,7 +266,7 @@ BEGIN
               FROM partition_triggers;
 
             -- Get storage parameters
-            SELECT coalesce(E'\nWITH (' || string_agg(format('%1$I = %2$L', key, value), ', ') || ')', '')
+            SELECT COALESCE(E'\nWITH (' || string_agg(format('%1$I = %2$L', key, value), ', ') || ')', '')
               INTO v_storage_clause
               FROM jsonb_each_text(p_storage_parameters);
 
@@ -285,18 +289,18 @@ $SQL$,          p_partition_schema                                              
                     ELSE  E' (\n' || v_constraints || E'\n    )'
                 END
               , CASE v_partitioning_details.keys_data_types                                                                  -- <6>
-                    WHEN 'timestamptz' THEN v_partitions.exclusive_start_time::text
-                    WHEN 'timestamp'   THEN v_partitions.exclusive_start_time::text
-                    WHEN 'date'        THEN v_partitions.exclusive_start_time::date::text
-                    WHEN 'int4'        THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_start_time)::integer)::text
-                    WHEN 'int8'        THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_start_time)::bigint * 1000)::text
+                    WHEN 'timestamptz' THEN v_partitions.lower_bound::text
+                    WHEN 'timestamp'   THEN v_partitions.lower_bound::text
+                    WHEN 'date'        THEN v_partitions.lower_bound::date::text
+                    WHEN 'int4'        THEN (EXTRACT(EPOCH FROM v_partitions.lower_bound)::integer)::text
+                    WHEN 'int8'        THEN (EXTRACT(EPOCH FROM v_partitions.lower_bound)::bigint * 1000)::text
                 END
               , CASE v_partitioning_details.keys_data_types                                                                  -- <7>
-                    WHEN 'timestamptz' THEN v_partitions.exclusive_end_time::text
-                    WHEN 'timestamp'   THEN v_partitions.exclusive_end_time::text
-                    WHEN 'date'        THEN v_partitions.exclusive_end_time::date::text
-                    WHEN 'int4'        THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_end_time)::integer)::text
-                    WHEN 'int8'        THEN (EXTRACT(EPOCH FROM v_partitions.exclusive_end_time)::bigint * 1000)::text
+                    WHEN 'timestamptz' THEN v_partitions.upper_bound::text
+                    WHEN 'timestamp'   THEN v_partitions.upper_bound::text
+                    WHEN 'date'        THEN v_partitions.upper_bound::date::text
+                    WHEN 'int4'        THEN (EXTRACT(EPOCH FROM v_partitions.upper_bound)::integer)::text
+                    WHEN 'int8'        THEN (EXTRACT(EPOCH FROM v_partitions.upper_bound)::bigint * 1000)::text
                 END
               , v_storage_clause                                                                                             -- <8>
               , CASE                                                                                                         -- <9>
@@ -350,13 +354,13 @@ $SQL$,          p_partition_schema                                              
                     || format('%1$I.%2$I', p_partition_schema, v_default_partition_name)
                     || E'\n '
                     || index_definition
-                    , coalesce(index_predicate, '')
+                    , COALESCE(index_predicate, '')
                     , CASE
                         WHEN p_partition_tablespace != 'pg_default'
                             THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
                         ELSE ''
                         END
-                        || E'\n ' || coalesce(index_predicate, '')
+                        || E'\n ' || COALESCE(index_predicate, '')
                 )
                 || CASE
                         WHEN index_predicate IS NULL AND p_partition_tablespace != 'pg_default'
@@ -388,7 +392,7 @@ $SQL$,          p_partition_schema                                              
             FROM partition_triggers;
 
         -- Get storage parameters
-        SELECT coalesce(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
+        SELECT COALESCE(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
             INTO v_storage_clause
             FROM jsonb_each_text(p_storage_parameters);
 

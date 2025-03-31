@@ -5,32 +5,39 @@ generates:
     # tablespace: "tablespace"
     # prefix: "public__" # prefix for partition names
     #suffix: "YYYY_MM_DD" # suffix to append to the table name
-    name_template: "{schema}__{table}__YYYY_MM_DD"
-    #interval: "1 day" # daily, weekly, monthly, yearly, hourly, table might currently have daily partitions but you could decide to switch to say monthly
+    #name_template: "{schema}__{table}__YYYY_MM_DD"
+    # cheo: true
+    interval: "1 mon" # daily, weekly, monthly, yearly, hourly, table might currently have daily partitions but you could decide to switch to say monthly
     #past: 1 # how many partitions to create in the past, if we find such partitions already and they are still part of the
     # partition tree after the retention_period then we don't create migration scripts for them
-    future: 1 # how many partitions to create in the future, current plus number of future
-    retention_interval: "2 years" # interval for which data/partition is dropped 
+    future: 2 # how many partitions to create in the future, current plus number of future
+    #retention: "2 years" # interval for which data/partition is dropped 
     create_default: false # if you want to create a default partition or not (if not exists by default)
+    skip_overlapping: true
     tables:
       - table_schema: "public"
         table_name: "enrichment"
         partition:
-          #schema: "partitions" # useful if partition schema is different from the parent schema
-          # tablespace: "pg_default1"
-          storage_parameters:
-            fillfactor: 90
-            autovacuum_enabled: false
-          past: 2
-          future: 1
-          retention_interval: "2 years" # interval for which data/partition is dropped
+          name_template: "{schema}__{table}__YYYY_MM_DD"
+        #   #schema: "partitions" # useful if partition schema is different from the parent schema
+        #   # tablespace: "pg_default1"
+        #   # storage_parameters:
+        #   #   fillfactor: 90
+        #   #   autovacuum_enabled: false
+        #   # past: 2
+        #   #future: 1
+        #   # retention: "2 years" # interval for which data/partition is dropped
           create_default: true
-          # prefix: "users_"
-          #suffix: "__YYYY_MM_DD"
-          interval: "1 year"
+          # cheo: true
+        #   # prefix: "users_"
+        #   #suffix: "__YYYY_MM_DD"
+        #   interval: "1 year"
+        #   retention: "12 months"
+        #   skip_overlapping: true
+        # template: "CURRENT_PARTITION"
         template:
            table_schema: "public"
-           table_name: "users_template"
+           table_name: "tbl_con"
       # - table_schema: "public"
       #   table_name: "transactions"
       #   partition:
@@ -40,7 +47,7 @@ generates:
       #     template: "CURRENT_PARTITION" # CURRENT_PARTITION, LATEST_PARTITION, DEFAULT_PARTITION
       #     past: 2
       #     future: 1
-      #     retention_interval: "2 years" # interval for which data/partition is dropped 
+      #     retention: "2 years" # interval for which data/partition is dropped 
       #     create_default: true
     groups: # by default we create one file per partitioned table, this controls if you want everything in one file (*) or you want specific partitioned table partitions in one file
       audit-tables:

@@ -51,6 +51,9 @@ export DEFAULT_PAST=0
 export DEFAULT_FUTURE=0
 export DEFAULT_RETENTION_INTERVAL="0"
 export DEFAULT_CREATE_DEFAULT=false
+export DEFAULT_SKIP_OVERLAPPING=false
+export DEFAULT_STORAGE_PARAMETERS="{}"
+export DEFAULT_TIMEZONE="UTC"
 
 # Extract global configs
 export GLOBAL_TABLESPACE=$(yq '.generates[].tablespace // strenv(DEFAULT_TABLESPACE)' "$CONFIG")
@@ -59,8 +62,12 @@ export GLOBAL_PARTITION_NAME_TEMPLATE=$(yq '.generates[].name_template' "$CONFIG
 export GLOBAL_PAST=$(yq '.generates[].past // strenv(DEFAULT_PAST)' "$CONFIG")
 export GLOBAL_FUTURE=$(yq '.generates[].future // strenv(DEFAULT_FUTURE)' "$CONFIG")
 export GLOBAL_INTERVAL=$(yq '.generates[].interval' "$CONFIG")
-export GLOBAL_RETENTION_INTERVAL=$(yq '.generates[].retention_interval // strenv(DEFAULT_RETENTION_INTERVAL)' "$CONFIG")
+export GLOBAL_RETENTION=$(yq '.generates[].retention' "$CONFIG")
 export GLOBAL_CREATE_DEFAULT=$(yq '.generates[].create_default // strenv(DEFAULT_CREATE_DEFAULT)' "$CONFIG")
+export GLOBAL_SKIP_OVERLAPPING=$(yq '.generates[].skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "$CONFIG")
+export GLOBAL_STORAGE_PARAMETERS=$(yq '.generates[].storage_parameters // strenv(DEFAULT_STORAGE_PARAMETERS)' "$CONFIG")
+export GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "$CONFIG")
+
 
 # Process each partitioned table
 yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
@@ -76,7 +83,8 @@ yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
     PARTITION_INTERVAL=$(echo "$table" | yq '.partition.interval // strenv(GLOBAL_INTERVAL)')
     PAST_PARTITIONS=$(echo "$table" | yq '.partition.past // strenv(GLOBAL_PAST)')
     FUTURE_PARTITIONS=$(echo "$table" | yq '.partition.future // strenv(GLOBAL_FUTURE)')
-    RETENTION_INTERVAL=$(echo "$table" | yq '.partition.retention_interval // strenv(GLOBAL_RETENTION_INTERVAL)')
+    RETENTION=$(echo "$table" | yq '.partition.retention // strenv(GLOBAL_RETENTION)')
+    TIMEZONE=$(echo "$table" | yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)')
     # Because yq default value operator is used to provide alternative (or default) values
     # when a particular expression is either null or false, we cannot use it here since create_default is boolean
     # and we need to override it only when it is not set.
@@ -84,9 +92,71 @@ yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
     if [[ "$CREATE_DEFAULT_PARTITION" == "null" ]]; then
         CREATE_DEFAULT_PARTITION=$GLOBAL_CREATE_DEFAULT
     fi
+    SKIP_OVERLAPPING=$(echo "$table" | yq '.partition.skip_overlapping // strenv(GLOBAL_SKIP_OVERLAPPING)')
+    STORAGE_PARAMETERS=$(echo "$table" | yq '.partition.storage_parameters // strenv(GLOBAL_STORAGE_PARAMETERS)')
+
+    TEMPLATE_TABLE=$(echo "$table" | yq '.template')
+    echo "Template table: $TEMPLATE_TABLE"
+    if [[ "$TEMPLATE_TABLE" == "DEFAULT_PARTITION" ]]; then
+        IFS=',' read -r TEMPLATE_TABLE_SCHEMA TEMPLATE_TABLE_NAME < <(
+            psql --username=postgres \
+                 --dbname=postgres \
+                 --tuples-only \
+                 --no-align \
+                 --quiet \
+                 --csv \
+                 -v "ON_ERROR_STOP=1" \
+                 --echo-errors \
+                 <<EOF
+SELECT partition_schema
+     , partition_name
+  FROM pgpartium.get_default_partition('$TABLE_SCHEMA', '$TABLE_NAME')
+EOF
+) || { echo "TemplateTableError: Default partition for table ${TABLE_SCHEMA}.${TABLE_NAME} not found."; exit 1; }
+
+    elif [[ "$TEMPLATE_TABLE" == "LATEST_PARTITION" ]]; then
+        IFS=',' read -r TEMPLATE_TABLE_SCHEMA TEMPLATE_TABLE_NAME < <(
+            psql --username=postgres \
+                 --dbname=postgres \
+                 --tuples-only \
+                 --no-align \
+                 --quiet \
+                 --csv \
+                 -v "ON_ERROR_STOP=1" \
+                 <<EOF
+SELECT partition_schema
+     , partition_name
+  FROM pgpartium.get_latest_partition('$TABLE_SCHEMA', '$TABLE_NAME')
+EOF
+) || { echo "TemplateTableError: Latest partition for table ${TABLE_SCHEMA}.${TABLE_NAME} not found."; exit 1; }
+
+    elif [[ "$TEMPLATE_TABLE" == "CURRENT_PARTITION" ]]; then
+        IFS=',' read -r TEMPLATE_TABLE_SCHEMA TEMPLATE_TABLE_NAME < <(
+            psql --username=postgres \
+                 --dbname=postgres \
+                 --tuples-only \
+                 --no-align \
+                 --quiet \
+                 --csv \
+                 -v "ON_ERROR_STOP=1" \
+                 <<EOF
+SELECT partition_schema
+     , partition_name
+  FROM pgpartium.get_current_partition('$TABLE_SCHEMA', '$TABLE_NAME')
+EOF
+) || { echo "TemplateTableError: Current partition for table ${TABLE_SCHEMA}.${TABLE_NAME} not found."; exit 1; }
+
+    else
+        TEMPLATE_TABLE_SCHEMA=$(echo "$TEMPLATE_TABLE" | yq '.table_schema')
+        TEMPLATE_TABLE_NAME=$(echo "$TEMPLATE_TABLE" | yq '.table_name')
+
+    fi
+
+    echo "Col1: $TEMPLATE_TABLE_SCHEMA"
+    echo "Col2: $TEMPLATE_TABLE_NAME"
 
     echo "Table: $TABLE_SCHEMA.$TABLE_NAME"
-    echo "GLlobal suffix: $PARTITION_SCHEMA"
+    echo "retention: $RETENTION"
     echo "Create default: $CREATE_DEFAULT_PARTITION"
     # echo "  Partition: $PARTITION"
 
@@ -109,7 +179,12 @@ SELECT *
   , $CREATE_DEFAULT_PARTITION
   , '$PARTITION_SCHEMA'
   , '$PARTITION_TABLESPACE'
-  , '{}'
+  , '$STORAGE_PARAMETERS'
+  , '$TEMPLATE_TABLE_SCHEMA'
+  , '$TEMPLATE_TABLE_NAME'
+  , '$RETENTION'
+  , '$TIMEZONE'
+  , $SKIP_OVERLAPPING
 )
 EOF
 

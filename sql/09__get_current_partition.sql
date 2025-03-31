@@ -50,28 +50,28 @@ AS $BODY$
      WHERE c.relispartition
        AND p.relname = table_name
        AND pn.nspname = table_schema
-       AND now() >= CASE 'timestamp with time zone'
-                      WHEN 'timestamp with time zone'
+       AND now() >= CASE keys_data_types
+                      WHEN 'timestamptz'
                         THEN CAST((matches)[1] AS timestamptz)
-                      WHEN 'timestamp without time zone'
+                      WHEN 'timestamp'
                         THEN CAST((matches)[1] AS timestamptz)
                       WHEN 'date'
                         THEN CAST((matches)[1] AS date)
-                      WHEN 'integer'
+                      WHEN 'int4'
                         THEN to_timestamp(CAST((matches)[1] AS integer))
-                      WHEN 'bigint'
+                      WHEN 'int8'
                         THEN to_timestamp(CAST((matches)[1] AS bigint) / 1000)
                     END
-       AND now() < CASE 'timestamp with time zone'
-                     WHEN 'timestamp with time zone'
+       AND now() < CASE keys_data_types
+                     WHEN 'timestamptz'
                        THEN CAST((matches)[2] AS timestamptz)
-                     WHEN 'timestamp without time zone'
+                     WHEN 'timestamp'
                        THEN CAST((matches)[2] AS timestamptz)
                      WHEN 'date'
                        THEN CAST((matches)[2] AS date)
-                     WHEN 'integer'
+                     WHEN 'int4'
                        THEN to_timestamp(CAST((matches)[2] AS integer))
-                     WHEN 'bigint'
+                     WHEN 'int8'
                        THEN to_timestamp(CAST((matches)[2] AS bigint) / 1000)
                    END;
 $BODY$;
