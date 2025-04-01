@@ -52,6 +52,11 @@ BEGIN
         USING ERRCODE = 'undefined_table';
     END IF;
 
+    IF COALESCE(p_partition_name_template, '') = '' THEN
+        RAISE 'name template is required'
+        USING ERRCODE = 'invalid_parameter_value';
+    END IF;
+
     IF NOT v_is_parent_partitioned THEN
         RAISE 'table "%"."%" is not partitioned', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
@@ -228,7 +233,7 @@ BEGIN
                         || format('%1$I.%2$I', p_partition_schema, v_partitions.partition_name)
                         || E'\n '
                         || index_definition
-                        , COALESCE(index_predicate, '')
+                        , COALESCE(' ' || index_predicate, '')
                         , CASE
                             WHEN p_partition_tablespace != 'pg_default'
                               THEN format(E'\nTABLESPACE %1$I', p_partition_tablespace)

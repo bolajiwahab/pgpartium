@@ -1,0 +1,91 @@
+#!/bin/bash
+
+usage()
+{
+cat <<-EOF
+    ${0##*/}
+    
+    Generates partitions for partitioned tables.
+
+    OPTIONS:
+    -c  the config file in yaml (Required)
+    -h  show this help message.
+
+    SAMPLE USAGE:
+        ${0##*/} -c config.yaml
+EOF
+}
+
+while getopts "c:h" OPTION
+do
+    case $OPTION in
+        c)
+            CONFIG="$OPTARG"
+            ;;
+        h | *)
+            usage
+            exit 0
+            ;;
+    esac
+done
+
+set -eu -o pipefail
+
+CONFIG=${CONFIG:-}
+
+# Ensure config is provided
+if [[ -z "$CONFIG" ]]; then
+  usage
+  exit 1
+fi
+
+# Setup infrastructure
+ls sql/*.sql | sort | xargs -I {} psql --quiet --username=postgres --dbname=postgres -f "{}"
+
+# Validate schema
+yq -o=json '.' "$CONFIG" | jsonschema schema.json
+
+# Set defaults
+export DEFAULT_TIMEZONE="UTC"
+
+# Extract global configs
+export GLOBAL_RETENTION=$(yq '.generates[].retention' "$CONFIG")
+export GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "$CONFIG")
+
+# Process each partitioned table
+yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
+    TABLE_SCHEMA=$(echo "$table" | yq '.table_schema')
+    TABLE_NAME=$(echo "$table" | yq '.table_name')
+    RETENTION=$(echo "$table" | yq '.partition.retention // strenv(GLOBAL_RETENTION)')
+    TIMEZONE=$(echo "$table" | yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)')
+
+    psql --username=postgres \
+         --dbname=postgres \
+         --tuples-only \
+         --no-align \
+         --quiet \
+         --echo-queries \
+         -v "ON_ERROR_STOP=1" \
+         -v table_schema="$TABLE_SCHEMA" \
+         -v table_name="$TABLE_NAME" \
+         -v retention="$RETENTION" \
+         -v timezone="$TIMEZONE" \
+         --output="/tmp/$TABLE_NAME.sql" \
+         <<EOF
+SELECT *
+  FROM pgpartium.expire_partitions(
+    :'table_schema'
+  , :'table_name'
+  , :'retention'
+  , :'timezone'
+)
+EOF
+
+echo "Expired partitions for $TABLE_SCHEMA.$TABLE_NAME"
+
+# Move file to directory if it is not empty
+if [[ -s "/tmp/${TABLE_NAME}.sql" ]]; then
+    mv /tmp/${TABLE_NAME}.sql ${TABLE_NAME}.sql
+fi
+
+done

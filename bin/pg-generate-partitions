@@ -49,7 +49,6 @@ yq -o=json '.' "$CONFIG" | jsonschema schema.json
 export DEFAULT_TABLESPACE="pg_default"
 export DEFAULT_PAST=0
 export DEFAULT_FUTURE=0
-export DEFAULT_RETENTION_INTERVAL="0"
 export DEFAULT_CREATE_DEFAULT=false
 export DEFAULT_SKIP_OVERLAPPING=false
 export DEFAULT_STORAGE_PARAMETERS="{}"
@@ -67,7 +66,6 @@ export GLOBAL_CREATE_DEFAULT=$(yq '.generates[].create_default // strenv(DEFAULT
 export GLOBAL_SKIP_OVERLAPPING=$(yq '.generates[].skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "$CONFIG")
 export GLOBAL_STORAGE_PARAMETERS=$(yq '.generates[].storage_parameters // strenv(DEFAULT_STORAGE_PARAMETERS)' "$CONFIG")
 export GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "$CONFIG")
-
 
 # Process each partitioned table
 yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
@@ -157,7 +155,7 @@ EOF
 
     echo "Table: $TABLE_SCHEMA.$TABLE_NAME"
     echo "retention: $RETENTION"
-    echo "Create default: $CREATE_DEFAULT_PARTITION"
+    echo "Partition interval: $PARTITION_INTERVAL"
     # echo "  Partition: $PARTITION"
 
     psql --username=postgres \
@@ -165,26 +163,42 @@ EOF
          --tuples-only \
          --no-align \
          --quiet \
+         --echo-queries \
          -v "ON_ERROR_STOP=1" \
-         --output=/tmp/${TABLE_NAME}.sql \
+         -v table_schema="$TABLE_SCHEMA" \
+         -v table_name="$TABLE_NAME" \
+         -v partition_name_template="$PARTITION_NAME_TEMPLATE" \
+         -v partition_interval="$PARTITION_INTERVAL" \
+         -v past_partitions="$PAST_PARTITIONS" \
+         -v future_partitions="$FUTURE_PARTITIONS" \
+         -v create_default_partition="$CREATE_DEFAULT_PARTITION" \
+         -v partition_schema="$PARTITION_SCHEMA" \
+         -v partition_tablespace="$PARTITION_TABLESPACE" \
+         -v storage_parameters="$STORAGE_PARAMETERS" \
+         -v template_table_schema="$TEMPLATE_TABLE_SCHEMA" \
+         -v template_table_name="$TEMPLATE_TABLE_NAME" \
+         -v retention="$RETENTION" \
+         -v timezone="$TIMEZONE" \
+         -v skip_overlapping="$SKIP_OVERLAPPING" \
+         --output="/tmp/$TABLE_NAME.sql" \
          <<EOF
 SELECT *
   FROM pgpartium.generate_partitions(
-    '$TABLE_SCHEMA'
-  , '$TABLE_NAME'
-  , '$PARTITION_NAME_TEMPLATE'
-  , '$PARTITION_INTERVAL'
-  , $PAST_PARTITIONS
-  , $FUTURE_PARTITIONS
-  , $CREATE_DEFAULT_PARTITION
-  , '$PARTITION_SCHEMA'
-  , '$PARTITION_TABLESPACE'
-  , '$STORAGE_PARAMETERS'
-  , '$TEMPLATE_TABLE_SCHEMA'
-  , '$TEMPLATE_TABLE_NAME'
-  , '$RETENTION'
-  , '$TIMEZONE'
-  , $SKIP_OVERLAPPING
+    :'table_schema'
+  , :'table_name'
+  , :'partition_name_template'
+  , :'partition_interval'
+  , :'past_partitions'
+  , :'future_partitions'
+  , :'create_default_partition'
+  , :'partition_schema'
+  , :'partition_tablespace'
+  , :'storage_parameters'
+  , :'template_table_schema'
+  , :'template_table_name'
+  , :'retention'
+  , :'timezone'
+  , :'skip_overlapping'
 )
 EOF
 
