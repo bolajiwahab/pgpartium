@@ -38,7 +38,7 @@ done
 set -eu -o pipefail
 
 BRANCH=${BRANCH:-generate-partitions}
-TITLE=${TITLE:-Add/Expire partitions}
+TITLE=${TITLE:-"Add/Expire partitions"}
 # COMMIT_MSG=${COMMIT_MSG:-}
 
 # Ensure required options are provided
