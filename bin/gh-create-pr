@@ -78,11 +78,11 @@ if [[ -n "${PR_URL}" ]]; then
     exit 0
 else
     echo "Creating PR"
-    gh pr create --base ${BASE_BRANCH} \
-                 --head ${FULL_BRANCH} \
-                 --title ${TITLE}
-                #  --body "This PR adds/expires partitions" \
-                #  --label "partitions pgpartium"
+    gh pr create --base "${BASE_BRANCH}" \
+                 --head "${FULL_BRANCH}" \
+                 --title "${TITLE}" \
+                 --body "This PR adds/expires partitions" \
+                 --label "partitions pgpartium"
     # echo "Creating PR"
     # git checkout -b "$FULL_BRANCH"
     # git add -A
