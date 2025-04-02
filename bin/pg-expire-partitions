@@ -46,10 +46,11 @@ ls sql/*.sql | sort | xargs -I {} psql --quiet --username=postgres --dbname=post
 yq -o=json '.' "$CONFIG" | jsonschema schema.json
 
 # Set defaults
+export DEFAULT_RETENTION='-1'
 export DEFAULT_TIMEZONE="UTC"
 
 # Extract global configs
-export GLOBAL_RETENTION=$(yq '.generates[].retention' "$CONFIG")
+export GLOBAL_RETENTION=$(yq '.generates[].retention // strenv(DEFAULT_RETENTION)' "$CONFIG")
 export GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "$CONFIG")
 
 # Process each partitioned table
@@ -81,11 +82,11 @@ SELECT *
 )
 EOF
 
-echo "Expired partitions for $TABLE_SCHEMA.$TABLE_NAME"
-
 # Move file to directory if it is not empty
 if [[ -s "/tmp/${TABLE_NAME}.sql" ]]; then
     mv /tmp/${TABLE_NAME}.sql ${TABLE_NAME}.sql
 fi
+
+echo "Expired partitions for $TABLE_SCHEMA.$TABLE_NAME"
 
 done

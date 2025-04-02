@@ -49,6 +49,7 @@ yq -o=json '.' "$CONFIG" | jsonschema schema.json
 export DEFAULT_TABLESPACE="pg_default"
 export DEFAULT_PAST=0
 export DEFAULT_FUTURE=0
+export DEFAULT_RETENTION='-1'
 export DEFAULT_CREATE_DEFAULT=false
 export DEFAULT_SKIP_OVERLAPPING=false
 export DEFAULT_STORAGE_PARAMETERS="{}"
@@ -61,7 +62,7 @@ export GLOBAL_PARTITION_NAME_TEMPLATE=$(yq '.generates[].name_template' "$CONFIG
 export GLOBAL_PAST=$(yq '.generates[].past // strenv(DEFAULT_PAST)' "$CONFIG")
 export GLOBAL_FUTURE=$(yq '.generates[].future // strenv(DEFAULT_FUTURE)' "$CONFIG")
 export GLOBAL_INTERVAL=$(yq '.generates[].interval' "$CONFIG")
-export GLOBAL_RETENTION=$(yq '.generates[].retention' "$CONFIG")
+export GLOBAL_RETENTION=$(yq '.generates[].retention // strenv(DEFAULT_RETENTION)' "$CONFIG")
 export GLOBAL_CREATE_DEFAULT=$(yq '.generates[].create_default // strenv(DEFAULT_CREATE_DEFAULT)' "$CONFIG")
 export GLOBAL_SKIP_OVERLAPPING=$(yq '.generates[].skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "$CONFIG")
 export GLOBAL_STORAGE_PARAMETERS=$(yq '.generates[].storage_parameters // strenv(DEFAULT_STORAGE_PARAMETERS)' "$CONFIG")
@@ -104,11 +105,12 @@ yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
                  --quiet \
                  --csv \
                  -v "ON_ERROR_STOP=1" \
-                 --echo-errors \
+                 -v table_schema="$TABLE_SCHEMA" \
+                 -v table_name="$TABLE_NAME" \
                  <<EOF
 SELECT partition_schema
      , partition_name
-  FROM pgpartium.get_default_partition('$TABLE_SCHEMA', '$TABLE_NAME')
+  FROM pgpartium.get_default_partition(:'table_schema', :'table_name')
 EOF
 ) || { echo "TemplateTableError: Default partition for table ${TABLE_SCHEMA}.${TABLE_NAME} not found."; exit 1; }
 
@@ -121,10 +123,12 @@ EOF
                  --quiet \
                  --csv \
                  -v "ON_ERROR_STOP=1" \
+                 -v table_schema="$TABLE_SCHEMA" \
+                 -v table_name="$TABLE_NAME" \
                  <<EOF
 SELECT partition_schema
      , partition_name
-  FROM pgpartium.get_latest_partition('$TABLE_SCHEMA', '$TABLE_NAME')
+  FROM pgpartium.get_latest_partition(:'table_schema', :'table_name')
 EOF
 ) || { echo "TemplateTableError: Latest partition for table ${TABLE_SCHEMA}.${TABLE_NAME} not found."; exit 1; }
 
@@ -137,10 +141,12 @@ EOF
                  --quiet \
                  --csv \
                  -v "ON_ERROR_STOP=1" \
+                 -v table_schema="$TABLE_SCHEMA" \
+                 -v table_name="$TABLE_NAME" \
                  <<EOF
 SELECT partition_schema
      , partition_name
-  FROM pgpartium.get_current_partition('$TABLE_SCHEMA', '$TABLE_NAME')
+  FROM pgpartium.get_current_partition(:'table_schema', :'table_name')
 EOF
 ) || { echo "TemplateTableError: Current partition for table ${TABLE_SCHEMA}.${TABLE_NAME} not found."; exit 1; }
 
@@ -202,11 +208,11 @@ SELECT *
 )
 EOF
 
-echo "Generated partitions for $TABLE_SCHEMA.$TABLE_NAME"
-
 # Move file to directory if it is not empty
 if [[ -s "/tmp/${TABLE_NAME}.sql" ]]; then
     mv /tmp/${TABLE_NAME}.sql ${TABLE_NAME}.sql
 fi
+
+echo "Generated partitions for $TABLE_SCHEMA.$TABLE_NAME"
 
 done

@@ -84,7 +84,10 @@
                     },
                     "retention": {
                         "description": "The retention time interval to expire partitions containing data older than the given interval.",
-                        "type": "string",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
                         "minLength": 1,
                         "default": "null"
                     },

@@ -11,7 +11,7 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
   , p_storage_parameters jsonb = '{}'
   , p_template_table_schema text = NULL
   , p_template_table_name text = NULL
-  , p_retention interval = NULL
+  , p_retention interval = '-1'
   , p_timezone text = 'UTC'
   , p_skip_overlapping boolean = false
 )
@@ -197,7 +197,7 @@ BEGIN
             CONTINUE;
         END IF;
 
-        IF age(CAST(v_partitions.upper_bound AS timestamptz)) > p_retention THEN
+        IF age(CAST(v_partitions.upper_bound AS timestamptz)) > NULLIF(p_retention, '-1') THEN
             CONTINUE;
         END IF;
          

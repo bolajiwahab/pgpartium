@@ -76,7 +76,7 @@ AS $BODY$
                THEN age(to_timestamp(CAST((matches)[2] AS integer)))
              WHEN 'int8'
                THEN age(to_timestamp(CAST((matches)[2] AS bigint) / 1000))
-           END > p_retention
+           END > NULLIF(p_retention, '-1')
      ORDER BY age DESC;
 
 $BODY$;

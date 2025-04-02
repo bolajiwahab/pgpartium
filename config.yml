@@ -11,7 +11,7 @@ generates:
     #past: 1 # how many partitions to create in the past, if we find such partitions already and they are still part of the
     # partition tree after the retention_period then we don't create migration scripts for them
     future: 2 # how many partitions to create in the future, current plus number of future
-    retention: "11 mon" # interval for which data/partition is dropped 
+    retention: "11 mons" # interval for which data/partition is dropped 
     create_default: false # if you want to create a default partition or not (if not exists by default)
     skip_overlapping: true
     tables:
