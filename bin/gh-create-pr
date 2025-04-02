@@ -37,15 +37,9 @@ done
 
 set -eu -o pipefail
 
-BRANCH=${BRANCH:-generate-partitions}
+BRANCH=${BRANCH:-add-expire-partitions}
 TITLE=${TITLE:-"Add/Expire partitions"}
-# COMMIT_MSG=${COMMIT_MSG:-}
-
-# Ensure required options are provided
-# if [[ -z "$BRANCH" ]]; then
-#   usage
-#   exit 1
-# fi
+COMMIT_MSG=${COMMIT_MSG:-${TITLE}}
 
 if git diff --quiet -- && [ -z "$(git ls-files --others --exclude-standard)" ]; then
     echo "✅ No changes detected. Exiting..."
@@ -63,11 +57,11 @@ BASE_BRANCH=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
 # Ensure we have the latest remote info
 git fetch origin
 
-# Always create/reset the local branch from HEAD to retain untracked files
+# Always create/reset our branch from HEAD to retain untracked files
 git checkout -B "$FULL_BRANCH" HEAD
 
 git add -A
-git commit -m "Adds/expires partitions"
+git commit -m "$COMMIT_MSG"
 
 # Push to remote
 git push origin "$FULL_BRANCH" --force
@@ -81,19 +75,5 @@ else
     gh pr create --base "${BASE_BRANCH}" \
                  --head "${FULL_BRANCH}" \
                  --title "${TITLE}" \
-                 --body "This PR adds/expires partitions"
-                #  --label "partitions, pgpartium"
-    # echo "Creating PR"
-    # git checkout -b "$FULL_BRANCH"
-    # git add -A
-
-    # Add and commit changes
-    # git add *
-    # git commit -m "$COMMIT_MSG"
-
-    # # Push to remote
-    # git push origin "$BRANCH_NAME"
-
-    # # Create a merge request using GitLab CLI
-    # glab mr create --source "$BRANCH_NAME" --target main --title "$PR_TITLE" --description "$PR_BODY"
+                 --body "This PR adds/expires partitions."
 fi
