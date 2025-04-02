@@ -1,0 +1,79 @@
+#!/bin/bash
+
+usage()
+{
+cat <<-EOF
+    ${0##*/}
+    
+    Creates or updates a pull request on github.
+
+    OPTIONS:
+    -b  the branch name to use (Required)
+    -h  show this help message.
+
+    SAMPLE USAGE:
+        ${0##*/} -b generate-partitions
+EOF
+}
+
+while getopts "b:h" OPTION
+do
+    case $OPTION in
+        b)
+            BRANCH="$OPTARG"
+            ;;
+        t)
+            TITLE="$OPTARG"
+            ;;
+        m)
+            COMMIT_MSG="$OPTARG"
+            ;;
+        h | *)
+            usage
+            exit 0
+            ;;
+    esac
+done
+
+set -eu -o pipefail
+
+BRANCH=${BRANCH:-add-expire-partitions}
+TITLE=${TITLE:-"Add/Expire partitions"}
+COMMIT_MSG=${COMMIT_MSG:-${TITLE}}
+
+if git diff --quiet -- && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+    echo "✅ No changes detected. Exiting..."
+    exit 0
+fi
+
+if ! gh auth status &>/dev/null; then
+  echo "❌ GitHub CLI is not authenticated. Run 'gh auth login'."
+  exit 1
+fi
+
+FULL_BRANCH="pgpartium/${BRANCH}"
+BASE_BRANCH=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
+
+# Ensure we have the latest remote info
+git fetch origin
+
+# Always create/reset our branch from HEAD to retain untracked files
+git checkout -B "$FULL_BRANCH" HEAD
+
+git add -A
+git commit -m "$COMMIT_MSG"
+
+# Push to remote
+git push origin "$FULL_BRANCH" --force
+
+PR_URL="$(gh pr list --head "${FULL_BRANCH}" --state open --json url --jq .[].url)"
+if [[ -n "${PR_URL}" ]]; then
+    echo "PR already exists -> ${PR_URL}. Exiting..."
+    exit 0
+else
+    echo "Creating PR"
+    gh pr create --base "${BASE_BRANCH}" \
+                 --head "${FULL_BRANCH}" \
+                 --title "${TITLE}" \
+                 --body "This PR adds/expires partitions."
+fi
