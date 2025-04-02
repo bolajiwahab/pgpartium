@@ -81,7 +81,7 @@ else
     gh pr create --base ${BASE_BRANCH} \
                  --head ${FULL_BRANCH} \
                  --title ${TITLE} \
-                 --body "This PR adds/expires partitions" \
+                #  --body "This PR adds/expires partitions" \
                  --label "partitions pgpartium"
     # echo "Creating PR"
     # git checkout -b "$FULL_BRANCH"
