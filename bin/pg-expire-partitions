@@ -1,10 +1,9 @@
 #!/bin/bash
 
-usage()
-{
-cat <<-EOF
+usage() {
+    cat <<-EOF
     ${0##*/}
-    
+
     Generates partitions for partitioned tables.
 
     OPTIONS:
@@ -16,63 +15,72 @@ cat <<-EOF
 EOF
 }
 
-while getopts "c:h" OPTION
-do
-    case $OPTION in
-        c)
-            CONFIG="$OPTARG"
-            ;;
-        h | *)
-            usage
-            exit 0
-            ;;
+while getopts "c:h" option; do
+    case "${option}" in
+    c)
+        config="${OPTARG}"
+        ;;
+    h | *)
+        usage
+        exit 0
+        ;;
     esac
 done
 
-set -eu -o pipefail
+set -euo pipefail
 
-CONFIG=${CONFIG:-}
+config=${config:-}
 
 # Ensure config is provided
-if [[ -z "$CONFIG" ]]; then
-  usage
-  exit 1
+if [[ -z "${config}" ]]; then
+    usage
+    exit 1
 fi
 
 # Setup infrastructure
-ls sql/*.sql | sort | xargs -I {} psql --quiet --username=postgres --dbname=postgres -f "{}"
+find sql -maxdepth 1 -type f -name "*.sql" -print0 | sort -z |
+    xargs -0 -I {} psql -v "ON_ERROR_STOP=1" --quiet --username=postgres --dbname=postgres -f "{}"
 
 # Validate schema
-yq -o=json '.' "$CONFIG" | jsonschema schema.json
+yq -o=json '.' "${config}" | jsonschema schema.json
+
+# nodename='sub_node' yq '.node[strenv(nodename)]' example.yaml
 
 # Set defaults
 export DEFAULT_RETENTION='-1'
 export DEFAULT_TIMEZONE="UTC"
 
 # Extract global configs
-export GLOBAL_RETENTION=$(yq '.generates[].retention // strenv(DEFAULT_RETENTION)' "$CONFIG")
-export GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "$CONFIG")
+GLOBAL_RETENTION=$(yq '.generates[].retention // strenv(DEFAULT_RETENTION)' "${config}")
+GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
+
+export GLOBAL_RETENTION GLOBAL_TIMEZONE
+
+directory=$(yq '.generates[].directory' "${config}")
 
 # Process each partitioned table
-yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
-    TABLE_SCHEMA=$(echo "$table" | yq '.table_schema')
-    TABLE_NAME=$(echo "$table" | yq '.table_name')
-    RETENTION=$(echo "$table" | yq '.partition.retention // strenv(GLOBAL_RETENTION)')
-    TIMEZONE=$(echo "$table" | yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)')
+yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
+    table_schema=$(echo "${table}" | yq '.table_schema')
+    table_name=$(echo "${table}" | yq '.table_name')
+    retention=$(echo "${table}" | yq '.partition.retention // strenv(GLOBAL_RETENTION)')
+    timezone=$(echo "${table}" | yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)')
+    output_filename="${table_name}_expired_partitions.sql"
+
+    echo "Generating expired partitions for ${table_schema}.${table_name} in ${directory}"
 
     psql --username=postgres \
-         --dbname=postgres \
-         --tuples-only \
-         --no-align \
-         --quiet \
-         --echo-queries \
-         -v "ON_ERROR_STOP=1" \
-         -v table_schema="$TABLE_SCHEMA" \
-         -v table_name="$TABLE_NAME" \
-         -v retention="$RETENTION" \
-         -v timezone="$TIMEZONE" \
-         --output="/tmp/$TABLE_NAME.sql" \
-         <<EOF
+        --dbname=postgres \
+        --tuples-only \
+        --no-align \
+        --quiet \
+        --echo-queries \
+        -v "ON_ERROR_STOP=1" \
+        -v table_schema="${table_schema}" \
+        -v table_name="${table_name}" \
+        -v retention="${retention}" \
+        -v timezone="${timezone}" \
+        --output="/tmp/${output_filename}" \
+        <<EOF
 SELECT *
   FROM pgpartium.expire_partitions(
     :'table_schema'
@@ -82,11 +90,12 @@ SELECT *
 )
 EOF
 
-# Move file to directory if it is not empty
-if [[ -s "/tmp/${TABLE_NAME}.sql" ]]; then
-    mv /tmp/${TABLE_NAME}.sql ${TABLE_NAME}.sql
-fi
-
-echo "Expired partitions for $TABLE_SCHEMA.$TABLE_NAME"
+    # If file is not empty, move it to directory
+    if [[ -s "/tmp/${output_filename}" ]]; then
+        mv "/tmp/${output_filename}" "${directory}/${output_filename}"
+        echo "Expired partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
+    else
+        echo "No expired partitions for ${table_schema}.${table_name}"
+    fi
 
 done

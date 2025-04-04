@@ -47,7 +47,7 @@ BEGIN
         USING ERRCODE = 'undefined_table';
     END IF;
 
-    IF (p_template_table_schema IS NOT NULL OR p_template_table_name IS NOT NULL) AND NOT v_template_exists THEN
+    IF (COALESCE(p_template_table_schema, '') > '' OR COALESCE(p_template_table_name, '') > '') AND NOT v_template_exists THEN
         RAISE 'template table "%"."%" does not exist', p_template_table_schema, p_template_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
@@ -200,7 +200,7 @@ BEGIN
         IF age(CAST(v_partitions.upper_bound AS timestamptz)) > NULLIF(p_retention, '-1') THEN
             CONTINUE;
         END IF;
-         
+
         IF NOT EXISTS (
             SELECT 1
               FROM current_bounds

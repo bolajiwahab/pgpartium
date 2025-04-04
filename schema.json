@@ -291,12 +291,10 @@
                     "generates": {
                         "type": "array",
                         "items": {
-                            "properties": {
-                                "name_template": {
-                                    "not": {
-                                        "type": "string"
-                                    }
-                                }
+                            "not": {
+                                "required": [
+                                    "name_template"
+                                ]
                             }
                         }
                     }
@@ -311,21 +309,16 @@
                                 "tables": {
                                     "type": "array",
                                     "items": {
-                                        "type": "object",
                                         "properties": {
                                             "partition": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "name_template": {
-                                                        "type": "string"
-                                                    }
-                                                },
                                                 "required": [
                                                     "name_template"
                                                 ]
                                             }
                                         },
-                                        "required": ["partition"]
+                                        "required": [
+                                            "partition"
+                                        ]
                                     }
                                 }
                             }
@@ -340,12 +333,10 @@
                     "generates": {
                         "type": "array",
                         "items": {
-                            "properties": {
-                                "interval": {
-                                    "not": {
-                                        "type": "string"
-                                    }
-                                }
+                            "not": {
+                                "required": [
+                                    "interval"
+                                ]
                             }
                         }
                     }
@@ -360,20 +351,16 @@
                                 "tables": {
                                     "type": "array",
                                     "items": {
-                                        "type": "object",
                                         "properties": {
                                             "partition": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "interval": {
-                                                        "type": "string"
-                                                    }
-                                                },
                                                 "required": [
                                                     "interval"
                                                 ]
                                             }
-                                        }
+                                        },
+                                        "required": [
+                                            "partition"
+                                        ]
                                     }
                                 }
                             }

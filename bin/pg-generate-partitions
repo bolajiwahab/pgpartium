@@ -1,10 +1,9 @@
 #!/bin/bash
 
-usage()
-{
-cat <<-EOF
+usage() {
+    cat <<-EOF
     ${0##*/}
-    
+
     Generates partitions for partitioned tables.
 
     OPTIONS:
@@ -16,34 +15,34 @@ cat <<-EOF
 EOF
 }
 
-while getopts "c:h" OPTION
-do
-    case $OPTION in
-        c)
-            CONFIG="$OPTARG"
-            ;;
-        h | *)
-            usage
-            exit 0
-            ;;
+while getopts "c:h" option; do
+    case "${option}" in
+    c)
+        config="${OPTARG}"
+        ;;
+    h | *)
+        usage
+        exit 0
+        ;;
     esac
 done
 
-set -eu -o pipefail
+set -euo pipefail
 
-CONFIG=${CONFIG:-}
+config=${config:-}
 
 # Ensure config is provided
-if [[ -z "$CONFIG" ]]; then
-  usage
-  exit 1
+if [[ -z "${config}" ]]; then
+    usage
+    exit 1
 fi
 
 # Setup infrastructure
-ls sql/*.sql | sort | xargs -I {} psql --quiet --username=postgres --dbname=postgres -f "{}"
+find sql -maxdepth 1 -type f -name "*.sql" -print0 | sort -z |
+    xargs -0 -I {} psql -v "ON_ERROR_STOP=1" --quiet --username=postgres --dbname=postgres -f "{}"
 
 # Validate schema
-yq -o=json '.' "$CONFIG" | jsonschema schema.json
+yq -o=json '.' "${config}" | jsonschema schema.json
 
 # Set defaults
 export DEFAULT_TABLESPACE="pg_default"
@@ -56,138 +55,146 @@ export DEFAULT_STORAGE_PARAMETERS="{}"
 export DEFAULT_TIMEZONE="UTC"
 
 # Extract global configs
-export GLOBAL_TABLESPACE=$(yq '.generates[].tablespace // strenv(DEFAULT_TABLESPACE)' "$CONFIG")
-export GLOBAL_SCHEMA=$(yq '.generates[].schema' "$CONFIG")
-export GLOBAL_PARTITION_NAME_TEMPLATE=$(yq '.generates[].name_template' "$CONFIG")
-export GLOBAL_PAST=$(yq '.generates[].past // strenv(DEFAULT_PAST)' "$CONFIG")
-export GLOBAL_FUTURE=$(yq '.generates[].future // strenv(DEFAULT_FUTURE)' "$CONFIG")
-export GLOBAL_INTERVAL=$(yq '.generates[].interval' "$CONFIG")
-export GLOBAL_RETENTION=$(yq '.generates[].retention // strenv(DEFAULT_RETENTION)' "$CONFIG")
-export GLOBAL_CREATE_DEFAULT=$(yq '.generates[].create_default // strenv(DEFAULT_CREATE_DEFAULT)' "$CONFIG")
-export GLOBAL_SKIP_OVERLAPPING=$(yq '.generates[].skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "$CONFIG")
-export GLOBAL_STORAGE_PARAMETERS=$(yq '.generates[].storage_parameters // strenv(DEFAULT_STORAGE_PARAMETERS)' "$CONFIG")
-export GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "$CONFIG")
+GLOBAL_TABLESPACE=$(yq '.generates[].tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")
+GLOBAL_SCHEMA=$(yq '.generates[].schema' "${config}")
+GLOBAL_PARTITION_NAME_TEMPLATE=$(yq '.generates[].name_template' "${config}")
+GLOBAL_PAST=$(yq '.generates[].past // strenv(DEFAULT_PAST)' "${config}")
+GLOBAL_FUTURE=$(yq '.generates[].future // strenv(DEFAULT_FUTURE)' "${config}")
+GLOBAL_INTERVAL=$(yq '.generates[].interval' "${config}")
+GLOBAL_RETENTION=$(yq '.generates[].retention // strenv(DEFAULT_RETENTION)' "${config}")
+GLOBAL_CREATE_DEFAULT=$(yq '.generates[].create_default // strenv(DEFAULT_CREATE_DEFAULT)' "${config}")
+GLOBAL_SKIP_OVERLAPPING=$(yq '.generates[].skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")
+GLOBAL_STORAGE_PARAMETERS=$(yq '.generates[].storage_parameters // strenv(DEFAULT_STORAGE_PARAMETERS)' "${config}")
+GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
+
+export GLOBAL_TABLESPACE GLOBAL_SCHEMA GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL \
+    GLOBAL_RETENTION global_create_default_partition GLOBAL_SKIP_OVERLAPPING GLOBAL_STORAGE_PARAMETERS GLOBAL_TIMEZONE
+
+directory=$(yq '.generates[].directory' "${config}")
 
 # Process each partitioned table
-yq '.generates[].tables[] | @json' "$CONFIG" | while read -r table; do
-    TABLE_SCHEMA=$(echo "$table" | yq '.table_schema')
-    TABLE_NAME=$(echo "$table" | yq '.table_name')
-    PARTITION_SCHEMA=$(echo "$table" | yq '.partition.schema // strenv(GLOBAL_SCHEMA)')
+yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
+    table_schema=$(echo "${table}" | yq '.table_schema')
+    table_name=$(echo "${table}" | yq '.table_name')
+    partition_schema=$(echo "${table}" | yq '.partition.schema // strenv(GLOBAL_SCHEMA)')
     # If no schema is provided either in the partition config or in the global config, default to table schema
-    if [[ "$PARTITION_SCHEMA" == "null" ]]; then
-        PARTITION_SCHEMA=$TABLE_SCHEMA
+    if [[ "${partition_schema}" == "null" ]]; then
+        partition_schema="${table_schema}"
     fi
-    PARTITION_NAME_TEMPLATE=$(echo "$table" | yq '.partition.name_template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)')
-    PARTITION_TABLESPACE=$(echo "$table" | yq '.partition.tablespace // strenv(GLOBAL_TABLESPACE)')
-    PARTITION_INTERVAL=$(echo "$table" | yq '.partition.interval // strenv(GLOBAL_INTERVAL)')
-    PAST_PARTITIONS=$(echo "$table" | yq '.partition.past // strenv(GLOBAL_PAST)')
-    FUTURE_PARTITIONS=$(echo "$table" | yq '.partition.future // strenv(GLOBAL_FUTURE)')
-    RETENTION=$(echo "$table" | yq '.partition.retention // strenv(GLOBAL_RETENTION)')
-    TIMEZONE=$(echo "$table" | yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)')
+    partition_name_template=$(echo "${table}" | yq '.partition.name_template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)')
+    partition_tablespace=$(echo "${table}" | yq '.partition.tablespace // strenv(GLOBAL_TABLESPACE)')
+    partition_interval=$(echo "${table}" | yq '.partition.interval // strenv(GLOBAL_INTERVAL)')
+    past_partitions=$(echo "${table}" | yq '.partition.past // strenv(GLOBAL_PAST)')
+    future_partitions=$(echo "${table}" | yq '.partition.future // strenv(GLOBAL_FUTURE)')
+    retention=$(echo "${table}" | yq '.partition.retention // strenv(GLOBAL_RETENTION)')
+    timezone=$(echo "${table}" | yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)')
     # Because yq default value operator is used to provide alternative (or default) values
     # when a particular expression is either null or false, we cannot use it here since create_default is boolean
     # and we need to override it only when it is not set.
-    CREATE_DEFAULT_PARTITION=$(echo "$table" | yq '.partition.create_default')
-    if [[ "$CREATE_DEFAULT_PARTITION" == "null" ]]; then
-        CREATE_DEFAULT_PARTITION=$GLOBAL_CREATE_DEFAULT
+    create_default=$(echo "${table}" | yq '.partition.create_default')
+    if [[ "${create_default}" == "null" ]]; then
+        create_default="${GLOBAL_CREATE_DEFAULT}"
     fi
-    SKIP_OVERLAPPING=$(echo "$table" | yq '.partition.skip_overlapping // strenv(GLOBAL_SKIP_OVERLAPPING)')
-    STORAGE_PARAMETERS=$(echo "$table" | yq '.partition.storage_parameters // strenv(GLOBAL_STORAGE_PARAMETERS)')
+    skip_overlapping=$(echo "${table}" | yq '.partition.skip_overlapping // strenv(GLOBAL_SKIP_OVERLAPPING)')
+    storage_parameters=$(echo "${table}" | yq '.partition.storage_parameters // strenv(GLOBAL_STORAGE_PARAMETERS)')
 
-    TEMPLATE_TABLE=$(echo "$table" | yq '.template')
-    echo "Template table: $TEMPLATE_TABLE"
-    if [[ "$TEMPLATE_TABLE" == "DEFAULT_PARTITION" ]]; then
-        IFS=',' read -r TEMPLATE_TABLE_SCHEMA TEMPLATE_TABLE_NAME < <(
+    template_table=$(echo "${table}" | yq '.template')
+
+    if [[ "${template_table}" == "DEFAULT_PARTITION" ]]; then
+        IFS=',' read -r template_table_schema template_table_name < <(
             psql --username=postgres \
-                 --dbname=postgres \
-                 --tuples-only \
-                 --no-align \
-                 --quiet \
-                 --csv \
-                 -v "ON_ERROR_STOP=1" \
-                 -v table_schema="$TABLE_SCHEMA" \
-                 -v table_name="$TABLE_NAME" \
-                 <<EOF
+                --dbname=postgres \
+                --tuples-only \
+                --no-align \
+                --quiet \
+                --csv \
+                -v "ON_ERROR_STOP=1" \
+                -v table_schema="${table_schema}" \
+                -v table_name="${table_name}" \
+                <<EOF
 SELECT partition_schema
      , partition_name
   FROM pgpartium.get_default_partition(:'table_schema', :'table_name')
 EOF
-) || { echo "TemplateTableError: Default partition for table ${TABLE_SCHEMA}.${TABLE_NAME} not found."; exit 1; }
+        ) || {
+            echo "TemplateTableError: Default partition for table ${table_schema}.${table_name} not found."
+            exit 1
+        }
 
-    elif [[ "$TEMPLATE_TABLE" == "LATEST_PARTITION" ]]; then
-        IFS=',' read -r TEMPLATE_TABLE_SCHEMA TEMPLATE_TABLE_NAME < <(
+    elif [[ "${template_table}" == "LATEST_PARTITION" ]]; then
+        IFS=',' read -r template_table_schema template_table_name < <(
             psql --username=postgres \
-                 --dbname=postgres \
-                 --tuples-only \
-                 --no-align \
-                 --quiet \
-                 --csv \
-                 -v "ON_ERROR_STOP=1" \
-                 -v table_schema="$TABLE_SCHEMA" \
-                 -v table_name="$TABLE_NAME" \
-                 <<EOF
+                --dbname=postgres \
+                --tuples-only \
+                --no-align \
+                --quiet \
+                --csv \
+                -v "ON_ERROR_STOP=1" \
+                -v table_schema="${table_schema}" \
+                -v table_name="${table_name}" \
+                <<EOF
 SELECT partition_schema
      , partition_name
   FROM pgpartium.get_latest_partition(:'table_schema', :'table_name')
 EOF
-) || { echo "TemplateTableError: Latest partition for table ${TABLE_SCHEMA}.${TABLE_NAME} not found."; exit 1; }
+        ) || {
+            echo "TemplateTableError: Latest partition for table ${table_schema}.${table_name} not found."
+            exit 1
+        }
 
-    elif [[ "$TEMPLATE_TABLE" == "CURRENT_PARTITION" ]]; then
-        IFS=',' read -r TEMPLATE_TABLE_SCHEMA TEMPLATE_TABLE_NAME < <(
+    elif [[ "${template_table}" == "CURRENT_PARTITION" ]]; then
+        IFS=',' read -r template_table_schema template_table_name < <(
             psql --username=postgres \
-                 --dbname=postgres \
-                 --tuples-only \
-                 --no-align \
-                 --quiet \
-                 --csv \
-                 -v "ON_ERROR_STOP=1" \
-                 -v table_schema="$TABLE_SCHEMA" \
-                 -v table_name="$TABLE_NAME" \
-                 <<EOF
+                --dbname=postgres \
+                --tuples-only \
+                --no-align \
+                --quiet \
+                --csv \
+                -v "ON_ERROR_STOP=1" \
+                -v table_schema="${table_schema}" \
+                -v table_name="${table_name}" \
+                <<EOF
 SELECT partition_schema
      , partition_name
   FROM pgpartium.get_current_partition(:'table_schema', :'table_name')
 EOF
-) || { echo "TemplateTableError: Current partition for table ${TABLE_SCHEMA}.${TABLE_NAME} not found."; exit 1; }
+        ) || {
+            echo "TemplateTableError: Current partition for table ${table_schema}.${table_name} not found."
+            exit 1
+        }
 
     else
-        TEMPLATE_TABLE_SCHEMA=$(echo "$TEMPLATE_TABLE" | yq '.table_schema')
-        TEMPLATE_TABLE_NAME=$(echo "$TEMPLATE_TABLE" | yq '.table_name')
+        template_table_schema=$(echo "${template_table}" | yq '.table_schema // ""')
+        template_table_name=$(echo "${template_table}" | yq '.table_name // ""')
 
     fi
 
-    echo "Col1: $TEMPLATE_TABLE_SCHEMA"
-    echo "Col2: $TEMPLATE_TABLE_NAME"
-
-    echo "Table: $TABLE_SCHEMA.$TABLE_NAME"
-    echo "retention: $RETENTION"
-    echo "Partition interval: $PARTITION_INTERVAL"
-    # echo "  Partition: $PARTITION"
+    output_filename="${table_name}_partitions.sql"
 
     psql --username=postgres \
-         --dbname=postgres \
-         --tuples-only \
-         --no-align \
-         --quiet \
-         --echo-queries \
-         -v "ON_ERROR_STOP=1" \
-         -v table_schema="$TABLE_SCHEMA" \
-         -v table_name="$TABLE_NAME" \
-         -v partition_name_template="$PARTITION_NAME_TEMPLATE" \
-         -v partition_interval="$PARTITION_INTERVAL" \
-         -v past_partitions="$PAST_PARTITIONS" \
-         -v future_partitions="$FUTURE_PARTITIONS" \
-         -v create_default_partition="$CREATE_DEFAULT_PARTITION" \
-         -v partition_schema="$PARTITION_SCHEMA" \
-         -v partition_tablespace="$PARTITION_TABLESPACE" \
-         -v storage_parameters="$STORAGE_PARAMETERS" \
-         -v template_table_schema="$TEMPLATE_TABLE_SCHEMA" \
-         -v template_table_name="$TEMPLATE_TABLE_NAME" \
-         -v retention="$RETENTION" \
-         -v timezone="$TIMEZONE" \
-         -v skip_overlapping="$SKIP_OVERLAPPING" \
-         --output="/tmp/$TABLE_NAME.sql" \
-         <<EOF
+        --dbname=postgres \
+        --tuples-only \
+        --no-align \
+        --quiet \
+        --echo-queries \
+        -v "ON_ERROR_STOP=1" \
+        -v table_schema="${table_schema}" \
+        -v table_name="${table_name}" \
+        -v partition_name_template="${partition_name_template}" \
+        -v partition_interval="${partition_interval}" \
+        -v past_partitions="${past_partitions}" \
+        -v future_partitions="${future_partitions}" \
+        -v create_default_partition="${create_default}" \
+        -v partition_schema="${partition_schema}" \
+        -v partition_tablespace="${partition_tablespace}" \
+        -v storage_parameters="${storage_parameters}" \
+        -v template_table_schema="${template_table_schema}" \
+        -v template_table_name="${template_table_name}" \
+        -v retention="${retention}" \
+        -v timezone="${timezone}" \
+        -v skip_overlapping="${skip_overlapping}" \
+        --output="/tmp/${output_filename}" \
+        <<EOF
 SELECT *
   FROM pgpartium.generate_partitions(
     :'table_schema'
@@ -208,11 +215,12 @@ SELECT *
 )
 EOF
 
-# Move file to directory if it is not empty
-if [[ -s "/tmp/${TABLE_NAME}.sql" ]]; then
-    mv /tmp/${TABLE_NAME}.sql ${TABLE_NAME}.sql
-fi
-
-echo "Generated partitions for $TABLE_SCHEMA.$TABLE_NAME"
+    # If file is not empty, move it to directory
+    if [[ -s "/tmp/${output_filename}" ]]; then
+        mv "/tmp/${output_filename}" "${directory}/${output_filename}"
+        echo "Generated partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
+    else
+        echo "No partitions generated for ${table_schema}.${table_name}"
+    fi
 
 done

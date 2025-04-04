@@ -1,1 +1,3 @@
+DROP SCHEMA IF EXISTS pgpartium CASCADE;
+
 CREATE SCHEMA pgpartium;
