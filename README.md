@@ -15,15 +15,12 @@ select substring('CREATE INDEX tbl_con_ledger_id_idx2 ON partitions.enrichment__
 
 needs to adjust queries to start from pg_namespace
 
--- yq -o=json '.' config.yaml | jsonschema schema.json
-
 we need to prevent creating file on failure
 
 -- Raise note about usage of to_char internally, any character that should not be transformed needs to be escaped with double quotes
 internally we use to_char for formatting date/time in the generation of the partition names.
 
 -- outstanding
-1. Update schema to ensure top or partition level configs
-2. Add index_tablespace
-3. Add index_storage_parameters
-4. 
+1. Add index_tablespace
+2. Add index_storage_parameters
+3.

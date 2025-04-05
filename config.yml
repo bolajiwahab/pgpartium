@@ -1,6 +1,6 @@
 generates:
   - migration-tool: "flyway" # migration tool so we can generate versioned migration scripts
-    directory: "/Users/bolajiwahab" # directory to generate migration scripts in
+    directory: "/migrations" # directory to generate migration scripts in
     schema: "partitions2" # useful if partition schema is different from the parent schema
     # tablespace: "tablespace"
     # prefix: "public__" # prefix for partition names
