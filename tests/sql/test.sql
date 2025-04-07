@@ -22,7 +22,7 @@ BEGIN;
 SET search_path = 'pgtap';
 
 -- Plan the tests.
-SELECT plan(12);
+SELECT plan(18);
 
 -- Run the tests.
 SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('', 'transactions', '', '1 month')$$
@@ -83,6 +83,38 @@ SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'order
   , '0A000'
   , 'partitioning on data type "uuid" is not supported'
   , 'fail on unsupported data type'
+);
+
+SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_template_table_schema=>'', p_template_table_name=>'charges_template')$$
+  , '42P01'
+  , 'template table ""."charges_template" does not exist'
+  , 'fail on empty template table schema'
+);
+
+SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_template_table_schema=>'public', p_template_table_name=>'')$$
+  , '42P01'
+  , 'template table "public"."" does not exist'
+  , 'fail on empty template table name'
+);
+
+SELECT lives_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_template_table_schema=>'', p_template_table_name=>'')$$
+  , 'pass on empty template table schema and name'
+);
+
+SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_template_table_schema=>NULL, p_template_table_name=>'charges_template')$$
+  , '42P01'
+  , 'template table "<NULL>"."charges_template" does not exist'
+  , 'fail on null template table schema'
+);
+
+SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_template_table_schema=>'public', p_template_table_name=>NULL)$$
+  , '42P01'
+  , 'template table "public"."<NULL>" does not exist'
+  , 'fail on null template table name'
+);
+
+SELECT lives_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_template_table_schema=>NULL, p_template_table_name=>NULL)$$
+  , 'pass on null template table schema and name'
 );
 
 SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '', '1 month')$$

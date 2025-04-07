@@ -81,10 +81,14 @@ BEGIN
         USING ERRCODE = 'invalid_parameter_value';
     END IF;
 
+    DROP TABLE IF EXISTS current_bounds;
+
     CREATE TEMPORARY TABLE current_bounds ON COMMIT DROP AS
     SELECT lower_bound
          , upper_bound
       FROM pgpartium.get_partition_bounds(p_table_schema, p_table_name);
+
+    DROP TABLE IF EXISTS partition_constraints;
 
     CREATE TEMPORARY TABLE partition_constraints ON COMMIT DROP AS
     WITH template_constraints AS (
@@ -106,6 +110,8 @@ BEGIN
       LEFT JOIN parent_constraints
         ON template_constraints.constraint_definition = parent_constraints.constraint_definition
      WHERE parent_constraints.constraint_definition IS NULL;
+
+    DROP TABLE IF EXISTS partition_indexes;
 
     CREATE TEMPORARY TABLE partition_indexes ON COMMIT DROP AS
     WITH template_indexes AS (
@@ -130,6 +136,8 @@ BEGIN
       LEFT JOIN parent_indexes
         ON template_indexes.index_definition = parent_indexes.index_definition
      WHERE parent_indexes.index_definition IS NULL;
+
+    DROP TABLE IF EXISTS partition_triggers;
 
     CREATE TEMPORARY TABLE partition_triggers ON COMMIT DROP AS
     WITH template_triggers AS (

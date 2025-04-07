@@ -62,6 +62,28 @@ AS $$
 $$;
 
 
+CREATE OR REPLACE FUNCTION _error_diag( TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT )
+RETURNS TEXT
+LANGUAGE sql IMMUTABLE
+AS $$
+    SELECT COALESCE(
+               COALESCE( NULLIF($1, '') || ': ', '' ) || COALESCE( NULLIF($2, ''), '' ),
+               'NO ERROR FOUND'
+           )
+        || COALESCE(E'\n        DETAIL:     ' || nullif($3, ''), '')
+        || COALESCE(E'\n        HINT:       ' || nullif($4, ''), '')
+        || COALESCE(E'\n        SCHEMA:     ' || nullif($6, ''), '')
+        || COALESCE(E'\n        TABLE:      ' || nullif($7, ''), '')
+        || COALESCE(E'\n        COLUMN:     ' || nullif($8, ''), '')
+        || COALESCE(E'\n        CONSTRAINT: ' || nullif($9, ''), '')
+        || COALESCE(E'\n        TYPE:       ' || nullif($10, ''), '')
+        -- We need to manually indent all the context lines
+        || COALESCE(E'\n        CONTEXT:\n'
+               || regexp_replace(NULLIF( $5, ''), '^', '            ', 'gn'
+           ), '');
+$$;
+
+
 CREATE OR REPLACE FUNCTION diag ( msg text )
 RETURNS TEXT
 LANGUAGE sql strict
