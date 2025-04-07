@@ -38,8 +38,8 @@ generates:
         template:
            table_schema: "public"
            table_name: "tbl_con"
-      - table_schema: "public"
-        table_name: "measurement"
+      # - table_schema: "public"
+      #   table_name: "measurement"
         # partition:
         #   create_default: true
         # partition:

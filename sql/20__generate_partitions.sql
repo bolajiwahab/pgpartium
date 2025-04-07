@@ -47,6 +47,30 @@ BEGIN
         USING ERRCODE = 'undefined_table';
     END IF;
 
+    IF NOT v_is_parent_partitioned THEN
+        RAISE 'table "%"."%" is not partitioned', p_table_schema, p_table_name
+        USING ERRCODE = 'undefined_table';
+    END IF;
+
+    IF v_partitioning_details.strategy != 'RANGE' THEN
+        RAISE '"%" partitioning is not supported', v_partitioning_details.strategy
+        USING ERRCODE = 'feature_not_supported',
+                 HINT = 'table ' || '"' || p_table_schema || '"' || '.' || '"' || p_table_name || '"' || ' must be partitioned by range';
+    END IF;
+
+    IF v_partitioning_details.number_of_keys > 1 THEN
+        RAISE 'multi column partitioned tables are not supported'
+        USING ERRCODE = 'feature_not_supported',
+                 HINT = 'table ' || '"' || p_table_schema || '"' || '.' || '"' || p_table_name || '"' || ' is partitioned on more than one column';
+    END IF;
+
+    IF v_partitioning_details.keys_data_types NOT IN ('date', 'timestamptz', 'timestamp', 'int4', 'int8') THEN
+        RAISE 'partitioning on data type "%" is not supported', v_partitioning_details.keys_data_types
+        USING ERRCODE = 'feature_not_supported',
+               DETAIL = 'table ' || '"' || p_table_schema || '"' || '.' || '"' || p_table_name || '"' || ' is partitioned on a data type that is not supported',
+                 HINT = 'supported data types are: date, timestamp with time zone, timestamp without time zone, integer, and bigint';
+    END IF;
+
     IF (COALESCE(p_template_table_schema, '') > '' OR COALESCE(p_template_table_name, '') > '') AND NOT v_template_exists THEN
         RAISE 'template table "%"."%" does not exist', p_template_table_schema, p_template_table_name
         USING ERRCODE = 'undefined_table';
@@ -55,30 +79,6 @@ BEGIN
     IF COALESCE(p_partition_name_template, '') = '' THEN
         RAISE 'name template is required'
         USING ERRCODE = 'invalid_parameter_value';
-    END IF;
-
-    IF NOT v_is_parent_partitioned THEN
-        RAISE 'table "%"."%" is not partitioned', p_table_schema, p_table_name
-        USING ERRCODE = 'undefined_table';
-    END IF;
-
-    IF v_partitioning_details.strategy != 'RANGE' THEN
-        RAISE '"%" partitioning is not supported', v_partitioning_details.strategy
-        USING ERRCODE = 'undefined_table',
-                 HINT = 'table ' || '"' || p_table_schema || '"' || '.' || '"' || p_table_name || '"' || ' must be partitioned by range';
-    END IF;
-
-    IF v_partitioning_details.number_of_keys > 1 THEN
-        RAISE 'multi column partitioned tables are not supported'
-        USING ERRCODE = 'undefined_table',
-                 HINT = 'table ' || '"' || p_table_schema || '"' || '.' || '"' || p_table_name || '"' || ' is partitioned on more than one column';
-    END IF;
-
-    IF v_partitioning_details.keys_data_types NOT IN ('date', 'timestamptz', 'timestamp', 'int4', 'int8') THEN
-        RAISE 'partitioning on data type "%" is not supported', v_partitioning_details.keys_data_types
-        USING ERRCODE = 'undefined_table',
-               DETAIL = 'table ' || '"' || p_table_schema || '"' || '.' || '"' || p_table_name || '"' || ' is partitioned on a data type that is not supported',
-                 HINT = 'supported data types are: date, timestamp with time zone, timestamp without time zone, integer, and bigint';
     END IF;
 
     CREATE TEMPORARY TABLE current_bounds ON COMMIT DROP AS

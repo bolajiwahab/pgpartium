@@ -23,4 +23,5 @@ internally we use to_char for formatting date/time in the generation of the part
 -- outstanding
 1. Add index_tablespace
 2. Add index_storage_parameters
-3.
+3. ci with shellcheck and shellformat and tests
+4.
