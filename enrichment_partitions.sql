@@ -37,4 +37,3 @@ CREATE TABLE partitions2.enrichment__default
 CREATE INDEX enrichment__default_created_expires_at_idx
     ON partitions2.enrichment__default
  USING btree (created, expires_at);
-

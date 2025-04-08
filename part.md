@@ -83,7 +83,7 @@ To enforce per partition uniqueness, we have two options:
 
     ```sql
     CREATE TABLE public.test_2025_03
-        PARTITION OF public.test 
+        PARTITION OF public.test
         FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
     ```
 
@@ -150,7 +150,7 @@ To enforce per partition uniqueness, we have two options:
 
     ```sql
     CREATE TABLE public.test_2025_03
-        PARTITION OF public.test 
+        PARTITION OF public.test
         FOR VALUES FROM ('2025-03-01') TO ('2025-04-01');
     ```
 

@@ -1,0 +1,81 @@
+---
+default_language_version:
+  python: python3.12
+
+default_install_hook_types: [pre-commit, commit-msg]
+
+repos:
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.0.0
+    hooks:
+      - id: conventional-pre-commit
+        name: Lint commit messages
+        entry: conventional-pre-commit
+        language: python
+        stages: [commit-msg]
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        name: Lint shell scripts
+        entry: shellcheck
+        language: python
+        types: [shell]
+        stages: [pre-commit]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+      - id: trailing-whitespace
+        stages: [pre-commit]
+        name: Trim Trailing Whitespace
+        entry: trailing-whitespace-fixer
+        language: python
+        types: [text]
+
+      - id: end-of-file-fixer
+        stages: [pre-commit]
+        name: Add a blank line at end of a file
+        entry: end-of-file-fixer
+        language: python
+        types: [text]
+
+      - id: mixed-line-ending
+        stages: [pre-commit]
+        name: Ensure line feed character (LF)
+        entry: mixed-line-ending
+        language: python
+        types: [text]
+        args: [--fix=lf]
+
+      - id: check-yaml
+        stages: [pre-commit]
+        name: Check yaml
+        entry: check-yaml
+        language: python
+        types: [yaml]
+        args: [--unsafe]
+
+  # Formatters should be run late so that they can re-format
+  # any prior changes
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.11.0-1
+    hooks:
+      - id: shfmt
+        name: Format shell scripts
+        entry: shfmt
+        args: [--indent=4]
+        stages: [pre-commit]
+        types: [shell]
+
+  # - repo: https://github.com/adrienverge/yamllint.git
+  #   rev: v1.37.0
+  #   hooks:
+  #     - id: yamllint
+  #       stages: [pre-commit]
+  #       name: Lint yaml files
+  #       entry: yamllint
+  #       language: python
+  #       types: [yaml]
+  #       args: [--strict]

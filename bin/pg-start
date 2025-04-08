@@ -4,7 +4,7 @@ usage()
 {
 cat <<-EOF
     ${0##*/}
-    
+
     Creates a postgres cluster for a postgres version and start it.
 
     OPTIONS:
