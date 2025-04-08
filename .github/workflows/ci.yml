@@ -1,8 +1,12 @@
+---
+# yamllint disable rule:line-length
 name: CI
 
-on:
-  pull_request:
+on:  # yamllint disable-line rule:truthy
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
