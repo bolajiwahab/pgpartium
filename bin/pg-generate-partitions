@@ -38,8 +38,7 @@ if [[ -z "${config}" ]]; then
 fi
 
 # Setup infrastructure
-find sql -maxdepth 1 -type f -name "*.sql" -print0 | sort -z |
-    xargs -0 -I {} psql -v "ON_ERROR_STOP=1" --quiet --username=postgres --dbname=postgres -f "{}"
+pg-setup-infra
 
 # Validate schema
 yq -o=json '.' "${config}" | jsonschema schema.json

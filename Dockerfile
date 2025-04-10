@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim AS pgpartium
+FROM debian:bookworm-slim AS base
 
 ADD https://salsa.debian.org/postgresql/postgresql-common/-/raw/master/pgdg/apt.postgresql.org.sh /usr/local/bin/
 
@@ -8,9 +8,7 @@ COPY createcluster.conf /etc/postgresql-common/createcluster.conf
 
 COPY bin/* /usr/local/bin/
 
-# RUN chmod +x /usr/local/bin/partium
-
-WORKDIR /app
+WORKDIR /src
 
 COPY sql sql
 
@@ -32,5 +30,11 @@ RUN wget --no-verbose https://github.com/mikefarah/yq/releases/download/v4.45.1/
 
 # Switch to non-root user.
 USER 5000
+
+CMD ["/bin/bash"]
+
+FROM base AS test
+
+COPY tests tests
 
 CMD ["/bin/bash"]

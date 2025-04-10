@@ -14,16 +14,6 @@ repos:
         language: python
         stages: [commit-msg]
 
-  - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
-    hooks:
-      - id: shellcheck
-        name: Lint shell scripts
-        entry: shellcheck
-        language: python
-        types: [shell]
-        stages: [pre-commit]
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
@@ -56,6 +46,16 @@ repos:
         language: python
         types: [yaml]
         args: [--unsafe]
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        name: Lint shell scripts
+        entry: shellcheck
+        language: python
+        types: [shell]
+        stages: [pre-commit]
 
   # Formatters should be run late so that they can re-format
   # any prior changes

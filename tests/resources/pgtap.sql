@@ -1,8 +1,10 @@
--- Sourced from https://github.com/theory/pgtap/blob/main/sql/pgtap.sql.in
+-- Set up pgtap for testing
 
-CREATE SCHEMA IF NOT EXISTS pgtap;
+CREATE SCHEMA pgtap;
 
 SET search_path = 'pgtap';
+
+-- Sourced from https://github.com/theory/pgtap/blob/main/sql/pgtap.sql.in
 
 CREATE OR REPLACE FUNCTION _get ( text )
 RETURNS integer

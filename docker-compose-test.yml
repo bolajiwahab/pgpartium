@@ -1,0 +1,19 @@
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    container_name: test
+    user: root
+    tty: true
+    command: >
+      sh -c "
+        pg-start -v ${PGVERSION:-17} &&
+        pg-setup-infra &&
+        psql --username=postgres --dbname=postgres --file=tests/test_generate_partitions.sql &&
+        pg-generate-partitions -c /migrations/config.yml &&
+        pg-expire-partitions -c /migrations/config.yml
+      "
+    volumes:
+      - .:/migrations

@@ -13,7 +13,30 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    name: Run pre-commit
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-    - uses: pre-commit/action@v3.0.1
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+
+    - name: Install and run pre-commit
+      uses: pre-commit/action@v3.0.1
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        postgresql:
+          - 15
+          - 16
+          - 17
+    name: Run tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        run: PGVERSION=${{ matrix.postgresql }} ./docker_integration_test.sh

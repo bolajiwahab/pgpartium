@@ -1,3 +1,5 @@
+-- Seed data for testing
+
 -- 1. Partitioned tables by timestamptz
 /*
     template table: no

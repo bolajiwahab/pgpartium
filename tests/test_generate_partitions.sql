@@ -14,10 +14,10 @@
 
 BEGIN;
 -- Load the TAP functions.
-\i tests/sql/pgtap.sql
+\i tests/resources/pgtap.sql
 
 -- Load the test data.
-\i tests/sql/seed.sql
+\i tests/resources/seed.sql
 
 SET search_path = 'pgtap';
 
@@ -133,4 +133,3 @@ SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'trans
 SELECT * FROM finish(true);
 
 ROLLBACK;
--- run the test psql -d try -Xf test.sql

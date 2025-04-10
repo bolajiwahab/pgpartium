@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Setup infrastructure
+find sql -type f -iname "*.sql" -print0 | sort -z | xargs -0 printf -- ' -f %s' | xargs -t psql --quiet -v "ON_ERROR_STOP=1" --single-transaction --username=postgres --dbname=postgres
