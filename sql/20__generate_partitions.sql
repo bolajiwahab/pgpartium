@@ -70,6 +70,15 @@ BEGIN
                  HINT = 'supported data types are: date, timestamp with time zone, timestamp without time zone, integer, and bigint';
     END IF;
 
+    IF p_partition_schema IS NOT NULL AND NOT EXISTS (
+        SELECT 1
+          FROM pg_catalog.pg_namespace
+         WHERE nspname = p_partition_schema
+    ) THEN
+        RAISE 'partition schema "%" does not exist', p_partition_schema
+        USING ERRCODE = 'invalid_schema_name';
+    END IF;
+
     IF (COALESCE(p_template_table_schema, '') > '' OR COALESCE(p_template_table_name, '') > '') AND NOT v_template_exists THEN
         RAISE 'template table "%"."%" does not exist', p_template_table_schema, p_template_table_name
         USING ERRCODE = 'undefined_table';

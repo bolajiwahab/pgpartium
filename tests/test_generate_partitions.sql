@@ -17,7 +17,7 @@ BEGIN;
 SET search_path TO pgtap, mock, public, pg_catalog;
 
 -- Plan the tests.
-SELECT plan(19);
+SELECT plan(21);
 
 -- Run the tests.
 -- Group: Exceptions
@@ -81,6 +81,18 @@ SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'order
   , 'fail on unsupported data type'
 );
 
+SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_partition_schema=>'')$$
+  , '3F000'
+  , 'partition schema "" does not exist'
+  , 'fail on empty partition schema'
+);
+
+SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_partition_schema=>'nonexistent')$$
+  , '3F000'
+  , 'partition schema "nonexistent" does not exist'
+  , 'fail on non existent partition schema'
+);
+
 SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_template_table_schema=>'', p_template_table_name=>'charges_template')$$
   , '42P01'
   , 'template table ""."charges_template" does not exist'
@@ -126,13 +138,16 @@ SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'trans
 );
 
 -- Group: Outputs
-PREPARE result_have AS SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_template_table_schema=>'', p_template_table_name=>'');
-PREPARE result_want AS VALUES ($$CREATE TABLE public.public__transactions__2025_03
+PREPARE result_with_defaults AS
+SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month');
+
+PREPARE expected_with_defaults
+AS VALUES ($$CREATE TABLE public.public__transactions__2025_03
     PARTITION OF public.transactions
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 $$);
 
-SELECT results_eq('result_have', 'result_want', 'Meaning of Life');
+SELECT results_eq('result_with_defaults', 'expected_with_defaults', 'result with defaults');
 
 -- Finish the tests and clean up.
 SELECT * FROM finish(true);
