@@ -13,18 +13,14 @@
 
 
 BEGIN;
--- Load the TAP functions.
-\i tests/resources/pgtap.sql
 
--- Load the test data.
-\i tests/resources/seed.sql
-
-SET search_path = 'pgtap';
+SET search_path TO pgtap, mock, public, pg_catalog;
 
 -- Plan the tests.
-SELECT plan(18);
+SELECT plan(19);
 
 -- Run the tests.
+-- Group: Exceptions
 SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('', 'transactions', '', '1 month')$$
   , '42P01'
   , 'table ""."transactions" does not exist'
@@ -128,6 +124,15 @@ SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'trans
   , 'name template is required'
   , 'fail on null name template'
 );
+
+-- Group: Outputs
+PREPARE result_have AS SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_template_table_schema=>'', p_template_table_name=>'');
+PREPARE result_want AS VALUES ($$CREATE TABLE public.public__transactions__2025_03
+    PARTITION OF public.transactions
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+$$);
+
+SELECT results_eq('result_have', 'result_want', 'Meaning of Life');
 
 -- Finish the tests and clean up.
 SELECT * FROM finish(true);

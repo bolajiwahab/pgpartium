@@ -6,7 +6,7 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
   , p_past integer = 0
   , p_future integer = 0
   , p_create_default boolean = false
-  , p_partition_schema text = 'public'
+  , p_partition_schema text = NULL
   , p_partition_tablespace text = 'pg_default'
   , p_storage_parameters jsonb = '{}'
   , p_template_table_schema text = NULL
@@ -17,7 +17,6 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
-SET search_path TO ''
 AS $BODY$
 DECLARE
     v_partitions               record;
@@ -238,7 +237,7 @@ BEGIN
                         || CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END
                         || format('%1$I', replace(index_name, p_template_table_name, v_partitions.partition_name))
                         || E'\n    ON '
-                        || format('%1$I.%2$I', p_partition_schema, v_partitions.partition_name)
+                        || format('%1$I.%2$I', COALESCE(p_partition_schema, p_table_schema), v_partitions.partition_name)
                         || E'\n '
                         || index_definition
                         , COALESCE(' ' || index_predicate, '')
@@ -269,7 +268,7 @@ BEGIN
                     || ' '
                     || trigger_event
                     || E'\n    ON '
-                    || format('%1$I.%2$I', p_partition_schema, v_partitions.partition_name)
+                    || format('%1$I.%2$I', COALESCE(p_partition_schema, p_table_schema), v_partitions.partition_name)
                     || E'\n   '
                     || trigger_body
                     || E';\n'
@@ -293,7 +292,7 @@ BEGIN
 $SQL$CREATE TABLE %1$I.%2$I
     PARTITION OF %3$I.%4$I%5$s
     FOR VALUES FROM (%6$L) TO (%7$L)%8$s%9$s;
-$SQL$,          p_partition_schema                                                                                           -- <1>
+$SQL$,          COALESCE(p_partition_schema, p_table_schema)                                                                 -- <1>
               , v_partitions.partition_name                                                                                  -- <2>
               , p_table_schema                                                                                               -- <3>
               , p_table_name                                                                                                 -- <4>
@@ -364,7 +363,7 @@ $SQL$,          p_partition_schema                                              
                     || CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END
                     || format('%1$I', replace(index_name, p_template_table_name, v_default_partition_name))
                     || E'\n    ON '
-                    || format('%1$I.%2$I', p_partition_schema, v_default_partition_name)
+                    || format('%1$I.%2$I', COALESCE(p_partition_schema, p_table_schema), v_default_partition_name)
                     || E'\n '
                     || index_definition
                     , COALESCE(index_predicate, '')
@@ -395,7 +394,7 @@ $SQL$,          p_partition_schema                                              
                 || ' '
                 || trigger_event
                 || E'\n    ON '
-                || format('%1$I.%2$I', p_partition_schema, v_default_partition_name)
+                || format('%1$I.%2$I', COALESCE(p_partition_schema, p_table_schema), v_default_partition_name)
                 || E'\n   '
                 || trigger_body
                 || E';\n'
@@ -419,7 +418,7 @@ $SQL$,          p_partition_schema                                              
 $SQL$CREATE TABLE %1$I.%2$I
     PARTITION OF %3$I.%4$I%5$s
     DEFAULT%6$s%7$s;
-$SQL$,      p_partition_schema                                              -- <1>
+$SQL$,      COALESCE(p_partition_schema, p_table_schema)                    -- <1>
           , v_default_partition_name                                        -- <2>
           , p_table_schema                                                  -- <3>
           , p_table_name                                                    -- <4>

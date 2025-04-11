@@ -39,4 +39,4 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run tests
-        run: PGVERSION=${{ matrix.postgresql }} ./docker_integration_test.sh
+        run: PGVERSION=${{ matrix.postgresql }} ./run_tests.sh

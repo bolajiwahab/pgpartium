@@ -38,6 +38,7 @@ if [[ -z "${config}" ]]; then
 fi
 
 # # Setup infrastructure
+echo "Setting up infra"
 pg-setup-infra
 
 # Validate schema
