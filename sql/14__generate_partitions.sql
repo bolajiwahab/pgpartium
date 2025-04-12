@@ -315,7 +315,10 @@ BEGIN
 
             -- Partition definition
             v_ddl := v_ddl || format(
-/* This alignment is needed to have the right indentation in the generated migration scripts */
+/*
+This alignment is needed to have the right indentation in the generated migration scripts.
+We could use new lines characters instead, but that would require escaping with `E` which does not work with dollar quoting.
+*/
 $SQL$CREATE TABLE %1$I.%2$I
     PARTITION OF %3$I.%4$I%5$s
     FOR VALUES FROM (%6$L) TO (%7$L)%8$s%9$s;
@@ -439,8 +442,8 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
 
         -- Get storage parameters
         SELECT COALESCE(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
-            INTO v_storage_clause
-            FROM jsonb_each_text(p_partition_storage_parameters);
+          INTO v_storage_clause
+          FROM jsonb_each_text(p_partition_storage_parameters);
 
         IF v_ddl != '' THEN
             v_ddl := v_ddl || E'\n';
@@ -448,7 +451,10 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
 
         v_ddl := v_ddl || format(
 
-/* This alignment is needed to have the right indentation in the generated migration scripts */
+/*
+This alignment is needed to have the right indentation in the generated migration scripts.
+We could use new lines characters instead, but that would require escaping with `E` which does not work with dollar quoting.
+*/
 $SQL$CREATE TABLE %1$I.%2$I
     PARTITION OF %3$I.%4$I%5$s
     DEFAULT%6$s%7$s;

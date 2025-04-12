@@ -21,7 +21,8 @@ we need to prevent creating file on failure
 internally we use to_char for formatting date/time in the generation of the partition names.
 
 -- outstanding
-1. Add index_tablespace
-2. Add index_storage_parameters
-3. ci with shellcheck and shellformat and tests - DONE
-4. adjust config.yml as sample and update
+1. adjust config.yml as sample and update
+2. update bash scripts with the new options
+3. use named parameters instead of positional parameters in the bash scripts
+4. tests for the bash scripts?
+5.
