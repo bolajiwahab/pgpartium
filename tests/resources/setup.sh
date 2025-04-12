@@ -44,6 +44,11 @@ fi
 
 apt-get install -y postgresql-"${PGVERSION}"-pgtap
 
+echo "Creating tablespace pgpartium"
+mkdir -pv /var/lib/postgresql/tablespaces/pgpartium
+chown -R postgres:postgres /var/lib/postgresql/tablespaces/pgpartium
+psql -v "ON_ERROR_STOP=1" --quiet --username=postgres --dbname=postgres -c "CREATE TABLESPACE pgpartium LOCATION '/var/lib/postgresql/tablespaces/pgpartium';"
+
 echo "Creating pgtap extension"
 psql -v "ON_ERROR_STOP=1" --quiet --username=postgres --dbname=postgres -c "CREATE EXTENSION pgtap;"
 

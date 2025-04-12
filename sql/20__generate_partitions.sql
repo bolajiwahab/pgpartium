@@ -6,9 +6,10 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
   , p_past integer = 0
   , p_future integer = 0
   , p_create_default boolean = false
+  , p_default_partition_name_template text = NULL
   , p_partition_schema text = NULL
   , p_partition_tablespace text = 'pg_default'
-  , p_storage_parameters jsonb = '{}'
+  , p_partition_storage_parameters jsonb = '{}'
   , p_template_table_schema text = NULL
   , p_template_table_name text = NULL
   , p_retention interval = '-1'
@@ -70,7 +71,18 @@ BEGIN
                  HINT = 'supported data types are: date, timestamp with time zone, timestamp without time zone, integer, and bigint';
     END IF;
 
-    IF p_partition_schema IS NOT NULL AND NOT EXISTS (
+    IF COALESCE(p_partition_name_template, '') = '' THEN
+        RAISE 'name template is required'
+        USING ERRCODE = 'invalid_parameter_value';
+    END IF;
+
+    IF p_create_default AND COALESCE(p_default_partition_name_template, '') = '' THEN
+        RAISE 'creating default partition requires default partition name template'
+        USING ERRCODE = 'invalid_parameter_value';
+    END IF;
+
+    IF p_partition_schema IS NOT NULL
+    AND NOT EXISTS (
         SELECT 1
           FROM pg_catalog.pg_namespace
          WHERE nspname = p_partition_schema
@@ -79,14 +91,18 @@ BEGIN
         USING ERRCODE = 'invalid_schema_name';
     END IF;
 
+    IF NOT EXISTS (
+        SELECT 1
+          FROM pg_catalog.pg_tablespace
+         WHERE spcname = p_partition_tablespace
+    ) THEN
+        RAISE 'partition tablespace "%" does not exist', p_partition_tablespace
+        USING ERRCODE = 'undefined_object';
+    END IF;
+
     IF (COALESCE(p_template_table_schema, '') > '' OR COALESCE(p_template_table_name, '') > '') AND NOT v_template_exists THEN
         RAISE 'template table "%"."%" does not exist', p_template_table_schema, p_template_table_name
         USING ERRCODE = 'undefined_table';
-    END IF;
-
-    IF COALESCE(p_partition_name_template, '') = '' THEN
-        RAISE 'name template is required'
-        USING ERRCODE = 'invalid_parameter_value';
     END IF;
 
     DROP TABLE IF EXISTS current_bounds;
@@ -213,7 +229,7 @@ BEGIN
             CONTINUE;
         END IF;
 
-        IF age(CAST(v_partitions.upper_bound AS timestamptz)) > NULLIF(p_retention, '-1') THEN
+        IF age(now(), CAST(v_partitions.upper_bound AS timestamptz)) > NULLIF(p_retention, '-1') THEN
             CONTINUE;
         END IF;
 
@@ -289,7 +305,7 @@ BEGIN
             -- Get storage parameters
             SELECT COALESCE(E'\nWITH (' || string_agg(format('%1$I = %2$L', key, value), ', ') || ')', '')
               INTO v_storage_clause
-              FROM jsonb_each_text(p_storage_parameters);
+              FROM jsonb_each_text(p_partition_storage_parameters);
 
             IF v_ddl != '' THEN
                 v_ddl := v_ddl || E'\n';
@@ -348,7 +364,14 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
     AND NOT EXISTS (
         SELECT pgpartium.get_default_partition(p_table_schema, p_table_name)
     ) THEN
-        SELECT p_table_name || '__default'
+        SELECT replace(
+                    replace(
+                        p_default_partition_name_template
+                      , '{table}'
+                      , p_table_name)
+                  , '{schema}'
+                  , p_table_schema
+               )
           INTO v_default_partition_name;
         -- Get constraint definition
         SELECT string_agg(
@@ -415,7 +438,7 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
         -- Get storage parameters
         SELECT COALESCE(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
             INTO v_storage_clause
-            FROM jsonb_each_text(p_storage_parameters);
+            FROM jsonb_each_text(p_partition_storage_parameters);
 
         IF v_ddl != '' THEN
             v_ddl := v_ddl || E'\n';
@@ -442,16 +465,16 @@ $SQL$,      COALESCE(p_partition_schema, p_table_schema)                    -- <
                 ELSE ''
             END
         );
-    END IF;
 
-    IF v_indexes IS NOT NULL THEN
-        v_ddl := v_ddl || E'\n' || v_indexes;
-    END IF;
+        IF v_indexes IS NOT NULL THEN
+            v_ddl := v_ddl || E'\n' || v_indexes;
+        END IF;
 
-    IF v_triggers IS NOT NULL THEN
-        v_ddl := v_ddl || E'\n' || v_triggers;
-    END IF;
+        IF v_triggers IS NOT NULL THEN
+            v_ddl := v_ddl || E'\n' || v_triggers;
+        END IF;
 
+    END IF;
     -- Create default partition: END
 
     IF v_ddl != '' THEN

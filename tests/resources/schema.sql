@@ -3,7 +3,7 @@ CREATE SCHEMA partitions;
 
 -- 1. Partitioned tables by timestamptz.
 /*
-    template table: no
+    template table: yes
     initial partitions: 0
     interval: 1 month
     name template: '{schema}__{table}__YYYY_MM'
@@ -19,9 +19,25 @@ CREATE TABLE public.transactions (
   , status text NOT NULL
   , created_at timestamptz NOT NULL
   , updated_at timestamptz NOT NULL
-  , CONSTRAINT transactions_pkey PRIMARY KEY (transaction_id, created_at)
 )
 PARTITION BY RANGE (created_at);
+
+CREATE TABLE public.transactions_template (
+    transaction_id uuid NOT NULL
+  , user_id uuid NOT NULL
+  , account_id uuid NOT NULL
+  , status text NOT NULL
+  , created_at timestamptz NOT NULL
+  , CONSTRAINT transactions_template_pkey PRIMARY KEY (transaction_id)
+  , CONSTRAINT transactions_template_user_id_key UNIQUE (user_id)
+);
+
+CREATE INDEX transactions_template_account_id_idx
+    ON public.transactions_template (account_id);
+
+CREATE INDEX transactions_template_status_active_idx
+    ON public.transactions_template (status)
+ WHERE status = 'active';
 
 /*
     template table: no
