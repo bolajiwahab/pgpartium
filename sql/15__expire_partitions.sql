@@ -1,7 +1,7 @@
 CREATE OR REPLACE FUNCTION pgpartium.expire_partitions (
     p_table_schema text
   , p_table_name text
-  , p_retention interval
+  , p_retention interval = '-1'
   , p_detach_first boolean = false
   , p_detach_concurrently boolean = false
   , p_timezone text = 'UTC'
