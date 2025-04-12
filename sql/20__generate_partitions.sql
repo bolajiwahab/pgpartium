@@ -9,7 +9,9 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
   , p_default_partition_name_template text = NULL
   , p_partition_schema text = NULL
   , p_partition_tablespace text = 'pg_default'
+  , p_index_tablespace text = 'pg_default'
   , p_partition_storage_parameters jsonb = '{}'
+  , p_index_storage_parameters jsonb = '{}'
   , p_template_table_schema text = NULL
   , p_template_table_name text = NULL
   , p_retention interval = '-1'
@@ -267,15 +269,15 @@ BEGIN
                         || index_definition
                         , COALESCE(' ' || index_predicate, '')
                         , CASE
-                            WHEN p_partition_tablespace != 'pg_default'
-                              THEN format(E'\nTABLESPACE %1$I', p_partition_tablespace)
+                            WHEN COALESCE(p_index_tablespace, p_partition_tablespace) != 'pg_default'
+                              THEN format(E'\nTABLESPACE %1$I', COALESCE(p_index_tablespace, p_partition_tablespace))
                             ELSE ''
                           END
                           || E'\n ' || COALESCE(index_predicate, '')
                     )
                     || CASE
-                         WHEN index_predicate IS NULL AND p_partition_tablespace != 'pg_default'
-                           THEN format(E'\nTABLESPACE %1$I', p_partition_tablespace)
+                         WHEN index_predicate IS NULL AND COALESCE(p_index_tablespace, p_partition_tablespace) != 'pg_default'
+                           THEN format(E'\nTABLESPACE %1$I', COALESCE(p_index_tablespace, p_partition_tablespace))
                            ELSE ''
                        END
                     || E';\n'
@@ -326,15 +328,15 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
                     ELSE  E' (\n' || v_constraints || E'\n    )'
                 END
               , CASE v_partitioning_details.keys_data_types                                                                  -- <6>
-                    WHEN 'timestamptz' THEN v_partitions.lower_bound::text
-                    WHEN 'timestamp'   THEN v_partitions.lower_bound::text
+                    WHEN 'timestamptz' THEN v_partitions.lower_bound::timestamptz::text
+                    WHEN 'timestamp'   THEN v_partitions.lower_bound::timestamp::text
                     WHEN 'date'        THEN v_partitions.lower_bound::date::text
                     WHEN 'int4'        THEN (EXTRACT(EPOCH FROM v_partitions.lower_bound)::integer)::text
                     WHEN 'int8'        THEN (EXTRACT(EPOCH FROM v_partitions.lower_bound)::bigint * 1000)::text
                 END
               , CASE v_partitioning_details.keys_data_types                                                                  -- <7>
-                    WHEN 'timestamptz' THEN v_partitions.upper_bound::text
-                    WHEN 'timestamp'   THEN v_partitions.upper_bound::text
+                    WHEN 'timestamptz' THEN v_partitions.upper_bound::timestamptz::text
+                    WHEN 'timestamp'   THEN v_partitions.upper_bound::timestamp::text
                     WHEN 'date'        THEN v_partitions.upper_bound::date::text
                     WHEN 'int4'        THEN (EXTRACT(EPOCH FROM v_partitions.upper_bound)::integer)::text
                     WHEN 'int8'        THEN (EXTRACT(EPOCH FROM v_partitions.upper_bound)::bigint * 1000)::text
@@ -400,15 +402,15 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
                     || index_definition
                     , COALESCE(index_predicate, '')
                     , CASE
-                        WHEN p_partition_tablespace != 'pg_default'
-                            THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
+                        WHEN COALESCE(p_index_tablespace, p_partition_tablespace) != 'pg_default'
+                            THEN format(E'\nTABLESPACE %I', COALESCE(p_index_tablespace, p_partition_tablespace))
                         ELSE ''
                         END
                         || E'\n ' || COALESCE(index_predicate, '')
                 )
                 || CASE
-                        WHEN index_predicate IS NULL AND p_partition_tablespace != 'pg_default'
-                        THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
+                        WHEN index_predicate IS NULL AND COALESCE(p_index_tablespace, p_partition_tablespace) != 'pg_default'
+                        THEN format(E'\nTABLESPACE %I', COALESCE(p_index_tablespace, p_partition_tablespace))
                         ELSE ''
                     END
                 || E';\n'

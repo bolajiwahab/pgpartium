@@ -12,8 +12,8 @@ services:
         pg-start -v ${PGVERSION:-17} &&
         tests/resources/setup.sh -v ${PGVERSION:-17} &&
         psql --username=postgres --dbname=postgres --file=tests/test_generate_partitions.sql #&&
-        # pg-generate-partitions -c /migrations/config.yml &&
-        # pg-expire-partitions -c /migrations/config.yml
+        #pg-generate-partitions -c /migrations/config.yml &&
+        #pg-expire-partitions -c /migrations/config.yml
       "
     volumes:
       - .:/migrations

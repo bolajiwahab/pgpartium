@@ -14,10 +14,10 @@
 
 BEGIN;
 
-SET search_path TO pgtap, mock, public, pg_catalog;
+SET search_path TO mock, public, pg_catalog;
 
 -- Plan the tests.
-SELECT plan(33);
+SELECT plan(43);
 
 -- Run the tests.
 -- Group: Exceptions
@@ -57,9 +57,9 @@ SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions (NULL, NULL, '', 
   , 'fail on empty parent table schema and name'
 );
 
-SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'charges_template', NULL, '1 month')$$
+SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'accounts', NULL, '1 month')$$
   , '42P01'
-  , 'table "public"."charges_template" is not partitioned'
+  , 'table "public"."accounts" is not partitioned'
   , 'fail on non partitioned table'
 );
 
@@ -133,6 +133,12 @@ SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'trans
   , 'fail on null template table name'
 );
 
+SELECT throws_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_template_table_schema=>'public', p_template_table_name=>'nonexistent')$$
+  , '42P01'
+  , 'template table "public"."nonexistent" does not exist'
+  , 'fail on non existent template table'
+);
+
 SELECT lives_ok($$SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_template_table_schema=>NULL, p_template_table_name=>NULL)$$
   , 'pass on null template table schema and name'
 );
@@ -166,7 +172,8 @@ PREPARE result_with_defaults AS
 SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month');
 
 PREPARE expected_with_defaults
-AS VALUES ($$CREATE TABLE public.public__transactions__2025_03
+AS VALUES (
+$$CREATE TABLE public.public__transactions__2025_03
     PARTITION OF public.transactions
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 $$);
@@ -177,7 +184,8 @@ PREPARE result_with_past AS
 SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_past=>1);
 
 PREPARE expected_with_past
-AS VALUES ($$CREATE TABLE public.public__transactions__2025_02
+AS VALUES (
+$$CREATE TABLE public.public__transactions__2025_02
     PARTITION OF public.transactions
     FOR VALUES FROM ('2025-02-01 00:00:00+00') TO ('2025-03-01 00:00:00+00');
 
@@ -192,7 +200,8 @@ PREPARE result_with_future AS
 SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_future=>1);
 
 PREPARE expected_with_future
-AS VALUES ($$CREATE TABLE public.public__transactions__2025_03
+AS VALUES (
+$$CREATE TABLE public.public__transactions__2025_03
     PARTITION OF public.transactions
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
@@ -207,7 +216,8 @@ PREPARE result_with_create_default AS
 SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_create_default=>true, p_default_partition_name_template=>'{schema}__{table}__default');
 
 PREPARE expected_with_create_default
-AS VALUES ($$CREATE TABLE public.public__transactions__2025_03
+AS VALUES (
+$$CREATE TABLE public.public__transactions__2025_03
     PARTITION OF public.transactions
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
@@ -222,7 +232,8 @@ PREPARE result_with_partition_schema AS
 SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_partition_schema=>'partitions');
 
 PREPARE expected_with_partition_schema
-AS VALUES ($$CREATE TABLE partitions.public__transactions__2025_03
+AS VALUES (
+$$CREATE TABLE partitions.public__transactions__2025_03
     PARTITION OF public.transactions
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 $$);
@@ -233,7 +244,8 @@ PREPARE result_with_partition_tablespace AS
 SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_partition_tablespace=>'pgpartium');
 
 PREPARE expected_with_partition_tablespace
-AS VALUES ($$CREATE TABLE public.public__transactions__2025_03
+AS VALUES (
+$$CREATE TABLE public.public__transactions__2025_03
     PARTITION OF public.transactions
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00')
 TABLESPACE pgpartium;
@@ -245,7 +257,8 @@ PREPARE result_with_partition_storage_parameters AS
 SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_partition_storage_parameters=>'{"fillfactor": "90"}');
 
 PREPARE expected_with_partition_storage_parameters
-AS VALUES ($$CREATE TABLE public.public__transactions__2025_03
+AS VALUES (
+$$CREATE TABLE public.public__transactions__2025_03
     PARTITION OF public.transactions
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00')
 WITH (fillfactor = '90');
@@ -257,7 +270,8 @@ PREPARE result_with_template_table AS
 SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_template_table_schema=>'public', p_template_table_name=>'transactions_template');
 
 PREPARE expected_with_template_table
-AS VALUES ($$CREATE TABLE public.public__transactions__2025_03
+AS VALUES (
+$$CREATE TABLE public.public__transactions__2025_03
     PARTITION OF public.transactions (
         CONSTRAINT public__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
         CONSTRAINT public__transactions__2025_03_user_id_key UNIQUE (user_id)
@@ -276,20 +290,189 @@ $$);
 
 SELECT results_eq('result_with_template_table', 'expected_with_template_table', 'generate partitions with template table');
 
+PREPARE result_with_template_table_and_index_tablespace AS
+SELECT * FROM pgpartium.generate_partitions (
+    'public'
+  , 'transactions'
+  , '{schema}__{table}__YYYY_MM'
+  , '1 month'
+  , p_template_table_schema=>'public'
+  , p_template_table_name=>'transactions_template'
+  , p_index_tablespace=>'pgpartium'
+);
+
+PREPARE expected_with_template_table_and_index_tablespace
+AS VALUES (
+$$CREATE TABLE public.public__transactions__2025_03
+    PARTITION OF public.transactions (
+        CONSTRAINT public__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT public__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+
+CREATE INDEX public__transactions__2025_03_account_id_idx
+    ON public.public__transactions__2025_03
+ USING btree (account_id)
+TABLESPACE pgpartium;
+
+CREATE INDEX public__transactions__2025_03_status_active_idx
+    ON public.public__transactions__2025_03
+ USING btree (status)
+TABLESPACE pgpartium
+ WHERE status = 'active'::text;
+$$);
+
+SELECT results_eq(
+    'result_with_template_table_and_index_tablespace'
+  , 'expected_with_template_table_and_index_tablespace'
+  , 'generate partitions with template table and index tablespace'
+);
+
+PREPARE result_with_template_table_and_index_storage_parameters AS
+SELECT * FROM pgpartium.generate_partitions (
+    'public'
+  , 'transactions'
+  , '{schema}__{table}__YYYY_MM'
+  , '1 month'
+  , p_template_table_schema=>'public'
+  , p_template_table_name=>'transactions_template'
+  , p_index_storage_parameters=>'{"fillfactor": "90"}'
+);
+
+PREPARE expected_with_template_table_and_index_storage_parameters
+AS VALUES (
+$$CREATE TABLE public.public__transactions__2025_03
+    PARTITION OF public.transactions (
+        CONSTRAINT public__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT public__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+
+CREATE INDEX public__transactions__2025_03_account_id_idx
+    ON public.public__transactions__2025_03
+ USING btree (account_id);
+
+CREATE INDEX public__transactions__2025_03_status_active_idx
+    ON public.public__transactions__2025_03
+ USING btree (status)
+ WHERE status = 'active'::text;
+$$);
+
+SELECT results_eq(
+    'result_with_template_table_and_index_storage_parameters'
+  , 'expected_with_template_table_and_index_storage_parameters'
+  , 'generate partitions with template table and index storage parameters'
+);
 
 PREPARE result_with_retention AS
 SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_retention=>'-1 month', p_past=>1);
 
 PREPARE expected_with_retention
-AS VALUES ($$CREATE TABLE public.public__transactions__2025_03
+AS VALUES (
+$$CREATE TABLE public.public__transactions__2025_03
     PARTITION OF public.transactions
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 $$);
 
 SELECT results_eq('result_with_retention', 'expected_with_retention', 'generate partitions skipping partitions that would be expired by retention');
 
---   , p_timezone text = 'UTC'
---   , p_skip_overlapping boolean = false
+PREPARE result_with_timezone AS
+SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_timezone=>'Europe/Berlin');
+
+PREPARE expected_with_timezone
+AS VALUES (
+$$CREATE TABLE public.public__transactions__2025_03
+    PARTITION OF public.transactions
+    FOR VALUES FROM ('2025-03-01 00:00:00+01') TO ('2025-04-01 00:00:00+02');
+$$);
+
+SELECT results_eq('result_with_timezone', 'expected_with_timezone', 'generate partitions with timezone');
+
+-- Overlapping partitions: START
+CREATE TABLE public.public__transactions__2025_03_01
+    PARTITION OF public.transactions
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-03-02 00:00:00+00');
+
+PREPARE result_with_not_skip_overlapping AS
+SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_future=>1);
+
+PREPARE expected_with_not_skip_overlapping
+AS VALUES (
+$$CREATE TABLE public.public__transactions__2025_03
+    PARTITION OF public.transactions
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+
+CREATE TABLE public.public__transactions__2025_04
+    PARTITION OF public.transactions
+    FOR VALUES FROM ('2025-04-01 00:00:00+00') TO ('2025-05-01 00:00:00+00');
+$$);
+
+SELECT results_eq('result_with_not_skip_overlapping', 'expected_with_not_skip_overlapping', 'generate partitions not skipping overlapping partitions');
+
+PREPARE result_with_skip_overlapping AS
+SELECT * FROM pgpartium.generate_partitions ('public', 'transactions', '{schema}__{table}__YYYY_MM', '1 month', p_future=>1, p_skip_overlapping=>true);
+
+PREPARE expected_with_skip_overlapping
+AS VALUES (
+$$CREATE TABLE public.public__transactions__2025_04
+    PARTITION OF public.transactions
+    FOR VALUES FROM ('2025-04-01 00:00:00+00') TO ('2025-05-01 00:00:00+00');
+$$);
+
+SELECT results_eq('result_with_skip_overlapping', 'expected_with_skip_overlapping', 'generate partitions skipping overlapping partitions');
+-- Overlapping partitions: END
+
+PREPARE result_with_latest_partition_as_start_time AS
+SELECT * FROM pgpartium.generate_partitions ('public', 'notifications', '{schema}__{table}__YYYY_MM', '1 month');
+
+PREPARE expected_with_latest_partition_as_start_time
+AS VALUES (
+$$CREATE TABLE public.public__notifications__2025_02
+    PARTITION OF public.notifications
+    FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
+
+CREATE TABLE public.public__notifications__2025_03
+    PARTITION OF public.notifications
+    FOR VALUES FROM ('2025-03-01') TO ('2025-04-01');
+$$);
+
+SELECT results_eq('result_with_latest_partition_as_start_time', 'expected_with_latest_partition_as_start_time', 'generate partitions with latest partition as start time');
+
+PREPARE result_with_partition_by_timestamp AS
+SELECT * FROM pgpartium.generate_partitions ('public', 'charges', '{schema}__{table}__YYYY_MM', '1 month');
+
+PREPARE expected_with_partition_by_timestamp
+AS VALUES (
+$$CREATE TABLE public.public__charges__2025_03
+    PARTITION OF public.charges
+    FOR VALUES FROM ('2025-03-01 00:00:00') TO ('2025-04-01 00:00:00');
+$$);
+
+SELECT results_eq('result_with_partition_by_timestamp', 'expected_with_partition_by_timestamp', 'generate partitions with partition by timestamp');
+
+PREPARE result_with_epoch_integer AS
+SELECT * FROM pgpartium.generate_partitions ('public', 'sales', '{schema}__{table}__YYYY_MM', '1 month');
+
+PREPARE expected_with_epoch_integer
+AS VALUES (
+$$CREATE TABLE public.public__sales__2025_03
+    PARTITION OF public.sales
+    FOR VALUES FROM ('1740787200') TO ('1743465600');
+$$);
+
+SELECT results_eq('result_with_epoch_integer', 'expected_with_epoch_integer', 'generate partitions with epoch integer');
+
+PREPARE result_with_epoch_bigint AS
+SELECT * FROM pgpartium.generate_partitions ('public', 'trips', '{schema}__{table}__YYYY_MM', '1 month');
+
+PREPARE expected_with_epoch_bigint
+AS VALUES (
+$$CREATE TABLE public.public__trips__2025_03
+    PARTITION OF public.trips
+    FOR VALUES FROM ('1740787200000') TO ('1743465600000');
+$$);
+
+SELECT results_eq('result_with_epoch_bigint', 'expected_with_epoch_bigint', 'generate partitions with epoch bigint');
 
 -- Finish the tests and clean up.
 SELECT * FROM finish(true);
