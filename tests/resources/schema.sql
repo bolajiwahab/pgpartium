@@ -36,7 +36,7 @@ CREATE TABLE public.transactions_template (
 CREATE INDEX transactions_template_account_id_idx
     ON public.transactions_template (account_id);
 
-CREATE INDEX transactions_template_status_active_idx
+CREATE UNIQUE INDEX transactions_template_status_active_key
     ON public.transactions_template (status)
  WHERE status = 'active';
 

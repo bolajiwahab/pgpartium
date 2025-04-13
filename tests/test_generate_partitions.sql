@@ -19,7 +19,7 @@ DEALLOCATE ALL;
 SET search_path TO mock, public, pg_catalog;
 
 -- Plan the tests.
-SELECT plan(43);
+SELECT plan(42);
 
 -- Run the tests.
 -- Group: Exceptions
@@ -487,7 +487,7 @@ SELECT * FROM pgpartium.generate_partitions (
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
   , p_interval=>'1 month'
-  , p_partition_storage_parameters=>'{"fillfactor": "90"}'
+  , p_storage_parameters=>'{"fillfactor": "90"}'
 );
 
 PREPARE expected_with_partition_storage_parameters AS VALUES (
@@ -525,7 +525,7 @@ CREATE INDEX public__transactions__2025_03_account_id_idx
     ON public.public__transactions__2025_03
  USING btree (account_id);
 
-CREATE INDEX public__transactions__2025_03_status_active_idx
+CREATE UNIQUE INDEX public__transactions__2025_03_status_active_key
     ON public.public__transactions__2025_03
  USING btree (status)
  WHERE status = 'active'::text;
@@ -561,7 +561,7 @@ CREATE INDEX public__transactions__2025_03_account_id_idx
  USING btree (account_id)
 TABLESPACE pgpartium;
 
-CREATE INDEX public__transactions__2025_03_status_active_idx
+CREATE UNIQUE INDEX public__transactions__2025_03_status_active_key
     ON public.public__transactions__2025_03
  USING btree (status)
 TABLESPACE pgpartium
@@ -572,41 +572,6 @@ SELECT results_eq(
     'result_with_template_table_and_index_tablespace'
   , 'expected_with_template_table_and_index_tablespace'
   , 'generate partitions with template table and index tablespace'
-);
-
-PREPARE result_with_template_table_and_index_storage_parameters AS
-SELECT * FROM pgpartium.generate_partitions (
-    p_table_schema=>'public'
-  , p_table_name=>'transactions'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
-  , p_interval=>'1 month'
-  , p_template_table_schema=>'public'
-  , p_template_table_name=>'transactions_template'
-  , p_index_storage_parameters=>'{"fillfactor": "90"}'
-);
-
-PREPARE expected_with_template_table_and_index_storage_parameters AS VALUES (
-$$CREATE TABLE public.public__transactions__2025_03
-    PARTITION OF public.transactions (
-        CONSTRAINT public__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT public__transactions__2025_03_user_id_key UNIQUE (user_id)
-    )
-    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
-
-CREATE INDEX public__transactions__2025_03_account_id_idx
-    ON public.public__transactions__2025_03
- USING btree (account_id);
-
-CREATE INDEX public__transactions__2025_03_status_active_idx
-    ON public.public__transactions__2025_03
- USING btree (status)
- WHERE status = 'active'::text;
-$$);
-
-SELECT results_eq(
-    'result_with_template_table_and_index_storage_parameters'
-  , 'expected_with_template_table_and_index_storage_parameters'
-  , 'generate partitions with template table and index storage parameters'
 );
 
 PREPARE result_with_retention AS

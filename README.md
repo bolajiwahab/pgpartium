@@ -27,4 +27,5 @@ internally we use to_char for formatting date/time in the generation of the part
 4. tests for the bash scripts? call the program with the fixtures config and compare the outputs
 5. update readme
 6. enable yamllint
-7.
+7. add added configs to bash scripts
+8.

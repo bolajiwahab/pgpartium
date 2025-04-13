@@ -10,8 +10,7 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
   , p_partition_schema text = NULL
   , p_partition_tablespace text = 'pg_default'
   , p_index_tablespace text = 'pg_default'
-  , p_partition_storage_parameters jsonb = '{}'
-  , p_index_storage_parameters jsonb = '{}'
+  , p_storage_parameters jsonb = '{}'
   , p_template_table_schema text = NULL
   , p_template_table_name text = NULL
   , p_retention interval = '-1'
@@ -307,7 +306,7 @@ BEGIN
             -- Get storage parameters
             SELECT COALESCE(E'\nWITH (' || string_agg(format('%1$I = %2$L', key, value), ', ') || ')', '')
               INTO v_storage_clause
-              FROM jsonb_each_text(p_partition_storage_parameters);
+              FROM jsonb_each_text(p_storage_parameters);
 
             IF v_ddl != '' THEN
                 v_ddl := v_ddl || E'\n';
@@ -378,6 +377,7 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
                   , p_table_schema
                )
           INTO v_default_partition_name;
+
         -- Get constraint definition
         SELECT string_agg(
             '        CONSTRAINT '
@@ -443,14 +443,13 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
         -- Get storage parameters
         SELECT COALESCE(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
           INTO v_storage_clause
-          FROM jsonb_each_text(p_partition_storage_parameters);
+          FROM jsonb_each_text(p_storage_parameters);
 
         IF v_ddl != '' THEN
             v_ddl := v_ddl || E'\n';
         END IF;
 
         v_ddl := v_ddl || format(
-
 /*
 This alignment is needed to have the right indentation in the generated migration scripts.
 We could use new lines characters instead, but that would require escaping with `E` which does not work with dollar quoting.
