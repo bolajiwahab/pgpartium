@@ -13,6 +13,9 @@
 
 BEGIN;
 
+-- Deallocate all previous prepared statements.
+DEALLOCATE ALL;
+
 SET search_path TO mock, public, pg_catalog;
 
 -- Plan the tests.
@@ -338,6 +341,7 @@ SELECT throws_ok($$
 );
 
 -- Group: Outputs
+-- We are using mocked now() from tests/resources/mock.sql.
 PREPARE result_with_defaults AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'

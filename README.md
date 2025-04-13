@@ -24,5 +24,7 @@ internally we use to_char for formatting date/time in the generation of the part
 1. adjust config.yml as sample and update
 2. update bash scripts with the new options
 3. use named parameters instead of positional parameters in the bash scripts
-4. tests for the bash scripts?
-5.
+4. tests for the bash scripts? call the program with the fixtures config and compare the outputs
+5. update readme
+6. enable yamllint
+7.

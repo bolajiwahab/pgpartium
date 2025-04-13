@@ -41,15 +41,15 @@ AS $BODY$
            END AS upper_bound
          , CASE keys_data_types
              WHEN 'timestamptz'
-               THEN age(CAST((matches)[2] AS timestamptz))
+               THEN age(now(), CAST((matches)[2] AS timestamptz))
              WHEN 'timestamp'
-               THEN age(CAST((matches)[2] AS timestamptz))
+               THEN age(now(), CAST((matches)[2] AS timestamptz))
              WHEN 'date'
-               THEN age(CAST((matches)[2] AS date))
+               THEN age(now(), CAST((matches)[2] AS date))
              WHEN 'int4'
-               THEN age(to_timestamp(CAST((matches)[2] AS integer)))
+               THEN age(now(), to_timestamp(CAST((matches)[2] AS integer)))
              WHEN 'int8'
-               THEN age(to_timestamp(CAST((matches)[2] AS bigint) / 1000))
+               THEN age(now(), to_timestamp(CAST((matches)[2] AS bigint) / 1000))
            END AS age
       FROM pg_catalog.pg_inherits AS i
      INNER JOIN pg_catalog.pg_class AS p
@@ -67,15 +67,15 @@ AS $BODY$
        AND pn.nspname = p_table_schema
        AND CASE keys_data_types
              WHEN 'timestamptz'
-               THEN age(CAST((matches)[2] AS timestamptz))
+               THEN age(now(), CAST((matches)[2] AS timestamptz))
              WHEN 'timestamp'
-               THEN age(CAST((matches)[2] AS timestamptz))
+               THEN age(now(), CAST((matches)[2] AS timestamptz))
              WHEN 'date'
-               THEN age(CAST((matches)[2] AS date))
+               THEN age(now(), CAST((matches)[2] AS date))
              WHEN 'int4'
-               THEN age(to_timestamp(CAST((matches)[2] AS integer)))
+               THEN age(now(), to_timestamp(CAST((matches)[2] AS integer)))
              WHEN 'int8'
-               THEN age(to_timestamp(CAST((matches)[2] AS bigint) / 1000))
+               THEN age(now(), to_timestamp(CAST((matches)[2] AS bigint) / 1000))
            END > NULLIF(p_retention, '-1')
      ORDER BY age DESC;
 
