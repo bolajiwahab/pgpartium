@@ -38,10 +38,10 @@ BEGIN
 
     PERFORM set_config('timezone', p_timezone, true);
 
-    v_parent_exists := pgpartium.table_exists(p_table_schema, p_table_name);
-    v_template_exists := pgpartium.table_exists(p_template_table_schema, p_template_table_name);
-    v_is_parent_partitioned := pgpartium.is_table_partitioned(p_table_schema, p_table_name);
-    v_partitioning_details := pgpartium.get_partitioning_details(p_table_schema, p_table_name);
+    v_parent_exists := pgpartium.table_exists(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
+    v_template_exists := pgpartium.table_exists(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name);
+    v_is_parent_partitioned := pgpartium.is_table_partitioned(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
+    v_partitioning_details := pgpartium.get_partitioning_details(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
 
     IF NOT v_parent_exists THEN
         RAISE 'table "%"."%" does not exist', p_table_schema, p_table_name
@@ -101,6 +101,15 @@ BEGIN
         USING ERRCODE = 'undefined_object';
     END IF;
 
+    IF NOT EXISTS (
+        SELECT 1
+          FROM pg_catalog.pg_tablespace
+         WHERE spcname = p_index_tablespace
+    ) THEN
+        RAISE 'index tablespace "%" does not exist', p_index_tablespace
+        USING ERRCODE = 'undefined_object';
+    END IF;
+
     IF (COALESCE(p_template_table_schema, '') > '' OR COALESCE(p_template_table_name, '') > '') AND NOT v_template_exists THEN
         RAISE 'template table "%"."%" does not exist', p_template_table_schema, p_template_table_name
         USING ERRCODE = 'undefined_table';
@@ -111,7 +120,7 @@ BEGIN
     CREATE TEMPORARY TABLE current_bounds ON COMMIT DROP AS
     SELECT lower_bound
          , upper_bound
-      FROM pgpartium.get_partition_bounds(p_table_schema, p_table_name);
+      FROM pgpartium.get_partition_bounds(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
 
     DROP TABLE IF EXISTS partition_constraints;
 
@@ -120,13 +129,13 @@ BEGIN
         SELECT constraint_name
              , constraint_type
              , constraint_definition
-          FROM pgpartium.get_constraints(p_template_table_schema, p_template_table_name)
+          FROM pgpartium.get_constraints(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name)
     )
     , parent_constraints AS (
         SELECT constraint_name
              , constraint_type
              , constraint_definition
-          FROM pgpartium.get_constraints(p_table_schema, p_table_name)
+          FROM pgpartium.get_constraints(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
     )
     SELECT template_constraints.constraint_name
          , template_constraints.constraint_type
@@ -144,14 +153,14 @@ BEGIN
              , is_unique_index
              , index_definition
              , index_predicate
-          FROM pgpartium.get_indexes(p_template_table_schema, p_template_table_name)
+          FROM pgpartium.get_indexes(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name)
     )
     , parent_indexes AS (
         SELECT index_name
              , is_unique_index
              , index_definition
              , index_predicate
-          FROM pgpartium.get_indexes(p_table_schema, p_table_name)
+          FROM pgpartium.get_indexes(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
     )
     SELECT template_indexes.index_name
          , template_indexes.is_unique_index
@@ -171,7 +180,7 @@ BEGIN
              , event_timing
              , trigger_event
              , trigger_body
-          FROM pgpartium.get_triggers(p_template_table_schema, p_template_table_name)
+          FROM pgpartium.get_triggers(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name)
     )
     , parent_triggers AS (
         SELECT trigger_name
@@ -179,7 +188,7 @@ BEGIN
              , event_timing
              , trigger_event
              , trigger_body
-          FROM pgpartium.get_triggers(p_table_schema, p_table_name)
+          FROM pgpartium.get_triggers(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
     )
     SELECT template_triggers.trigger_name
          , template_triggers.is_constraint_trigger
@@ -197,7 +206,7 @@ BEGIN
                 COALESCE(
                     (
                         SELECT lower_bound
-                          FROM pgpartium.get_latest_partition(p_table_schema, p_table_name)
+                          FROM pgpartium.get_latest_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
                     )
                   , now()
                 );
@@ -366,7 +375,7 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
    -- Create default partition: START
     IF p_create_default
     AND NOT EXISTS (
-        SELECT pgpartium.get_default_partition(p_table_schema, p_table_name)
+        SELECT pgpartium.get_default_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
     ) THEN
         SELECT replace(
                     replace(

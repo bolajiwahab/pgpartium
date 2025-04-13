@@ -13,10 +13,12 @@ generates:
     future: 2 # how many partitions to create in the future, current plus number of future
     retention: "11 mons" # interval for which data/partition is dropped
     create_default: false # if you want to create a default partition or not (if not exists by default)
+    # default_partition_name_template: "{schema}__{table}__DEFAULT"
+    index_tablespace: "pg_default" # tablespace for the index
     skip_overlapping: true
     tables:
       - table_schema: "public"
-        table_name: "enrichment"
+        table_name: "transactions"
         partition:
           name_template: "{schema}__{table}__YYYY_MM_DD"
         #   #schema: "partitions" # useful if partition schema is different from the parent schema
@@ -28,6 +30,7 @@ generates:
         #   #future: 1
         #   # retention: "2 years" # interval for which data/partition is dropped
           create_default: true
+          default_partition_name_template: "{schema}__{table}__DEFAULT"
           # cheo: true
         #   # prefix: "users_"
         #   #suffix: "__YYYY_MM_DD"
@@ -35,13 +38,13 @@ generates:
         #   retention: "12 months"
         #   skip_overlapping: true
         # template: "CURRENT_PARTITION"
-        template:
-           table_schema: "public"
-           table_name: "tbl_con"
-      # - table_schema: "public"
-      #   table_name: "measurement"
-        # partition:
-        #   create_default: true
+      #   template:
+      #      table_schema: "public"
+      #      table_name: "tbl_con"
+      - table_schema: "public"
+        table_name: "measurement"
+        partition:
+          create_default: true
         # partition:
           # name_template: "{schema}__{table}__YYYY_MM_DD"
       # - table_schema: "public"

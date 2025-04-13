@@ -39,7 +39,7 @@ fi
 
 # Setup infrastructure
 echo "Setting up infra"
-pg-setup-infra
+bin/pg-setup-infra
 
 # Validate schema
 yq -o=json '.' "${config}" | jsonschema schema.json
@@ -55,7 +55,6 @@ export DEFAULT_STORAGE_PARAMETERS="{}"
 export DEFAULT_TIMEZONE="UTC"
 
 # Extract global configs
-GLOBAL_TABLESPACE=$(yq '.generates[].tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")
 GLOBAL_SCHEMA=$(yq '.generates[].schema' "${config}")
 GLOBAL_PARTITION_NAME_TEMPLATE=$(yq '.generates[].name_template' "${config}")
 GLOBAL_PAST=$(yq '.generates[].past // strenv(DEFAULT_PAST)' "${config}")
@@ -63,12 +62,19 @@ GLOBAL_FUTURE=$(yq '.generates[].future // strenv(DEFAULT_FUTURE)' "${config}")
 GLOBAL_INTERVAL=$(yq '.generates[].interval' "${config}")
 GLOBAL_RETENTION=$(yq '.generates[].retention // strenv(DEFAULT_RETENTION)' "${config}")
 GLOBAL_CREATE_DEFAULT=$(yq '.generates[].create_default // strenv(DEFAULT_CREATE_DEFAULT)' "${config}")
+GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE=$(yq '.generates[].default_partition_name_template' "${config}")
 GLOBAL_SKIP_OVERLAPPING=$(yq '.generates[].skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")
+GLOBAL_PARTITION_TABLESPACE=$(yq '.generates[].tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")
 GLOBAL_STORAGE_PARAMETERS=$(yq '.generates[].storage_parameters // strenv(DEFAULT_STORAGE_PARAMETERS)' "${config}")
 GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
 
-export GLOBAL_TABLESPACE GLOBAL_SCHEMA GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL \
-    GLOBAL_RETENTION global_create_default_partition GLOBAL_SKIP_OVERLAPPING GLOBAL_STORAGE_PARAMETERS GLOBAL_TIMEZONE
+export GLOBAL_PARTITION_TABLESPACE GLOBAL_SCHEMA GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL \
+    GLOBAL_RETENTION GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE GLOBAL_SKIP_OVERLAPPING \
+    GLOBAL_STORAGE_PARAMETERS GLOBAL_TIMEZONE
+
+GLOBAL_INDEX_TABLESPACE=$(yq '.generates[].index_tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' "${config}")
+
+export GLOBAL_INDEX_TABLESPACE
 
 directory=$(yq '.generates[].directory' "${config}")
 
@@ -82,7 +88,8 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
         partition_schema="${table_schema}"
     fi
     partition_name_template=$(echo "${table}" | yq '.partition.name_template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)')
-    partition_tablespace=$(echo "${table}" | yq '.partition.tablespace // strenv(GLOBAL_TABLESPACE)')
+    partition_tablespace=$(echo "${table}" | yq '.partition.tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)')
+    index_tablespace=$(echo "${table}" | yq '.partition.index_tablespace // strenv(GLOBAL_INDEX_TABLESPACE)')
     partition_interval=$(echo "${table}" | yq '.partition.interval // strenv(GLOBAL_INTERVAL)')
     past_partitions=$(echo "${table}" | yq '.partition.past // strenv(GLOBAL_PAST)')
     future_partitions=$(echo "${table}" | yq '.partition.future // strenv(GLOBAL_FUTURE)')
@@ -95,6 +102,14 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
     if [[ "${create_default}" == "null" ]]; then
         create_default="${GLOBAL_CREATE_DEFAULT}"
     fi
+    # If create_default is true, default_partition_name_template is required
+    default_partition_name_template=$(echo "${table}" | yq '.partition.default_partition_name_template // strenv(GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE)')
+    if [[ "${create_default}" == true && "${default_partition_name_template}" == "null" ]]; then
+        echo "DefaultPartitionNameTemplateError: Default partition name template is required when create_default is true."
+        echo "Please provide a default partition name template in the config file."
+        exit 1
+    fi
+
     skip_overlapping=$(echo "${table}" | yq '.partition.skip_overlapping // strenv(GLOBAL_SKIP_OVERLAPPING)')
     storage_parameters=$(echo "${table}" | yq '.partition.storage_parameters // strenv(GLOBAL_STORAGE_PARAMETERS)')
 
@@ -114,7 +129,7 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
                 <<EOF
 SELECT partition_schema
      , partition_name
-  FROM pgpartium.get_default_partition(:'table_schema', :'table_name')
+  FROM pgpartium.get_default_partition(p_table_schema=>:'table_schema', p_table_name=>:'table_name')
 EOF
         ) || {
             echo "TemplateTableError: Default partition for table ${table_schema}.${table_name} not found."
@@ -135,7 +150,7 @@ EOF
                 <<EOF
 SELECT partition_schema
      , partition_name
-  FROM pgpartium.get_latest_partition(:'table_schema', :'table_name')
+  FROM pgpartium.get_latest_partition(p_table_schema=>:'table_schema', p_table_name=>:'table_name')
 EOF
         ) || {
             echo "TemplateTableError: Latest partition for table ${table_schema}.${table_name} not found."
@@ -156,7 +171,7 @@ EOF
                 <<EOF
 SELECT partition_schema
      , partition_name
-  FROM pgpartium.get_current_partition(:'table_schema', :'table_name')
+  FROM pgpartium.get_current_partition(p_table_schema=>:'table_schema', p_table_name=>:'table_name')
 EOF
         ) || {
             echo "TemplateTableError: Current partition for table ${table_schema}.${table_name} not found."
@@ -185,8 +200,10 @@ EOF
         -v past_partitions="${past_partitions}" \
         -v future_partitions="${future_partitions}" \
         -v create_default_partition="${create_default}" \
+        -v default_partition_name_template="${default_partition_name_template}" \
         -v partition_schema="${partition_schema}" \
         -v partition_tablespace="${partition_tablespace}" \
+        -v index_tablespace="${index_tablespace}" \
         -v storage_parameters="${storage_parameters}" \
         -v template_table_schema="${template_table_schema}" \
         -v template_table_name="${template_table_name}" \
@@ -197,24 +214,42 @@ EOF
         <<EOF
 SELECT *
   FROM pgpartium.generate_partitions(
-    :'table_schema'
-  , :'table_name'
-  , :'partition_name_template'
-  , :'partition_interval'
-  , :'past_partitions'
-  , :'future_partitions'
-  , :'create_default_partition'
-  , :'partition_schema'
-  , :'partition_tablespace'
-  , :'storage_parameters'
-  , :'template_table_schema'
-  , :'template_table_name'
-  , :'retention'
-  , :'timezone'
-  , :'skip_overlapping'
+    p_table_schema=>:'table_schema'
+  , p_table_name=>:'table_name'
+  , p_partition_name_template=>:'partition_name_template'
+  , p_interval=>:'partition_interval'
+  , p_past=>:'past_partitions'
+  , p_future=>:'future_partitions'
+  , p_create_default=>:'create_default_partition'
+  , p_default_partition_name_template=>:'default_partition_name_template'
+  , p_partition_schema=>:'partition_schema'
+  , p_partition_tablespace=>:'partition_tablespace'
+  , p_index_tablespace=>:'index_tablespace'
+  , p_storage_parameters=>:'storage_parameters'
+  , p_template_table_schema=>:'template_table_schema'
+  , p_template_table_name=>:'template_table_name'
+  , p_retention=>:'retention'
+  , p_timezone=>:'timezone'
+  , p_skip_overlapping=>:'skip_overlapping'
 )
 EOF
-
+#     p_table_schema text
+#   , p_table_name text
+#   , p_partition_name_template text
+#   , p_interval text
+#   , p_past integer = 0
+#   , p_future integer = 0
+#   , p_create_default boolean = false
+#   , p_default_partition_name_template text = NULL
+#   , p_partition_schema text = NULL
+#   , p_partition_tablespace text = 'pg_default'
+#   , p_index_tablespace text = 'pg_default'
+#   , p_storage_parameters jsonb = '{}'
+#   , p_template_table_schema text = NULL
+#   , p_template_table_name text = NULL
+#   , p_retention interval = '-1'
+#   , p_timezone text = 'UTC'
+#   , p_skip_overlapping boolean = false
     # If file is not empty, move it to directory
     if [[ -s "/tmp/${output_filename}" ]]; then
         mv "/tmp/${output_filename}" "${directory}/${output_filename}"

@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION pgpartium.get_partitioning_details (
-    table_schema text
-  , table_name text
+    p_table_schema text
+  , p_table_name text
 )
 RETURNS TABLE (
     number_of_keys integer
@@ -31,8 +31,8 @@ AS $BODY$
        AND a.attnum = ANY(CAST(p.partattrs AS integer[]))
      INNER JOIN pg_catalog.pg_type AS t
         ON t.oid = a.atttypid
-     WHERE n.nspname = table_schema
-       AND c.relname = table_name
+     WHERE n.nspname = p_table_schema
+       AND c.relname = p_table_name
      GROUP BY n.nspname
             , c.relname
             , p.partnatts

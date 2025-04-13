@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION pgpartium.get_latest_partition (
-    table_schema text
-  , table_name text
+    p_table_schema text
+  , p_table_name text
 )
 RETURNS TABLE (
     partition_schema text
@@ -46,10 +46,10 @@ AS $BODY$
      INNER JOIN pg_catalog.pg_namespace AS cn
         ON cn.oid = c.relnamespace
      CROSS JOIN regexp_matches(pg_catalog.pg_get_expr(c.relpartbound, c.oid), '\(\''?(.+?)\''?\).+\(\''?(.+?)\''?\)') AS matches
-         , LATERAL (SELECT keys_data_types FROM pgpartium.get_partitioning_details(table_schema, table_name)) AS key_data_type
+         , LATERAL (SELECT keys_data_types FROM pgpartium.get_partitioning_details(p_table_schema, p_table_name)) AS key_data_type
      WHERE c.relispartition
-       AND p.relname = table_name
-       AND pn.nspname = table_schema
+       AND p.relname = p_table_name
+       AND pn.nspname = p_table_schema
      ORDER BY (matches)[1] DESC
      LIMIT 1;
 $BODY$;

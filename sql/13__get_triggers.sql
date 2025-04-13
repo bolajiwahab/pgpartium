@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION pgpartium.get_triggers (
-    table_schema text
-  , table_name text
+    p_table_schema text
+  , p_table_name text
 )
 RETURNS TABLE (
     trigger_name text
@@ -62,6 +62,6 @@ AS $BODY$
      INNER JOIN pg_catalog.pg_trigger AS tg
         ON tg.tgrelid = t.oid
        AND NOT tg.tgisinternal
-     WHERE n.nspname = table_schema
-       AND t.relname = table_name;
+     WHERE n.nspname = p_table_schema
+       AND t.relname = p_table_name;
 $BODY$;

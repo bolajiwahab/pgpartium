@@ -2,9 +2,9 @@ CREATE OR REPLACE FUNCTION pgpartium.expire_partitions (
     p_table_schema text
   , p_table_name text
   , p_retention interval = '-1'
+  , p_detach_only boolean = false
   , p_detach_first boolean = false
   , p_detach_concurrently boolean = false
-  , p_detach_only boolean = false
   , p_timezone text = 'UTC'
 )
 RETURNS SETOF text
@@ -18,8 +18,8 @@ BEGIN
 
     PERFORM set_config('timezone', p_timezone, true);
 
-    v_parent_exists := pgpartium.table_exists(p_table_schema, p_table_name);
-    v_is_parent_partitioned := pgpartium.is_table_partitioned(p_table_schema, p_table_name);
+    v_parent_exists := pgpartium.table_exists(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
+    v_is_parent_partitioned := pgpartium.is_table_partitioned(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
 
     IF NOT v_parent_exists THEN
         RAISE 'table "%"."%" does not exist', p_table_schema, p_table_name
@@ -50,7 +50,7 @@ $SQL$,
             E'\n'
             ORDER BY age DESC
         )
-          FROM pgpartium.get_expired_partitions(p_table_schema, p_table_name, p_retention)
+          FROM pgpartium.get_expired_partitions(p_table_schema=>p_table_schema, p_table_name=>p_table_name, p_retention=>p_retention)
         HAVING COUNT(*) > 0;
 
         RETURN;
@@ -78,7 +78,7 @@ $SQL$,
             E'\n'
             ORDER BY age DESC
         )
-          FROM pgpartium.get_expired_partitions(p_table_schema, p_table_name, p_retention)
+          FROM pgpartium.get_expired_partitions(p_table_schema=>p_table_schema, p_table_name=>p_table_name, p_retention=>p_retention)
         HAVING COUNT(*) > 0;
 
         RETURN;
@@ -100,7 +100,7 @@ $SQL$,
         E'\n'
         ORDER BY age DESC
     )
-      FROM pgpartium.get_expired_partitions(p_table_schema, p_table_name, p_retention)
+      FROM pgpartium.get_expired_partitions(p_table_schema=>p_table_schema, p_table_name=>p_table_name, p_retention=>p_retention)
     HAVING COUNT(*) > 0;
 
     RETURN;

@@ -48,13 +48,19 @@ yq -o=json '.' "${config}" | jsonschema schema.json
 
 # Set defaults
 export DEFAULT_RETENTION='-1'
+export DEFAULT_DETACH_ONLY=false
+export DEFAULT_DETACH_FIRST=false
+export DEFAULT_DETACH_CONCURRENTLY=false
 export DEFAULT_TIMEZONE="UTC"
 
 # Extract global configs
 GLOBAL_RETENTION=$(yq '.generates[].retention // strenv(DEFAULT_RETENTION)' "${config}")
+GLOBAL_DETACH_ONLY=$(yq '.generates[].detach_only // strenv(DEFAULT_DETACH_ONLY)' "${config}")
+GLOBAL_DETACH_FIRST=$(yq '.generates[].detach_first // strenv(DEFAULT_DETACH_FIRST)' "${config}")
+GLOBAL_DETACH_CONCURRENTLY=$(yq '.generates[].detach_concurrently // strenv(DEFAULT_DETACH_CONCURRENTLY)' "${config}")
 GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
 
-export GLOBAL_RETENTION GLOBAL_TIMEZONE
+export GLOBAL_RETENTION GLOBAL_DETACH_ONLY GLOBAL_DETACH_FIRST GLOBAL_DETACH_CONCURRENTLY GLOBAL_TIMEZONE
 
 directory=$(yq '.generates[].directory' "${config}")
 
@@ -63,6 +69,24 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
     table_schema=$(echo "${table}" | yq '.table_schema')
     table_name=$(echo "${table}" | yq '.table_name')
     retention=$(echo "${table}" | yq '.partition.retention // strenv(GLOBAL_RETENTION)')
+    # Because yq default value operator is used to provide alternative (or default) values
+    # when a particular expression is either null or false, we cannot use it here since detach_only is boolean
+    # and we need to override it only when it is not set. Same for detach_first and detach_concurrently
+    detach_only=$(echo "${table}" | yq '.partition.detach_only')
+    if [[ "${detach_only}" == "null" ]]; then
+        detach_only="${GLOBAL_DETACH_ONLY}"
+    fi
+
+    detach_first=$(echo "${table}" | yq '.partition.detach_first')
+    if [[ "${detach_first}" == "null" ]]; then
+        detach_first="${GLOBAL_DETACH_FIRST}"
+    fi
+
+    detach_concurrently=$(echo "${table}" | yq '.partition.detach_concurrently')
+    if [[ "${detach_concurrently}" == "null" ]]; then
+        detach_concurrently="${GLOBAL_DETACH_CONCURRENTLY}"
+    fi
+
     timezone=$(echo "${table}" | yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)')
     output_filename="${table_name}_expired_partitions.sql"
 
@@ -78,15 +102,21 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
         -v table_schema="${table_schema}" \
         -v table_name="${table_name}" \
         -v retention="${retention}" \
+        -v detach_only="${detach_only}" \
+        -v detach_first="${detach_first}" \
+        -v detach_concurrently="${detach_concurrently}" \
         -v timezone="${timezone}" \
         --output="/tmp/${output_filename}" \
         <<EOF
 SELECT *
   FROM pgpartium.expire_partitions(
-    :'table_schema'
-  , :'table_name'
-  , :'retention'
-  , :'timezone'
+    p_table_schema=>:'table_schema'
+  , p_table_name=>:'table_name'
+  , p_detach_only=>:'detach_only'
+  , p_detach_first=>:'detach_first'
+  , p_detach_concurrently=>:'detach_concurrently'
+  , p_retention=>:'retention'
+  , p_timezone=>:'timezone'
 )
 EOF
 

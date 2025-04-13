@@ -19,7 +19,7 @@ DEALLOCATE ALL;
 SET search_path TO mock, public, pg_catalog;
 
 -- Plan the tests.
-SELECT plan(14);
+SELECT plan(15);
 
 -- Run the tests.
 -- Group: Exceptions
@@ -236,7 +236,7 @@ PREPARE result_with_timezone AS
 SELECT * FROM pgpartium.expire_partitions (
     p_table_schema=>'public'
   , p_table_name=>'notifications'
-    , p_retention=>'1 month'
+  , p_retention=>'1 month'
   , p_timezone=>'Europe/Berlin'
 );
 

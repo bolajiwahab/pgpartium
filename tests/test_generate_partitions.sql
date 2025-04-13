@@ -19,7 +19,7 @@ DEALLOCATE ALL;
 SET search_path TO mock, public, pg_catalog;
 
 -- Plan the tests.
-SELECT plan(42);
+SELECT plan(44);
 
 -- Run the tests.
 -- Group: Exceptions
@@ -180,6 +180,32 @@ SELECT throws_ok($$
   , '42704'
   , 'partition tablespace "<NULL>" does not exist'
   , 'fail on null partition tablespace'
+);
+
+SELECT throws_ok($$
+    SELECT * FROM pgpartium.generate_partitions (
+        p_table_schema=>'public'
+      , p_table_name=>'transactions'
+      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_interval=>'1 month'
+      , p_partition_tablespace=>'nonexistent'
+    )$$
+  , '42704'
+  , 'index tablespace "nonexistent" does not exist'
+  , 'fail on non existent index tablespace'
+);
+
+SELECT throws_ok($$
+    SELECT * FROM pgpartium.generate_partitions (
+        p_table_schema=>'public'
+      , p_table_name=>'transactions'
+      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_interval=>'1 month'
+      , p_index_tablespace=>NULL
+    )$$
+  , '42704'
+  , 'index tablespace "<NULL>" does not exist'
+  , 'fail on null index tablespace'
 );
 
 SELECT throws_ok($$

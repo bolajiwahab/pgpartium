@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION pgpartium.get_indexes (
-    table_schema text
-  , table_name text
+    p_table_schema text
+  , p_table_name text
 )
 RETURNS TABLE (
     index_name text
@@ -23,7 +23,7 @@ AS $BODY$
         ON i.indexrelid = ix.oid
       LEFT JOIN pg_catalog.pg_constraint AS c
         ON c.conindid = i.indexrelid
-     WHERE n.nspname = table_schema
-       AND t.relname = table_name
+     WHERE n.nspname = p_table_schema
+       AND t.relname = p_table_name
        AND c.conindid IS NULL;
 $BODY$;

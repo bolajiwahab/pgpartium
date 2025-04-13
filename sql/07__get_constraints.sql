@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION pgpartium.get_constraints (
-    table_schema text
-  , table_name text
+    p_table_schema text
+  , p_table_name text
 )
 RETURNS TABLE (
     constraint_name text
@@ -24,6 +24,6 @@ AS $BODY$
                                AND a.attnum = ANY(c.conkey)
                         ) AS a
         ON TRUE
-     WHERE n.nspname = table_schema
-       AND t.relname = table_name;
+     WHERE n.nspname = p_table_schema
+       AND t.relname = p_table_name;
 $BODY$;

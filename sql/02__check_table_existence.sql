@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION pgpartium.table_exists (
-    table_schema text
-  , table_name text
+    p_table_schema text
+  , p_table_name text
 )
 RETURNS boolean
 LANGUAGE SQL
@@ -10,7 +10,7 @@ AS $BODY$
                  FROM pg_catalog.pg_class AS c
                 INNER JOIN pg_catalog.pg_namespace AS n
                    ON n.oid = c.relnamespace
-                WHERE n.nspname = table_schema
-                  AND c.relname = table_name
+                WHERE n.nspname = p_table_schema
+                  AND c.relname = p_table_name
            );
 $BODY$;
