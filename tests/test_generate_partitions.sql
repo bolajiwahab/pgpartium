@@ -188,7 +188,7 @@ SELECT throws_ok($$
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
       , p_interval=>'1 month'
-      , p_partition_tablespace=>'nonexistent'
+      , p_index_tablespace=>'nonexistent'
     )$$
   , '42704'
   , 'index tablespace "nonexistent" does not exist'
