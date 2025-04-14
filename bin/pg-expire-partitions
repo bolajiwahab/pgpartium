@@ -38,7 +38,7 @@ if [[ -z "${config}" ]]; then
 fi
 
 # # Setup infrastructure
-echo "Setting up infra"
+echo "INFO: Setting up infra"
 pg-setup-infra
 
 # Validate schema
@@ -68,7 +68,12 @@ directory=$(yq '.generates[].directory' "${config}")
 yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
     table_schema=$(echo "${table}" | yq '.table_schema')
     table_name=$(echo "${table}" | yq '.table_name')
+
+    output_filename="${table_name}_expired_partitions.sql"
+    echo "INFO: Expiring partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
+
     retention=$(echo "${table}" | yq '.partition.retention // strenv(GLOBAL_RETENTION)')
+
     # Because yq default value operator is used to provide alternative (or default) values
     # when a particular expression is either null or false, we cannot use it here since detach_only is boolean
     # and we need to override it only when it is not set. Same for detach_first and detach_concurrently
@@ -88,9 +93,6 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
     fi
 
     timezone=$(echo "${table}" | yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)')
-    output_filename="${table_name}_expired_partitions.sql"
-
-    echo "Generating expired partitions for ${table_schema}.${table_name} in ${directory}"
 
     psql --username=postgres \
         --dbname=postgres \
@@ -123,9 +125,9 @@ EOF
     # If file is not empty, move it to directory
     if [[ -s "/tmp/${output_filename}" ]]; then
         mv "/tmp/${output_filename}" "${directory}/${output_filename}"
-        echo "Expired partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
+        echo "INFO: Expired partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
     else
-        echo "No expired partitions for ${table_schema}.${table_name}"
+        echo "INFO: No expired partitions for ${table_schema}.${table_name}"
     fi
 
 done

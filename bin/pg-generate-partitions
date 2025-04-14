@@ -38,8 +38,8 @@ if [[ -z "${config}" ]]; then
 fi
 
 # Setup infrastructure
-echo "Setting up infra"
-bin/pg-setup-infra
+echo "INFO: Setting up infra"
+pg-setup-infra
 
 # Validate schema
 yq -o=json '.' "${config}" | jsonschema schema.json
@@ -82,15 +82,33 @@ directory=$(yq '.generates[].directory' "${config}")
 yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
     table_schema=$(echo "${table}" | yq '.table_schema')
     table_name=$(echo "${table}" | yq '.table_name')
+
+    output_filename="${table_name}_partitions.sql"
+    echo "INFO: Generating partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
+
     partition_schema=$(echo "${table}" | yq '.partition.schema // strenv(GLOBAL_SCHEMA)')
     # If no schema is provided either in the partition config or in the global config, default to table schema
     if [[ "${partition_schema}" == "null" ]]; then
         partition_schema="${table_schema}"
     fi
+
     partition_name_template=$(echo "${table}" | yq '.partition.name_template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)')
+    if [[ "${partition_name_template}" == "null" ]]; then
+        echo "ERROR: Partition name template is required." >&2
+        echo "HINT: Please provide a partition name template in the config file either in the partition config or in the global config."
+        exit 1
+    fi
+
     partition_tablespace=$(echo "${table}" | yq '.partition.tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)')
     index_tablespace=$(echo "${table}" | yq '.partition.index_tablespace // strenv(GLOBAL_INDEX_TABLESPACE)')
+
     partition_interval=$(echo "${table}" | yq '.partition.interval // strenv(GLOBAL_INTERVAL)')
+    if [[ "${partition_interval}" == "null" ]]; then
+        echo "ERROR: Partition interval is required." >&2
+        echo "HINT: Please provide a partition interval in the config file either in the partition config or in the global config."
+        exit 1
+    fi
+
     past_partitions=$(echo "${table}" | yq '.partition.past // strenv(GLOBAL_PAST)')
     future_partitions=$(echo "${table}" | yq '.partition.future // strenv(GLOBAL_FUTURE)')
     retention=$(echo "${table}" | yq '.partition.retention // strenv(GLOBAL_RETENTION)')
@@ -105,8 +123,8 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
     # If create_default is true, default_partition_name_template is required
     default_partition_name_template=$(echo "${table}" | yq '.partition.default_partition_name_template // strenv(GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE)')
     if [[ "${create_default}" == true && "${default_partition_name_template}" == "null" ]]; then
-        echo "DefaultPartitionNameTemplateError: Default partition name template is required when create_default is true."
-        echo "Please provide a default partition name template in the config file."
+        echo "ERROR: Default partition name template is required when create_default is true." >&2
+        echo "HINT: Please provide a default partition name template in the config file either in the partition config or in the global config."
         exit 1
     fi
 
@@ -132,7 +150,7 @@ SELECT partition_schema
   FROM pgpartium.get_default_partition(p_table_schema=>:'table_schema', p_table_name=>:'table_name')
 EOF
         ) || {
-            echo "TemplateTableError: Default partition for table ${table_schema}.${table_name} not found."
+            echo "ERROR: Default partition for table ${table_schema}.${table_name} not found." >&2
             exit 1
         }
 
@@ -153,7 +171,7 @@ SELECT partition_schema
   FROM pgpartium.get_latest_partition(p_table_schema=>:'table_schema', p_table_name=>:'table_name')
 EOF
         ) || {
-            echo "TemplateTableError: Latest partition for table ${table_schema}.${table_name} not found."
+            echo "ERROR: Latest partition for table ${table_schema}.${table_name} not found." >&2
             exit 1
         }
 
@@ -174,7 +192,7 @@ SELECT partition_schema
   FROM pgpartium.get_current_partition(p_table_schema=>:'table_schema', p_table_name=>:'table_name')
 EOF
         ) || {
-            echo "TemplateTableError: Current partition for table ${table_schema}.${table_name} not found."
+            echo "ERROR: Current partition for table ${table_schema}.${table_name} not found." >&2
             exit 1
         }
 
@@ -183,8 +201,6 @@ EOF
         template_table_name=$(echo "${template_table}" | yq '.table_name // ""')
 
     fi
-
-    output_filename="${table_name}_partitions.sql"
 
     psql --username=postgres \
         --dbname=postgres \
@@ -233,29 +249,13 @@ SELECT *
   , p_skip_overlapping=>:'skip_overlapping'
 )
 EOF
-#     p_table_schema text
-#   , p_table_name text
-#   , p_partition_name_template text
-#   , p_interval text
-#   , p_past integer = 0
-#   , p_future integer = 0
-#   , p_create_default boolean = false
-#   , p_default_partition_name_template text = NULL
-#   , p_partition_schema text = NULL
-#   , p_partition_tablespace text = 'pg_default'
-#   , p_index_tablespace text = 'pg_default'
-#   , p_storage_parameters jsonb = '{}'
-#   , p_template_table_schema text = NULL
-#   , p_template_table_name text = NULL
-#   , p_retention interval = '-1'
-#   , p_timezone text = 'UTC'
-#   , p_skip_overlapping boolean = false
+
     # If file is not empty, move it to directory
     if [[ -s "/tmp/${output_filename}" ]]; then
-        mv "/tmp/${output_filename}" "${directory}/${output_filename}"
-        echo "Generated partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
+        # mv "/tmp/${output_filename}" "${directory}/${output_filename}"
+        echo "INFO: Generated partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
     else
-        echo "No partitions generated for ${table_schema}.${table_name}"
+        echo "INFO: No partitions generated for ${table_schema}.${table_name}"
     fi
 
 done
