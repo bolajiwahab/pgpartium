@@ -15,16 +15,16 @@ jobs:
     runs-on: ubuntu-latest
     name: Run pre-commit
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-    - name: Install and run pre-commit
-      uses: pre-commit/action@v3.0.1
+      - name: Install and run pre-commit
+        uses: pre-commit/action@v3.0.1
 
   test:
     runs-on: ubuntu-latest

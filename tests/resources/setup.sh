@@ -56,4 +56,4 @@ echo "Setting up schema"
 psql -v "ON_ERROR_STOP=1" --quiet --single-transaction --username=postgres --dbname=postgres -f tests/resources/mock.sql -f tests/resources/schema.sql
 
 echo "Setting up infra"
-pg-setup-infra
+pgp-setup-infra

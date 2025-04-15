@@ -18,15 +18,15 @@ EOF
 }
 
 while getopts "b:t:m:h" option; do
-    case $option in
+    case "${option}" in
     b)
-        branch="$OPTARG"
+        branch="${OPTARG}"
         ;;
     t)
-        title="$OPTARG"
+        title="${OPTARG}"
         ;;
     m)
-        commit_msg="$OPTARG"
+        commit_msg="${OPTARG}"
         ;;
     h | *)
         usage

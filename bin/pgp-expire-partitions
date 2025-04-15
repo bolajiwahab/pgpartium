@@ -39,12 +39,10 @@ fi
 
 # # Setup infrastructure
 echo "INFO: Setting up infra"
-pg-setup-infra
+pgp-setup-infra
 
 # Validate schema
 yq -o=json '.' "${config}" | jsonschema schema.json
-
-# nodename='sub_node' yq '.node[strenv(nodename)]' example.yaml
 
 # Set defaults
 export DEFAULT_RETENTION='-1'
@@ -68,8 +66,13 @@ directory=$(yq '.generates[].directory' "${config}")
 yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
     table_schema=$(echo "${table}" | yq '.table_schema')
     table_name=$(echo "${table}" | yq '.table_name')
+    file_name_template=$(echo "${table}" | yq '.file_name_template')
+    description=$(echo "${table}" | yq '.description.expire // "Expire partitions for {table_schema}.{table_name}"')
+    # Replace table_schema and table_name placeholders in the description
+    description="${description//\{table_schema\}/$table_schema}"
+    description="${description//\{table_name\}/$table_name}"
 
-    output_filename="${table_name}_expired_partitions.sql"
+    output_filename=$(pgp-get-migration-filename -t "${file_name_template}" -d "${directory}" -m "${description}")
     echo "INFO: Expiring partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
 
     retention=$(echo "${table}" | yq '.partition.retention // strenv(GLOBAL_RETENTION)')

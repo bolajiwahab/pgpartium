@@ -69,13 +69,13 @@ repos:
         stages: [pre-commit]
         types: [shell]
 
-  # - repo: https://github.com/adrienverge/yamllint.git
-  #   rev: v1.37.0
-  #   hooks:
-  #     - id: yamllint
-  #       stages: [pre-commit]
-  #       name: Lint yaml files
-  #       entry: yamllint
-  #       language: python
-  #       types: [yaml]
-  #       args: [--strict]
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.37.0
+    hooks:
+      - id: yamllint
+        stages: [pre-commit]
+        name: Lint yaml files
+        entry: yamllint
+        language: python
+        types: [yaml]
+        args: [--strict]

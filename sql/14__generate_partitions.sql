@@ -219,10 +219,10 @@ BEGIN
         SELECT replace(
                     replace(
                         to_char("date", p_partition_name_template)
-                      , '{table}'
+                      , '{table_name}'
                       , p_table_name
                     )
-                  , '{schema}'
+                  , '{table_schema}'
                   , p_table_schema
                ) AS partition_name
              , "date" AS lower_bound
@@ -380,9 +380,9 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
         SELECT replace(
                     replace(
                         p_default_partition_name_template
-                      , '{table}'
+                      , '{table_name}'
                       , p_table_name)
-                  , '{schema}'
+                  , '{table_schema}'
                   , p_table_schema
                )
           INTO v_default_partition_name;

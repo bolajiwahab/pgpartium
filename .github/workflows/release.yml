@@ -1,6 +1,8 @@
+---
+# yamllint disable rule:line-length
 name: release
 
-on:
+on:  # yamllint disable-line rule:truthy
   push:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
@@ -42,26 +44,6 @@ jobs:
             exit 1
             fi
 
-  # setup_and_build:
-  #   permissions:
-  #     contents: write
-  #   needs: [details]
-  #   runs-on: ubuntu-latest
-  #   container: pgxn/pgxn-tools
-  #   steps:
-  #     - name: Check out the repository
-  #       uses: actions/checkout@v4
-
-  #     - name: Bundle the extension
-  #       id: bundle-extension
-  #       run: pgxn-bundle
-
-  #     - name: Upload artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: dist
-  #         path: ./${{ steps.bundle-extension.outputs.bundle }}
-
   github_release:
     name: Create GitHub Release
     needs: [details]
@@ -73,12 +55,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      # - name: Download artifacts
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: dist
-      #     path: dist/
 
       - name: Create GitHub Release
         id: create_release

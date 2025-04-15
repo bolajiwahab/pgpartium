@@ -39,7 +39,7 @@ fi
 
 # Setup infrastructure
 echo "INFO: Setting up infra"
-pg-setup-infra
+pgp-setup-infra
 
 # Validate schema
 yq -o=json '.' "${config}" | jsonschema schema.json
@@ -48,7 +48,7 @@ yq -o=json '.' "${config}" | jsonschema schema.json
 export DEFAULT_TABLESPACE="pg_default"
 export DEFAULT_PAST=0
 export DEFAULT_FUTURE=0
-export DEFAULT_RETENTION='-1'
+export DEFAULT_RETENTION="-1"
 export DEFAULT_CREATE_DEFAULT=false
 export DEFAULT_SKIP_OVERLAPPING=false
 export DEFAULT_STORAGE_PARAMETERS="{}"
@@ -65,7 +65,7 @@ GLOBAL_CREATE_DEFAULT=$(yq '.generates[].create_default // strenv(DEFAULT_CREATE
 GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE=$(yq '.generates[].default_partition_name_template' "${config}")
 GLOBAL_SKIP_OVERLAPPING=$(yq '.generates[].skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")
 GLOBAL_PARTITION_TABLESPACE=$(yq '.generates[].tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")
-GLOBAL_STORAGE_PARAMETERS=$(yq '.generates[].storage_parameters // strenv(DEFAULT_STORAGE_PARAMETERS)' "${config}")
+GLOBAL_STORAGE_PARAMETERS=$(yq -o=json '.generates[].storage_parameters // strenv(DEFAULT_STORAGE_PARAMETERS)' "${config}")
 GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
 
 export GLOBAL_PARTITION_TABLESPACE GLOBAL_SCHEMA GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL \
@@ -82,8 +82,13 @@ directory=$(yq '.generates[].directory' "${config}")
 yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
     table_schema=$(echo "${table}" | yq '.table_schema')
     table_name=$(echo "${table}" | yq '.table_name')
+    file_name_template=$(echo "${table}" | yq '.file_name_template')
+    description=$(echo "${table}" | yq '.description.make // "Add partitions for {table_schema}_{table_name}"')
+    # Replace table_schema and table_name placeholders in the description
+    description="${description//\{table_schema\}/$table_schema}"
+    description="${description//\{table_name\}/$table_name}"
 
-    output_filename="${table_name}_partitions.sql"
+    output_filename=$(pgp-get-migration-filename -t "${file_name_template}" -d "${directory}" -m "${description}")
     echo "INFO: Generating partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
 
     partition_schema=$(echo "${table}" | yq '.partition.schema // strenv(GLOBAL_SCHEMA)')
@@ -130,6 +135,7 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
 
     skip_overlapping=$(echo "${table}" | yq '.partition.skip_overlapping // strenv(GLOBAL_SKIP_OVERLAPPING)')
     storage_parameters=$(echo "${table}" | yq '.partition.storage_parameters // strenv(GLOBAL_STORAGE_PARAMETERS)')
+    echo "INFO: Storage parameters: ${storage_parameters}"
 
     template_table=$(echo "${table}" | yq '.template')
 

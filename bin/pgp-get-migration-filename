@@ -1,0 +1,99 @@
+#!/bin/bash
+
+usage() {
+    cat <<-EOF
+    ${0##*/}
+
+    Creates or updates a pull request on github.
+
+    OPTIONS:
+    -t  the template to use for the migration file
+    -d  the directory to the migration files
+    -m  the description of the migration
+    -h  show this help message.
+
+    SAMPLE USAGE:
+        ${0##*/} -t "V{integer}__{description}.sql" -d "migrations" -m "Add partitions for sample table"
+        ${0##*/} -t "V{integer:03}__{description}.sql" -d "migrations" -m "Expire partitions for sample table"
+        ${0##*/} -t "{timestamp}__{description}.sql" -d "migrations" -m "Add partitions for sample table"
+        ${0##*/} -t "{epoch}_{description}.up.sql" -d "migrations" -m "Add partitions for sample table"
+EOF
+}
+
+while getopts "t:d:m:h" option; do
+    case $option in
+    t)
+        template="$OPTARG"
+        ;;
+    d)
+        directory="$OPTARG"
+        ;;
+    m)
+        description="$OPTARG"
+        ;;
+    h | *)
+        usage
+        exit 0
+        ;;
+    esac
+done
+
+set -euo pipefail
+
+# Transform description to lowercase and replace spaces with underscores.
+description=$(echo "${description}" | tr '[:upper:]' '[:lower:]' | sed -E 's/ +/_/g')
+
+date=$(date -u +%Y%m%d)
+year=$(date -u +%Y)
+month=$(date -u +%m)
+day=$(date -u +%d)
+hour=$(date -u +%H)
+
+# Version handling.
+if [[ "${template}" == *"{timestamp}"* ]]; then
+    version=$(date +"%Y%m%d%H%M%S")
+    file_name="${template//\{timestamp\}/$version}"
+fi
+
+if [[ "${template}" == *"{epoch}"* ]]; then
+    version=$(date +"%s")
+    file_name="${template//\{epoch\}/$version}"
+fi
+
+if [[ "${template}" =~ \{integer:([0-9]+)\} ]]; then
+    zero_padding="${BASH_REMATCH[1]}"
+    format="%0${zero_padding}d"
+    version_key="{integer:${zero_padding}}"
+elif [[ "${template}" == *"{integer}"* ]]; then
+    format="%d"
+    version_key="{integer}"
+fi
+
+if [[ "${template}" == *"{integer"* ]]; then
+    # Get highest integer in existing migration files.
+    max=0
+    for file in "${directory}/"*; do
+        [[ -f "$file" ]] || continue
+        base=$(basename "$file")
+        version=$(echo "$base" | grep -oE '[0-9]+' | head -1)
+        # Convert version to decimal to handle leading zeros
+        version=$((10#$version))
+        if [[ "${version}" =~ ^[0-9]+$ && "${version}" -gt "${max}" ]]; then
+            max="${version}"
+        fi
+    done
+    next_version=$((max + 1))
+    version=$(printf "%s" "$next_version" | awk -v format="$format" '{printf format, $0}')
+    template="${template//$version_key/$version}"
+    file_name="${template}"
+fi
+
+# Replace placeholders
+file_name="${file_name//\{date\}/$date}"
+file_name="${file_name//\{year\}/$year}"
+file_name="${file_name//\{month\}/$month}"
+file_name="${file_name//\{day\}/$day}"
+file_name="${file_name//\{hour\}/$hour}"
+file_name="${file_name//\{description\}/$description}"
+
+echo "$file_name"
