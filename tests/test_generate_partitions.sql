@@ -147,7 +147,7 @@ SELECT throws_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_partition_schema=>''
     )$$
@@ -160,7 +160,7 @@ SELECT throws_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_partition_schema=>'nonexistent'
     )$$
@@ -173,7 +173,7 @@ SELECT throws_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_partition_tablespace=>NULL
     )$$
@@ -186,7 +186,7 @@ SELECT throws_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_index_tablespace=>'nonexistent'
     )$$
@@ -199,7 +199,7 @@ SELECT throws_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_index_tablespace=>NULL
     )$$
@@ -212,7 +212,7 @@ SELECT throws_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_partition_tablespace=>'nonexistent'
     )$$
@@ -225,7 +225,7 @@ SELECT throws_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_template_table_schema=>''
       , p_template_table_name=>'charges_template'
@@ -239,7 +239,7 @@ SELECT throws_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_template_table_schema=>'public'
       , p_template_table_name=>''
@@ -253,7 +253,7 @@ SELECT lives_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_template_table_schema=>''
       , p_template_table_name=>''
@@ -265,7 +265,7 @@ SELECT throws_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_template_table_schema=>NULL
       , p_template_table_name=>'charges_template'
@@ -279,7 +279,7 @@ SELECT throws_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_template_table_schema=>'public'
       , p_template_table_name=>NULL
@@ -293,7 +293,7 @@ SELECT throws_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_template_table_schema=>'public'
       , p_template_table_name=>'nonexistent'
@@ -307,7 +307,7 @@ SELECT lives_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_template_table_schema=>NULL
       , p_template_table_name=>NULL
@@ -343,7 +343,7 @@ SELECT throws_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_create_default=>true
       , p_default_partition_name_template=>''
@@ -357,7 +357,7 @@ SELECT throws_ok($$
     SELECT * FROM pgpartium.generate_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
-      , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+      , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
       , p_create_default=>true
       , p_default_partition_name_template=>NULL)$$
@@ -372,7 +372,7 @@ PREPARE result_with_defaults AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
 );
 
@@ -392,7 +392,7 @@ PREPARE result_with_past AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
   , p_past=>1
 );
@@ -417,7 +417,7 @@ PREPARE result_with_future AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
   , p_future=>1
 );
@@ -442,10 +442,10 @@ PREPARE result_with_create_default AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
   , p_create_default=>true
-  , p_default_partition_name_template=>'{schema}__{table}__default'
+  , p_default_partition_name_template=>'{table_schema}__{table_name}__default'
 );
 
 PREPARE expected_with_create_default AS VALUES (
@@ -468,7 +468,7 @@ PREPARE result_with_partition_schema AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
   , p_partition_schema=>'partitions'
 );
@@ -489,7 +489,7 @@ PREPARE result_with_partition_tablespace AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
   , p_partition_tablespace=>'pgpartium'
 );
@@ -511,7 +511,7 @@ PREPARE result_with_partition_storage_parameters AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
   , p_storage_parameters=>'{"fillfactor": "90"}'
 );
@@ -533,7 +533,7 @@ PREPARE result_with_template_table AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
   , p_template_table_schema=>'public'
   , p_template_table_name=>'transactions_template'
@@ -567,7 +567,7 @@ PREPARE result_with_template_table_and_index_tablespace AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
   , p_template_table_schema=>'public'
   , p_template_table_name=>'transactions_template'
@@ -604,7 +604,7 @@ PREPARE result_with_retention AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
   , p_retention=>'-1 month'
   , p_past=>1
@@ -626,7 +626,7 @@ PREPARE result_with_timezone AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
   , p_timezone=>'Europe/Berlin'
 );
@@ -652,7 +652,7 @@ PREPARE result_with_not_skip_overlapping AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
   , p_future=>1
 );
@@ -677,7 +677,7 @@ PREPARE result_with_skip_overlapping AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
   , p_future=>1
   , p_skip_overlapping=>true
@@ -700,7 +700,7 @@ PREPARE result_with_latest_partition_as_start_time AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'notifications'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
 );
 
@@ -724,7 +724,7 @@ PREPARE result_with_partition_by_timestamp AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'charges'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
 );
 
@@ -744,7 +744,7 @@ PREPARE result_with_epoch_integer AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'sales'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
 );
 
@@ -764,7 +764,7 @@ PREPARE result_with_epoch_bigint AS
 SELECT * FROM pgpartium.generate_partitions (
     p_table_schema=>'public'
   , p_table_name=>'trips'
-  , p_partition_name_template=>'{schema}__{table}__YYYY_MM'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
 );
 
