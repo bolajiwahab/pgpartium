@@ -1,7 +1,7 @@
 CREATE SCHEMA mock;
 
 -- We are mocking now() to return a fixed timestamptz value
--- as the core function pgpartium.generate_partitions uses now()
+-- as the core function pgpartium.make_partitions uses now()
 -- to calculate the partitioning range.
 CREATE OR REPLACE FUNCTION mock.now ()
 RETURNS timestamptz

@@ -130,6 +130,15 @@ CREATE TABLE public.orders (
 )
 PARTITION BY RANGE (order_id);
 
+-- Partitioned by text.
+CREATE TABLE public.books (
+    book_id text NOT NULL
+  , user_id uuid NOT NULL
+  , created_at timestamptz NOT NULL
+  , updated_at timestamptz NOT NULL
+)
+PARTITION BY RANGE (book_id);
+
 -- Non partitioned table.
 CREATE TABLE public.accounts (
     user_id uuid NOT NULL

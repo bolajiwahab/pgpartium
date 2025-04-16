@@ -235,7 +235,7 @@ EOF
         --output="/tmp/${output_filename}" \
         <<EOF
 SELECT *
-  FROM pgpartium.generate_partitions(
+  FROM pgpartium.make_partitions(
     p_table_schema=>:'table_schema'
   , p_table_name=>:'table_name'
   , p_partition_name_template=>:'partition_name_template'

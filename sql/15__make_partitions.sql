@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION pgpartium.generate_partitions (
+CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
     p_table_schema text
   , p_table_name text
   , p_partition_name_template text
@@ -65,11 +65,11 @@ BEGIN
                  HINT = 'table ' || '"' || p_table_schema || '"' || '.' || '"' || p_table_name || '"' || ' is partitioned on more than one column';
     END IF;
 
-    IF v_partitioning_details.keys_data_types NOT IN ('date', 'timestamptz', 'timestamp', 'int4', 'int8') THEN
+    IF v_partitioning_details.keys_data_types NOT IN ('date', 'timestamptz', 'timestamp', 'int4', 'int8', 'uuid') THEN
         RAISE 'partitioning on data type "%" is not supported', v_partitioning_details.keys_data_types
         USING ERRCODE = 'feature_not_supported',
                DETAIL = 'table ' || '"' || p_table_schema || '"' || '.' || '"' || p_table_name || '"' || ' is partitioned on a data type that is not supported',
-                 HINT = 'supported data types are: date, timestamp with time zone, timestamp without time zone, integer, and bigint';
+                 HINT = 'supported data types are: date, timestamp with time zone, timestamp without time zone, integer, bigint, and uuid';
     END IF;
 
     IF COALESCE(p_partition_name_template, '') = '' THEN
@@ -344,6 +344,7 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
                     WHEN 'date'        THEN v_partitions.lower_bound::date::text
                     WHEN 'int4'        THEN (EXTRACT(EPOCH FROM v_partitions.lower_bound)::integer)::text
                     WHEN 'int8'        THEN (EXTRACT(EPOCH FROM v_partitions.lower_bound)::bigint * 1000)::text
+                    WHEN 'uuid'        THEN (overlay(overlay(pgpartium.gen_uuid_v7(v_partitions.lower_bound)::text PLACING '0000' FROM 15 FOR 4) PLACING '0000-000000000000' FROM 20))::text
                 END
               , CASE v_partitioning_details.keys_data_types                                                                  -- <7>
                     WHEN 'timestamptz' THEN v_partitions.upper_bound::timestamptz::text
@@ -351,6 +352,7 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
                     WHEN 'date'        THEN v_partitions.upper_bound::date::text
                     WHEN 'int4'        THEN (EXTRACT(EPOCH FROM v_partitions.upper_bound)::integer)::text
                     WHEN 'int8'        THEN (EXTRACT(EPOCH FROM v_partitions.upper_bound)::bigint * 1000)::text
+                    WHEN 'uuid'        THEN (overlay(overlay(pgpartium.gen_uuid_v7(v_partitions.upper_bound)::text PLACING '0000' FROM 15 FOR 4) PLACING '0000-000000000000' FROM 20))::text
                 END
               , v_storage_clause                                                                                             -- <8>
               , CASE                                                                                                         -- <9>

@@ -19,12 +19,12 @@ DEALLOCATE ALL;
 SET search_path TO mock, public, pg_catalog;
 
 -- Plan the tests.
-SELECT plan(44);
+SELECT plan(45);
 
 -- Run the tests.
 -- Group: Exceptions
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>''
       , p_table_name=>'transactions'
       , p_partition_name_template=>''
@@ -36,7 +36,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>''
       , p_partition_name_template=>''
@@ -48,7 +48,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>''
       , p_table_name=>''
       , p_partition_name_template=>''
@@ -60,7 +60,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>NULL
       , p_table_name=>'transactions'
       , p_partition_name_template=>''
@@ -72,7 +72,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>NULL
       , p_partition_name_template=>''
@@ -84,7 +84,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>NULL
       , p_table_name=>NULL
       , p_partition_name_template=>''
@@ -96,7 +96,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'accounts'
       , p_partition_name_template=>NULL
@@ -108,7 +108,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'users'
       , p_partition_name_template=>NULL
@@ -120,7 +120,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'scheduled_entries'
       , p_partition_name_template=>NULL
@@ -132,19 +132,19 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
-      , p_table_name=>'orders'
+      , p_table_name=>'books'
       , p_partition_name_template=>NULL
       , p_interval=>'1 month'
     )$$
   , '0A000'
-  , 'partitioning on data type "uuid" is not supported'
+  , 'partitioning on data type "text" is not supported'
   , 'fail on unsupported data type'
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -157,7 +157,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -170,7 +170,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -183,7 +183,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -196,7 +196,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -209,7 +209,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -222,7 +222,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -236,7 +236,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -250,7 +250,7 @@ SELECT throws_ok($$
 );
 
 SELECT lives_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -262,7 +262,7 @@ SELECT lives_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -276,7 +276,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -290,7 +290,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -304,7 +304,7 @@ SELECT throws_ok($$
 );
 
 SELECT lives_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -316,7 +316,7 @@ SELECT lives_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>''
@@ -328,7 +328,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>NULL
@@ -340,7 +340,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -354,7 +354,7 @@ SELECT throws_ok($$
 );
 
 SELECT throws_ok($$
-    SELECT * FROM pgpartium.generate_partitions (
+    SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>'public'
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -369,7 +369,7 @@ SELECT throws_ok($$
 -- Group: Outputs
 -- We are using mocked now() from tests/resources/mock.sql.
 PREPARE result_with_defaults AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -389,7 +389,7 @@ SELECT results_eq(
 );
 
 PREPARE result_with_past AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -414,7 +414,7 @@ SELECT results_eq(
 );
 
 PREPARE result_with_future AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -439,7 +439,7 @@ SELECT results_eq(
 );
 
 PREPARE result_with_create_default AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -465,7 +465,7 @@ SELECT results_eq(
 );
 
 PREPARE result_with_partition_schema AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -486,7 +486,7 @@ SELECT results_eq(
 );
 
 PREPARE result_with_partition_tablespace AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -508,7 +508,7 @@ SELECT results_eq(
 );
 
 PREPARE result_with_partition_storage_parameters AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -530,7 +530,7 @@ SELECT results_eq(
 );
 
 PREPARE result_with_template_table AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -564,7 +564,7 @@ SELECT results_eq(
 );
 
 PREPARE result_with_template_table_and_index_tablespace AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -601,7 +601,7 @@ SELECT results_eq(
 );
 
 PREPARE result_with_retention AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -623,7 +623,7 @@ SELECT results_eq(
 );
 
 PREPARE result_with_timezone AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -649,7 +649,7 @@ CREATE TABLE public.public__transactions__2025_03_01
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-03-02 00:00:00+00');
 
 PREPARE result_with_not_skip_overlapping AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -674,7 +674,7 @@ SELECT results_eq(
 );
 
 PREPARE result_with_skip_overlapping AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -697,7 +697,7 @@ SELECT results_eq(
 -- Overlapping partitions: END
 
 PREPARE result_with_latest_partition_as_start_time AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'notifications'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -721,7 +721,7 @@ SELECT results_eq(
 );
 
 PREPARE result_with_partition_by_timestamp AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'charges'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -741,7 +741,7 @@ SELECT results_eq(
 );
 
 PREPARE result_with_epoch_integer AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'sales'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -761,7 +761,7 @@ SELECT results_eq(
 );
 
 PREPARE result_with_epoch_bigint AS
-SELECT * FROM pgpartium.generate_partitions (
+SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'public'
   , p_table_name=>'trips'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
@@ -778,6 +778,26 @@ SELECT results_eq(
     'result_with_epoch_bigint'
   , 'expected_with_epoch_bigint'
   , 'generate partitions with epoch bigint'
+);
+
+PREPARE result_with_uuid_v7 AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'public'
+  , p_table_name=>'orders'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+);
+
+PREPARE expected_with_uuid_v7 AS VALUES (
+$$CREATE TABLE public.public__orders__2025_03
+    PARTITION OF public.orders
+    FOR VALUES FROM ('01954f00-b000-0000-0000-000000000000') TO ('0195eea5-d400-0000-0000-000000000000');
+$$);
+
+SELECT results_eq(
+    'result_with_uuid_v7'
+  , 'expected_with_uuid_v7'
+  , 'generate partitions with uuid v7'
 );
 
 -- Finish the tests and clean up.

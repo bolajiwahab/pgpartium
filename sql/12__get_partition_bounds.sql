@@ -23,6 +23,8 @@ AS $BODY$
                THEN to_timestamp(CAST((matches)[1] AS integer))
              WHEN 'int8'
                THEN to_timestamp(CAST((matches)[1] AS bigint) / 1000)
+             WHEN 'uuid'
+               THEN to_timestamp(('x' || replace(CAST((matches)[1] AS text), '-', ''))::bit(48)::bigint / 1000)
            END AS lower_bound
          , CASE keys_data_types
              WHEN 'timestamptz'
@@ -35,6 +37,8 @@ AS $BODY$
                THEN to_timestamp(CAST((matches)[2] AS integer))
              WHEN 'int8'
                THEN to_timestamp(CAST((matches)[2] AS bigint) / 1000)
+             WHEN 'uuid'
+               THEN to_timestamp(('x' || replace(CAST((matches)[2] AS text), '-', ''))::bit(48)::bigint / 1000)
            END AS upper_bound
       FROM pg_catalog.pg_inherits AS i
      INNER JOIN pg_catalog.pg_class AS p
