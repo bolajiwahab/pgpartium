@@ -2,7 +2,54 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "definitions": {
+        "file_name_template": {
+            "description": "The template for the migration filename.",
+            "type": "string",
+            "examples": [
+                "V{integer}__{description}.sql",
+                "V{integer:3}__{description}.sql",
+                "{timestamp}__{description}.sql",
+                "{epoch}_{description}.up.sql"
+            ],
+            "allOf": [
+                {
+                    "anyOf": [
+                        {
+                            "pattern": "\\{integer(:\\d+)?\\}"
+                        },
+                        {
+                            "pattern": "\\{timestamp\\}"
+                        },
+                        {
+                            "pattern": "\\{epoch\\}"
+                        }
+                    ]
+                },
+                {
+                    "pattern": "\\{description\\}"
+                }
+            ],
+            "minLength": 1
+        },
+        "description": {
+            "description": "The description of the migration.",
+            "type": "object",
+            "properties": {
+                "make": {
+                    "description": "The description for generation of partitions.",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "expire": {
+                    "description": "The description for expiration of partitions.",
+                    "type": "string",
+                    "minLength": 1
+                }
+            },
+            "additionalProperties": false
+        },
         "timezone": {
+            "description": "The timezone to use for the generation of the migration files.",
             "type": "string",
             "enum": [
                 "Africa/Abidjan",
@@ -580,6 +627,7 @@
             ]
         },
         "storage_parameters": {
+            "description": "The storage parameters for the partitions.",
             "type": "object",
             "properties": {
                 "fillfactor": {
@@ -728,52 +776,77 @@
             "additionalProperties": false,
             "minProperties": 1
         },
-        "schema": {
-            "type": "string",
-            "minLength": 1,
-            "default": "public"
-        },
-        "table": {
+        "name": {
             "type": "string",
             "minLength": 1
         },
+        "directory": {
+            "$ref": "#/definitions/name",
+            "description": "The directory to generate migrations in."
+        },
+        "schema": {
+            "$ref": "#/definitions/name"
+        },
+        "table_schema": {
+            "$ref": "#/definitions/schema",
+            "description": "The schema of a table."
+        },
+        "partition_schema": {
+            "$ref": "#/definitions/schema",
+            "description": "The schema for partitions.",
+            "default": "parent's schema"
+        },
+        "table_name": {
+            "$ref": "#/definitions/name",
+            "description": "The name of a table."
+        },
         "tablespace": {
-            "type": "string",
-            "minLength": 1,
+            "$ref": "#/definitions/name",
             "default": "pg_default"
         },
+        "partition_tablespace": {
+            "$ref": "#/definitions/tablespace",
+            "description": "The tablespace for the partitions."
+        },
+        "index_tablespace": {
+            "$ref": "#/definitions/tablespace",
+            "description": "The tablespace for the indexes.",
+            "default": "partition's tablespace"
+        },
         "name_template": {
-            "type": "string",
+            "$ref": "#/definitions/name",
+            "description": "The name template for the partitions.",
             "examples": [
                 "{table_schema}__{table_name}__YYYY_MM_DD",
                 "{table_schema}__{table_name}__YYYY_MM"
-            ],
-            "minLength": 1
+            ]
         },
         "default_partition_name_template": {
-            "$ref": "#/definitions/name_template",
+            "$ref": "#/definitions/name",
             "description": "The name template for the default partition.",
-            "type": "string",
             "examples": [
                 "{table_schema}__{table_name}__default"
-            ],
-            "minLength": 1
+            ]
         },
         "interval": {
+            "description": "The partition interval.",
             "type": "string",
             "minLength": 1
         },
         "past": {
+            "description": "The number of past partitions to make.",
             "type": "integer",
             "minimum": 0,
             "default": 0
         },
         "future": {
+            "description": "The number of future partitions to make.",
             "type": "integer",
             "minimum": 0,
             "default": 0
         },
         "create_default": {
+            "description": "Whether to create default partition.",
             "type": "boolean",
             "default": false
         },
@@ -815,201 +888,127 @@
                 "type": "object",
                 "properties": {
                     "directory": {
-                        "description": "The directory to generate migrations in.",
-                        "type": "string",
-                        "minLength": 1
+                        "$ref": "#/definitions/directory"
                     },
                     "schema": {
-                        "$ref": "#/definitions/schema",
-                        "description": "The schema for the partitions.",
-                        "default": "parent's schema"
+                        "$ref": "#/definitions/partition_schema"
                     },
                     "tablespace": {
-                        "$ref": "#/definitions/tablespace",
-                        "description": "The tablespace for the partitions."
+                        "$ref": "#/definitions/partition_tablespace"
                     },
                     "index_tablespace": {
-                        "$ref": "#/definitions/tablespace",
-                        "description": "The tablespace for the indexes."
+                        "$ref": "#/definitions/index_tablespace"
                     },
                     "storage_parameters": {
-                        "$ref": "#/definitions/storage_parameters",
-                        "description": "The storage parameters for the partitions."
+                        "$ref": "#/definitions/storage_parameters"
                     },
                     "name_template": {
-                        "$ref": "#/definitions/name_template",
-                        "description": "The name template for the partitions."
+                        "$ref": "#/definitions/name_template"
                     },
                     "interval": {
-                        "$ref": "#/definitions/interval",
-                        "description": "The partition interval."
+                        "$ref": "#/definitions/interval"
                     },
                     "past": {
-                        "$ref": "#/definitions/past",
-                        "description": "The number of past partitions to generate."
+                        "$ref": "#/definitions/past"
                     },
                     "future": {
-                        "$ref": "#/definitions/future",
-                        "description": "The number of future partitions to generate."
+                        "$ref": "#/definitions/future"
                     },
                     "create_default": {
-                        "$ref": "#/definitions/create_default",
-                        "description": "Whether to create default partition."
+                        "$ref": "#/definitions/create_default"
                     },
                     "default_partition_name_template": {
                         "$ref": "#/definitions/default_partition_name_template"
                     },
                     "retention": {
-                        "$ref": "#/definitions/retention",
-                        "description": "The retention time interval to expire partitions containing data older than the given interval."
+                        "$ref": "#/definitions/retention"
                     },
                     "detach_first": {
-                        "$ref": "#/definitions/detach_first",
-                        "description": "Whether to detach the expired partitions first before dropping them."
+                        "$ref": "#/definitions/detach_first"
                     },
                     "detach_only": {
-                        "$ref": "#/definitions/detach_only",
-                        "description": "Whether to only detach the expired partitions."
+                        "$ref": "#/definitions/detach_only"
                     },
                     "detach_concurrently": {
-                        "$ref": "#/definitions/detach_concurrently",
-                        "description": "Whether to detach the expired partitions concurrently."
+                        "$ref": "#/definitions/detach_concurrently"
                     },
                     "skip_overlapping": {
-                        "$ref": "#/definitions/skip_overlapping",
-                        "description": "Whether to skip overlapping partitions."
+                        "$ref": "#/definitions/skip_overlapping"
                     },
                     "timezone": {
-                        "$ref": "#/definitions/timezone",
-                        "description": "The timezone to use for the generation of the migration files."
+                        "$ref": "#/definitions/timezone"
                     },
                     "tables": {
-                        "description": "List of tables to generate partitions for.",
+                        "description": "List of tables to make or expire partitions for.",
                         "type": "array",
                         "items": {
-                            "description": "The table to generate partitions for.",
+                            "description": "The table to make or expire partitions for.",
                             "type": "object",
                             "properties": {
                                 "table_schema": {
-                                    "$ref": "#/definitions/schema",
-                                    "description": "The schema of a table."
+                                    "$ref": "#/definitions/table_schema"
                                 },
                                 "table_name": {
-                                    "$ref": "#/definitions/table",
-                                    "description": "The name of a table."
+                                    "$ref": "#/definitions/table_name"
                                 },
                                 "file_name_template": {
-                                    "description": "The template for the migration filename.",
-                                    "type": "string",
-                                    "examples": [
-                                        "V{integer}__{description}.sql",
-                                        "V{integer:3}__{description}.sql",
-                                        "{timestamp}__{description}.sql",
-                                        "{epoch}_{description}.up.sql"
-                                    ],
-                                    "allOf": [
-                                        {
-                                            "anyOf": [
-                                                {
-                                                    "pattern": "\\{integer(:\\d+)?\\}"
-                                                },
-                                                {
-                                                    "pattern": "\\{timestamp\\}"
-                                                },
-                                                {
-                                                    "pattern": "\\{epoch\\}"
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            "pattern": "\\{description\\}"
-                                        }
-                                    ],
-                                    "minLength": 1
+                                    "$ref": "#/definitions/file_name_template"
                                 },
                                 "description": {
-                                    "description": "The description of the migration.",
-                                    "type": "object",
-                                    "properties": {
-                                        "make": {
-                                            "description": "The description for generation of partitions.",
-                                            "type": "string",
-                                            "minLength": 1
-                                        },
-                                        "expire": {
-                                            "description": "The description for expiration of partitions.",
-                                            "type": "string",
-                                            "minLength": 1
-                                        }
-                                    },
-                                    "additionalProperties": false
+                                    "$ref": "#/definitions/description"
                                 },
                                 "partition": {
                                     "type": "object",
                                     "description": "The partition configuration for a table.",
                                     "properties": {
                                         "schema": {
-                                            "$ref": "#/definitions/schema",
-                                            "description": "The schema for the partitions."
+                                            "$ref": "#/definitions/partition_schema"
                                         },
                                         "tablespace": {
-                                            "$ref": "#/definitions/tablespace",
-                                            "description": "The tablespace for the partitions."
+                                            "$ref": "#/definitions/partition_tablespace"
                                         },
                                         "index_tablespace": {
-                                            "$ref": "#/definitions/tablespace",
-                                            "description": "The tablespace for the indexes."
+                                            "$ref": "#/definitions/index_tablespace"
                                         },
                                         "storage_parameters": {
-                                            "$ref": "#/definitions/storage_parameters",
-                                            "description": "The storage parameters for the partitions."
+                                            "$ref": "#/definitions/storage_parameters"
                                         },
                                         "name_template": {
-                                            "$ref": "#/definitions/name_template",
-                                            "description": "The name template for the partitions."
+                                            "$ref": "#/definitions/name_template"
                                         },
                                         "interval": {
-                                            "$ref": "#/definitions/interval",
-                                            "description": "The partition interval."
+                                            "$ref": "#/definitions/interval"
                                         },
                                         "past": {
-                                            "$ref": "#/definitions/past",
-                                            "description": "The number of past partitions to generate."
+                                            "$ref": "#/definitions/past"
                                         },
                                         "future": {
-                                            "$ref": "#/definitions/future",
-                                            "description": "The number of future partitions to generate."
+                                            "$ref": "#/definitions/future"
                                         },
                                         "create_default": {
-                                            "$ref": "#/definitions/create_default",
-                                            "description": "Whether to create default partition."
+                                            "$ref": "#/definitions/create_default"
                                         },
                                         "default_partition_name_template": {
                                             "$ref": "#/definitions/default_partition_name_template"
                                         },
                                         "retention": {
-                                            "$ref": "#/definitions/retention",
-                                            "description": "The retention time interval to expire partitions containing data older than the given interval."
+                                            "$ref": "#/definitions/retention"
                                         },
                                         "detach_first": {
-                                            "$ref": "#/definitions/detach_first",
-                                            "description": "Whether to detach the expired partitions first before dropping them."
+                                            "$ref": "#/definitions/detach_first"
                                         },
                                         "detach_only": {
-                                            "$ref": "#/definitions/detach_only",
-                                            "description": "Whether to only detach the expired partitions."
+                                            "$ref": "#/definitions/detach_only"
                                         },
                                         "detach_concurrently": {
-                                            "$ref": "#/definitions/detach_concurrently",
-                                            "description": "Whether to detach the expired partitions concurrently."
+                                            "$ref": "#/definitions/detach_concurrently"
                                         },
                                         "skip_overlapping": {
-                                            "$ref": "#/definitions/skip_overlapping",
-                                            "description": "Whether to skip overlapping partitions."
+                                            "$ref": "#/definitions/skip_overlapping"
                                         },
                                         "timezone": {
-                                            "$ref": "#/definitions/timezone",
-                                            "description": "The timezone to use for the generation of the migration files."
+                                            "description": "The timezone to use for the generation of the migration files.",
+                                            "$ref": "#/definitions/timezone"
                                         }
                                     },
                                     "additionalProperties": false
@@ -1022,14 +1021,10 @@
                                     ],
                                     "properties": {
                                         "table_schema": {
-                                            "description": "Schema of the template table.",
-                                            "type": "string",
-                                            "minLength": 1
+                                            "$ref": "#/definitions/table_schema"
                                         },
                                         "table_name": {
-                                            "description": "Name of the template table.",
-                                            "type": "string",
-                                            "minLength": 1
+                                            "$ref": "#/definitions/table_name"
                                         }
                                     },
                                     "required": [
