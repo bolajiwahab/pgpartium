@@ -16,7 +16,7 @@ AS $BODY$
      INNER JOIN pg_catalog.pg_class AS t
         ON n.oid = t.relnamespace
      INNER JOIN pg_catalog.pg_constraint AS c
-        ON c.conrelid = t.oid
+        ON t.oid = c.conrelid
       LEFT JOIN LATERAL (
                             SELECT string_agg(attname, ', ' ORDER BY a.attnum) AS columns
                               FROM pg_catalog.pg_attribute AS a

@@ -40,19 +40,19 @@ AS $BODY$
              WHEN 'uuid'
                THEN to_timestamp(('x' || replace(CAST((matches)[2] AS text), '-', ''))::bit(48)::bigint / 1000)
            END AS upper_bound
-      FROM pg_catalog.pg_inherits AS i
+      FROM pg_catalog.pg_namespace AS pn
      INNER JOIN pg_catalog.pg_class AS p
-        ON i.inhparent = p.oid
+        ON pn.oid = p.relnamespace
+     INNER JOIN pg_catalog.pg_inherits AS i
+        ON p.oid = i.inhparent
      INNER JOIN pg_catalog.pg_class AS c
         ON i.inhrelid = c.oid
-     INNER JOIN pg_catalog.pg_namespace AS pn
-        ON pn.oid = p.relnamespace
      INNER JOIN pg_catalog.pg_namespace AS cn
-        ON cn.oid = c.relnamespace
+        ON c.relnamespace = cn.oid
      CROSS JOIN regexp_matches(pg_catalog.pg_get_expr(c.relpartbound, c.oid), '\(\''?(.+?)\''?\).+\(\''?(.+?)\''?\)') AS matches
          , LATERAL (SELECT keys_data_types FROM pgpartium.get_partitioning_details(p_table_schema, p_table_name)) AS partitioning_details
-     WHERE c.relispartition
+     WHERE pn.nspname = p_table_schema
        AND p.relname = p_table_name
-       AND pn.nspname = p_table_schema
+       AND c.relispartition
      ORDER BY (matches)[1];
 $BODY$;

@@ -1,16 +1,3 @@
--- Turn off echo and keep things quiet.
-\unset ECHO
-\set QUIET 1
-
--- Format the output for nice TAP.
-\pset format unaligned
-\pset tuples_only true
-\pset pager off
-
--- Revert all changes on failure.
-\set ON_ERROR_ROLLBACK 1
-\set ON_ERROR_STOP true
-
 BEGIN;
 
 -- Deallocate all previous prepared statements.
@@ -547,14 +534,18 @@ $$CREATE TABLE public.public__transactions__2025_03
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
-CREATE INDEX public__transactions__2025_03_account_id_idx
-    ON public.public__transactions__2025_03
- USING btree (account_id);
-
 CREATE UNIQUE INDEX public__transactions__2025_03_status_active_key
     ON public.public__transactions__2025_03
  USING btree (status)
  WHERE status = 'active'::text;
+
+CREATE INDEX public__transactions__2025_03_account_id_idx
+    ON public.public__transactions__2025_03
+ USING btree (account_id);
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON public.public__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
 $$);
 
 SELECT results_eq(
@@ -582,16 +573,20 @@ $$CREATE TABLE public.public__transactions__2025_03
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
-CREATE INDEX public__transactions__2025_03_account_id_idx
-    ON public.public__transactions__2025_03
- USING btree (account_id)
-TABLESPACE pgpartium;
-
 CREATE UNIQUE INDEX public__transactions__2025_03_status_active_key
     ON public.public__transactions__2025_03
  USING btree (status)
 TABLESPACE pgpartium
  WHERE status = 'active'::text;
+
+CREATE INDEX public__transactions__2025_03_account_id_idx
+    ON public.public__transactions__2025_03
+ USING btree (account_id)
+TABLESPACE pgpartium;
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON public.public__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
 $$);
 
 SELECT results_eq(
@@ -801,6 +796,6 @@ SELECT results_eq(
 );
 
 -- Finish the tests and clean up.
-SELECT * FROM finish(true);
+SELECT * FROM finish();
 
 ROLLBACK;

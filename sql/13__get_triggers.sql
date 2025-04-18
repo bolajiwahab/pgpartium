@@ -60,7 +60,7 @@ AS $BODY$
      INNER JOIN pg_catalog.pg_class AS t
         ON n.oid = t.relnamespace
      INNER JOIN pg_catalog.pg_trigger AS tg
-        ON tg.tgrelid = t.oid
+        ON t.oid = tg.tgrelid
        AND NOT tg.tgisinternal
      WHERE n.nspname = p_table_schema
        AND t.relname = p_table_name;

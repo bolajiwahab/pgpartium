@@ -18,11 +18,11 @@ AS $BODY$
      INNER JOIN pg_catalog.pg_class AS t
         ON n.oid = t.relnamespace
      INNER JOIN pg_catalog.pg_index AS i
-        ON i.indrelid = t.oid AND i.indisvalid
+        ON t.oid = i.indrelid AND i.indisvalid
      INNER JOIN pg_catalog.pg_class AS ix
         ON i.indexrelid = ix.oid
       LEFT JOIN pg_catalog.pg_constraint AS c
-        ON c.conindid = i.indexrelid
+        ON i.indexrelid = c.conindid
      WHERE n.nspname = p_table_schema
        AND t.relname = p_table_name
        AND c.conindid IS NULL;

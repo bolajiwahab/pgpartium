@@ -261,7 +261,7 @@ BEGIN
                     WHEN 'p' THEN 0
                     WHEN 'u' THEN 1
                     ELSE 2
-                END
+                END, replace(constraint_name, p_template_table_name, v_partitions.partition_name)
             ) INTO v_constraints
             FROM partition_constraints;
 
@@ -290,6 +290,10 @@ BEGIN
                        END
                     || E';\n'
                     , E'\n'
+                    ORDER BY CASE is_unique_index
+                        WHEN true THEN 0
+                        WHEN false THEN 1
+                    END, replace(index_name, p_template_table_name, v_partitions.partition_name)
                    ) INTO v_indexes
               FROM partition_indexes;
 
@@ -308,7 +312,7 @@ BEGIN
                     || trigger_body
                     || E';\n'
                     , E'\n'
-                    ORDER BY trigger_name
+                    ORDER BY replace(trigger_name, p_template_table_name, v_partitions.partition_name)
                    ) INTO v_triggers
               FROM partition_triggers;
 
@@ -400,7 +404,7 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
                 WHEN 'p' THEN 0
                 WHEN 'u' THEN 1
                 ELSE 2
-            END
+            END, replace(constraint_name, p_template_table_name, v_default_partition_name)
         ) INTO v_constraints
         FROM partition_constraints;
 
@@ -429,6 +433,10 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
                     END
                 || E';\n'
                 , E'\n'
+                ORDER BY CASE is_unique_index
+                    WHEN true THEN 0
+                    WHEN false THEN 1
+                END, replace(index_name, p_template_table_name, v_default_partition_name)
                 ) INTO v_indexes
             FROM partition_indexes;
 
@@ -447,7 +455,7 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
                 || trigger_body
                 || E';\n'
                 , E'\n'
-                ORDER BY trigger_name
+                ORDER BY replace(trigger_name, p_template_table_name, v_default_partition_name)
                 ) INTO v_triggers
             FROM partition_triggers;
 

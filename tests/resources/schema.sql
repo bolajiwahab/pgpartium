@@ -33,6 +33,10 @@ CREATE TABLE public.transactions_template (
   , CONSTRAINT transactions_template_account_id_created_at_key UNIQUE (account_id, created_at)
 );
 
+CREATE TRIGGER suppress_redundant_updates_trig
+    BEFORE UPDATE ON public.transactions_template
+    FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
+
 CREATE INDEX transactions_template_account_id_idx
     ON public.transactions_template (account_id);
 

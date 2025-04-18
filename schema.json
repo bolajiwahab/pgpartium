@@ -890,10 +890,10 @@
                     "directory": {
                         "$ref": "#/definitions/directory"
                     },
-                    "schema": {
+                    "partition_schema": {
                         "$ref": "#/definitions/partition_schema"
                     },
-                    "tablespace": {
+                    "partition_tablespace": {
                         "$ref": "#/definitions/partition_tablespace"
                     },
                     "index_tablespace": {
@@ -961,10 +961,10 @@
                                     "type": "object",
                                     "description": "The partition configuration for a table.",
                                     "properties": {
-                                        "schema": {
+                                        "partition_schema": {
                                             "$ref": "#/definitions/partition_schema"
                                         },
-                                        "tablespace": {
+                                        "partition_tablespace": {
                                             "$ref": "#/definitions/partition_tablespace"
                                         },
                                         "index_tablespace": {
