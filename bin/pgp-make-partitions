@@ -65,7 +65,7 @@ GLOBAL_CREATE_DEFAULT=$(yq '.generates[].create_default // strenv(DEFAULT_CREATE
 GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE=$(yq '.generates[].default_partition_name_template' "${config}")
 GLOBAL_SKIP_OVERLAPPING=$(yq '.generates[].skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")
 GLOBAL_PARTITION_TABLESPACE=$(yq '.generates[].tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")
-GLOBAL_STORAGE_PARAMETERS=$(yq -o=json '.generates[].storage_parameters // strenv(DEFAULT_STORAGE_PARAMETERS)' "${config}")
+GLOBAL_STORAGE_PARAMETERS=$(yq -o=json '.generates[].storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")
 GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
 
 export GLOBAL_PARTITION_TABLESPACE GLOBAL_SCHEMA GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL \
@@ -100,7 +100,7 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
     partition_name_template=$(echo "${table}" | yq '.partition.name_template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)')
     if [[ "${partition_name_template}" == "null" ]]; then
         echo "ERROR: Partition name template is required." >&2
-        echo "HINT: Please provide a partition name template in the config file either in the partition config or in the global config."
+        echo "HINT: Please provide a partition name template in the config file either in the partition config or in the global config." >&2
         exit 1
     fi
 
@@ -110,7 +110,7 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
     partition_interval=$(echo "${table}" | yq '.partition.interval // strenv(GLOBAL_INTERVAL)')
     if [[ "${partition_interval}" == "null" ]]; then
         echo "ERROR: Partition interval is required." >&2
-        echo "HINT: Please provide a partition interval in the config file either in the partition config or in the global config."
+        echo "HINT: Please provide a partition interval in the config file either in the partition config or in the global config." >&2
         exit 1
     fi
 
@@ -129,13 +129,12 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
     default_partition_name_template=$(echo "${table}" | yq '.partition.default_partition_name_template // strenv(GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE)')
     if [[ "${create_default}" == true && "${default_partition_name_template}" == "null" ]]; then
         echo "ERROR: Default partition name template is required when create_default is true." >&2
-        echo "HINT: Please provide a default partition name template in the config file either in the partition config or in the global config."
+        echo "HINT: Please provide a default partition name template in the config file either in the partition config or in the global config." >&2
         exit 1
     fi
 
     skip_overlapping=$(echo "${table}" | yq '.partition.skip_overlapping // strenv(GLOBAL_SKIP_OVERLAPPING)')
     storage_parameters=$(echo "${table}" | yq '.partition.storage_parameters // strenv(GLOBAL_STORAGE_PARAMETERS)')
-    echo "INFO: Storage parameters: ${storage_parameters}"
 
     template_table=$(echo "${table}" | yq '.template')
 
@@ -208,12 +207,14 @@ EOF
 
     fi
 
-    psql --username=postgres \
+    tmpfile=$(mktemp)
+    trap 'rm -f "$tmpfile"' EXIT
+
+    result=$(psql --username=postgres \
         --dbname=postgres \
         --tuples-only \
         --no-align \
         --quiet \
-        --echo-queries \
         -v "ON_ERROR_STOP=1" \
         -v table_schema="${table_schema}" \
         -v table_name="${table_name}" \
@@ -232,7 +233,7 @@ EOF
         -v retention="${retention}" \
         -v timezone="${timezone}" \
         -v skip_overlapping="${skip_overlapping}" \
-        --output="/tmp/${output_filename}" \
+        --output="${tmpfile}" \
         <<EOF
 SELECT *
   FROM pgpartium.make_partitions(
@@ -255,13 +256,17 @@ SELECT *
   , p_skip_overlapping=>:'skip_overlapping'
 )
 EOF
+) 
 
     # If file is not empty, move it to directory
-    if [[ -s "/tmp/${output_filename}" ]]; then
-        # mv "/tmp/${output_filename}" "${directory}/${output_filename}"
+    if [[ -s "${tmpfile}" ]]; then
+        # PSQL sadly adds an empty line at the end, so remove it
+        sed -i -e '${/^$/d;}' "${tmpfile}"
+        mv "${tmpfile}" "${directory}/${output_filename}"
         echo "INFO: Generated partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
     else
         echo "INFO: No partitions generated for ${table_schema}.${table_name}"
+        rm "$tmpfile"
     fi
 
 done

@@ -37,4 +37,6 @@ FROM base AS test
 
 COPY tests tests
 
+COPY .shellspec .shellspec
+
 CMD ["/bin/bash"]

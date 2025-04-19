@@ -1,0 +1,11 @@
+generates:
+  - directory: "/tmp"
+    name_template: "{table_schema}__{table_name}__YYYY_MM"
+    interval: "1 mon"
+    tables:
+      - table_schema: "public"
+        table_name: "transactions"
+        file_name_template: "V{integer}__{description}.result"
+        description:
+          make: "defaults"
+          expire: "Expire partitions for {table_schema}_{table_name} table"
