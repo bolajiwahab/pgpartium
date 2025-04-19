@@ -1,3 +1,4 @@
+---
 generates:
   - directory: "/tmp"
     name_template: "{table_schema}__{table_name}__YYYY_MM"

@@ -210,7 +210,7 @@ EOF
     tmpfile=$(mktemp)
     trap 'rm -f "$tmpfile"' EXIT
 
-    result=$(psql --username=postgres \
+    psql --username=postgres \
         --dbname=postgres \
         --tuples-only \
         --no-align \
@@ -256,7 +256,6 @@ SELECT *
   , p_skip_overlapping=>:'skip_overlapping'
 )
 EOF
-) 
 
     # If file is not empty, move it to directory
     if [[ -s "${tmpfile}" ]]; then
