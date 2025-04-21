@@ -31,20 +31,16 @@ set -euo pipefail
 
 config=${config:-}
 
-# Ensure config is provided
+# Ensure config is provided.
 if [[ -z "${config}" ]]; then
     usage
     exit 1
 fi
 
-# Setup infrastructure
-echo "INFO: Setting up infra"
-pgp-setup-infra
-
-# Validate schema
+# Validate schema.
 yq -o=json '.' "${config}" | jsonschema schema.json
 
-# Set defaults
+# Set defaults.
 export DEFAULT_TABLESPACE="pg_default"
 export DEFAULT_PAST=0
 export DEFAULT_FUTURE=0
@@ -54,7 +50,7 @@ export DEFAULT_SKIP_OVERLAPPING=false
 export DEFAULT_STORAGE_PARAMETERS="{}"
 export DEFAULT_TIMEZONE="UTC"
 
-# Extract global configs
+# Extract global configs.
 GLOBAL_SCHEMA=$(yq '.generates[].schema' "${config}")
 GLOBAL_PARTITION_NAME_TEMPLATE=$(yq '.generates[].name_template' "${config}")
 GLOBAL_PAST=$(yq '.generates[].past // strenv(DEFAULT_PAST)' "${config}")
@@ -78,21 +74,42 @@ export GLOBAL_INDEX_TABLESPACE
 
 directory=$(yq '.generates[].directory' "${config}")
 
-# Process each partitioned table
-yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
+declare -A failed_tables=()
+
+# Staging area.
+temp_migration_directory=$(mktemp -d)
+temp_error_directory=$(mktemp -d)
+
+# Stage current migrations in staging area.
+echo "INFO: Staging current migrations in ${temp_migration_directory}"
+cp -a "${directory}/." "${temp_migration_directory}/"
+
+cleanup() {
+    rm -rf "${temp_migration_directory}"
+    rm -rf "${temp_error_directory}"
+}
+
+trap cleanup EXIT ERR
+
+# Setup infrastructure.
+echo "INFO: Setting up infra"
+pgp-setup-infra
+
+# Process each partitioned table.
+while read -r table; do
     table_schema=$(echo "${table}" | yq '.table_schema')
     table_name=$(echo "${table}" | yq '.table_name')
     file_name_template=$(echo "${table}" | yq '.file_name_template')
     description=$(echo "${table}" | yq '.description.make // "Add partitions for {table_schema}_{table_name}"')
-    # Replace table_schema and table_name placeholders in the description
+    # Replace table_schema and table_name placeholders in the description.
     description="${description//\{table_schema\}/$table_schema}"
     description="${description//\{table_name\}/$table_name}"
 
-    output_filename=$(pgp-get-migration-filename -t "${file_name_template}" -d "${directory}" -m "${description}")
-    echo "INFO: Generating partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
+    output_filename=$(pgp-get-migration-filename -t "${file_name_template}" -d "${temp_migration_directory}" -m "${description}")
+    echo "INFO: Generating partitions for ${table_schema}.${table_name}"
 
     partition_schema=$(echo "${table}" | yq '.partition.schema // strenv(GLOBAL_SCHEMA)')
-    # If no schema is provided either in the partition config or in the global config, default to table schema
+    # If no schema is provided either in the partition config or in the global config, default to table schema.
     if [[ "${partition_schema}" == "null" ]]; then
         partition_schema="${table_schema}"
     fi
@@ -125,7 +142,7 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
     if [[ "${create_default}" == "null" ]]; then
         create_default="${GLOBAL_CREATE_DEFAULT}"
     fi
-    # If create_default is true, default_partition_name_template is required
+    # If create_default is true, default_partition_name_template is required.
     default_partition_name_template=$(echo "${table}" | yq '.partition.default_partition_name_template // strenv(GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE)')
     if [[ "${create_default}" == true && "${default_partition_name_template}" == "null" ]]; then
         echo "ERROR: Default partition name template is required when create_default is true." >&2
@@ -207,10 +224,9 @@ EOF
 
     fi
 
-    tmpfile=$(mktemp)
-    trap 'rm -f "$tmpfile"' EXIT
+    error_file="${temp_error_directory}/${table_schema}.${table_name}.error"
 
-    psql --username=postgres \
+    if ! psql --username=postgres \
         --dbname=postgres \
         --tuples-only \
         --no-align \
@@ -233,7 +249,8 @@ EOF
         -v retention="${retention}" \
         -v timezone="${timezone}" \
         -v skip_overlapping="${skip_overlapping}" \
-        --output="${tmpfile}" \
+        --output="${temp_migration_directory}/${output_filename}" \
+        2>"${error_file}" \
         <<EOF
 SELECT *
   FROM pgpartium.make_partitions(
@@ -257,15 +274,28 @@ SELECT *
 )
 EOF
 
-    # If file is not empty, move it to directory
-    if [[ -s "${tmpfile}" ]]; then
-        # PSQL sadly adds an empty line at the end, so remove it
-        sed -i -e '${/^$/d;}' "${tmpfile}"
-        mv "${tmpfile}" "${directory}/${output_filename}"
-        echo "INFO: Generated partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
-    else
-        echo "INFO: No partitions generated for ${table_schema}.${table_name}"
-        rm "$tmpfile"
+    then
+        failed_tables["${table_schema}.${table_name}"]=$(<"${error_file}")
+        continue
     fi
 
-done
+    if [[ -s "${temp_migration_directory}/${output_filename}" ]]; then
+        # PSQL sadly adds an empty line at the end, so remove it
+        sed -i -e '${/^$/d;}' "${temp_migration_directory}/${output_filename}"
+        echo "INFO: Generated partitions for ${table_schema}.${table_name}"
+    else
+        echo "INFO: No partitions generated for ${table_schema}.${table_name}"
+        rm "${temp_migration_directory}/${output_filename}"
+    fi
+
+done < <(yq '.generates[].tables[] | @json' "${config}")
+
+if [ ${#failed_tables[@]} -gt 0 ]; then
+    echo "PANIC: failed for ${#failed_tables[@]} tables:" 2>&1
+    for table in "${!failed_tables[@]}"; do
+        echo "  '${table}': ${failed_tables[${table}]}" 2>&1
+    done
+    exit 1
+else
+    cp -a "${temp_migration_directory}/." "${directory}/"
+fi

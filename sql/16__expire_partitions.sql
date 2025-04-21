@@ -17,6 +17,7 @@ DECLARE
 BEGIN
 
     PERFORM set_config('timezone', p_timezone, true);
+    PERFORM set_config('client_min_messages', 'warning', true);
 
     v_parent_exists := pgpartium.table_exists(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
     v_is_parent_partitioned := pgpartium.is_table_partitioned(p_table_schema=>p_table_schema, p_table_name=>p_table_name);

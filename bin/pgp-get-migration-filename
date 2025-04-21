@@ -1,35 +1,35 @@
 #!/bin/bash
 
 usage() {
-    cat <<-EOF
+    echo "
     ${0##*/}
 
     Creates or updates a pull request on github.
 
     OPTIONS:
-    -t  the template to use for the migration file
-    -d  the directory to the migration files
-    -m  the description of the migration
-    -h  show this help message.
+        -t  the template to use for the migration file
+        -d  the directory to the migration files
+        -m  the description of the migration
+        -h  show this help message.
 
     SAMPLE USAGE:
-        ${0##*/} -t "V{integer}__{description}.sql" -d "migrations" -m "Add partitions for sample table"
-        ${0##*/} -t "V{integer:03}__{description}.sql" -d "migrations" -m "Expire partitions for sample table"
-        ${0##*/} -t "{timestamp}__{description}.sql" -d "migrations" -m "Add partitions for sample table"
-        ${0##*/} -t "{epoch}_{description}.up.sql" -d "migrations" -m "Add partitions for sample table"
-EOF
+        ${0##*/} -t \"V{integer}__{description}.sql\" -d \"migrations\" -m \"Add partitions for sample table\"
+        ${0##*/} -t \"V{integer:03}__{description}.sql\" -d \"migrations\" -m \"Expire partitions for sample table\"
+        ${0##*/} -t \"{timestamp}__{description}.sql\" -d \"migrations\" -m \"Add partitions for sample table\"
+        ${0##*/} -t \"{epoch}_{description}.up.sql\" -d \"migrations\" -m \"Add partitions for sample table\"
+"
 }
 
 while getopts "t:d:m:h" option; do
-    case $option in
+    case "${option}" in
     t)
-        template="$OPTARG"
+        template="${OPTARG}"
         ;;
     d)
-        directory="$OPTARG"
+        directory="${OPTARG}"
         ;;
     m)
-        description="$OPTARG"
+        description="${OPTARG}"
         ;;
     h | *)
         usage
@@ -40,60 +40,106 @@ done
 
 set -euo pipefail
 
-# Transform description to lowercase and replace spaces with underscores.
-description=$(echo "${description}" | tr '[:upper:]' '[:lower:]' | sed -E 's/ +/_/g')
+template=${template:-}
+directory=${directory:-}
+description=${description:-}
 
+# Ensure parameters are provided.
+if [[ -z "${template}" || -z "${directory}" || -z "${description}" ]]; then
+    usage
+    exit 1
+fi
+
+placeholders=(timestamp epoch date year month day hour description direction)
+
+get_next_version() {
+    # Return next version for sequential migrations.
+    local file_name_pattern="$1" padding="$2" directory="$3"
+
+    latest_version=0
+    for file in "${directory}/"*; do
+        # Process only regular files.
+        [[ -f "${file}" ]] || continue
+
+        file_name="${file##*/}"
+        if [[ "${file_name}" =~ ${file_name_pattern} ]]; then
+            extracted_version="${BASH_REMATCH[1]}"
+            # Convert extracted_version to decimal to handle leading zeroes.
+            extracted_version=$((10#$extracted_version))
+
+            if [[ "${extracted_version}" -gt "${latest_version}" ]]; then
+                latest_version="${extracted_version}"
+            fi
+        fi
+    done
+
+    next_version=$((latest_version + 1))
+    # Format next_version with padding.
+    next_version=$(printf "%0${padding}d" "$next_version")
+
+    echo "${next_version}"
+}
+
+template_to_pattern() {
+    # Generate file name pattern by replacing placeholders.
+    local template="$1"
+    local file_name_pattern="${template}"
+
+    # Replace placeholders with .*
+    for placeholder in "${placeholders[@]}"; do
+        file_name_pattern="${file_name_pattern//\{$placeholder\}/.*}"
+    done
+
+    # Special replacements for integer placeholders
+    file_name_pattern="${file_name_pattern//\{integer\}/([0-9]+)}"
+    file_name_pattern="${file_name_pattern//\{integer:[0-9]\}/([0-9]+)}"
+
+    echo "$file_name_pattern"
+}
+
+file_name="${template}"
+
+if [[ "${template}" =~ \{integer:([0-9]+)\} ]]; then
+    padding="${BASH_REMATCH[1]}"
+    version_key="{integer:${padding}}"
+
+    file_name_pattern=$(template_to_pattern "${template}")
+
+    next_version=$(get_next_version "${file_name_pattern}" "${padding}" "${directory}")
+    file_name="${file_name//$version_key/$next_version}"
+elif [[ "${template}" == *"{integer}"* ]]; then
+    padding=0
+    version_key="{integer}"
+
+    file_name_pattern=$(template_to_pattern "${template}")
+
+    next_version=$(get_next_version "${file_name_pattern}" "${padding}" "${directory}")
+    file_name="${file_name//$version_key/$next_version}"
+fi
+
+# Transform description to lowercase and replace spaces with underscores.
+description="${description,,}"
+description="${description//[[:space:]]/_}"
+
+timestamp=$(date +"%Y%m%d%H%M%S")
+epoch=$(date +"%s")
 date=$(date -u +%Y%m%d)
 year=$(date -u +%Y)
 month=$(date -u +%m)
 day=$(date -u +%d)
 hour=$(date -u +%H)
+direction="up"
 
-# Version handling.
-if [[ "${template}" == *"{timestamp}"* ]]; then
-    version=$(date +"%Y%m%d%H%M%S")
-    file_name="${template//\{timestamp\}/$version}"
-fi
-
-if [[ "${template}" == *"{epoch}"* ]]; then
-    version=$(date +"%s")
-    file_name="${template//\{epoch\}/$version}"
-fi
-
-if [[ "${template}" =~ \{integer:([0-9]+)\} ]]; then
-    zero_padding="${BASH_REMATCH[1]}"
-    format="%0${zero_padding}d"
-    version_key="{integer:${zero_padding}}"
-elif [[ "${template}" == *"{integer}"* ]]; then
-    format="%d"
-    version_key="{integer}"
-fi
-
-if [[ "${template}" == *"{integer"* ]]; then
-    # Get highest integer in existing migration files.
-    max=0
-    for file in "${directory}/"*; do
-        [[ -f "$file" ]] || continue
-        base=$(basename "$file")
-        version=$(echo "$base" | grep -oE '[0-9]+' | head -1)
-        # Convert version to decimal to handle leading zeros
-        version=$((10#$version))
-        if [[ "${version}" =~ ^[0-9]+$ && "${version}" -gt "${max}" ]]; then
-            max="${version}"
-        fi
-    done
-    next_version=$((max + 1))
-    version=$(printf "%s" "$next_version" | awk -v format="$format" '{printf format, $0}')
-    template="${template//$version_key/$version}"
-    file_name="${template}"
-fi
-
-# Replace placeholders
+# Update placeholders
+# Update description first as it can contain other placeholders
+file_name="${file_name//\{description\}/$description}"
+file_name="${file_name//\{timestamp\}/$timestamp}"
+file_name="${file_name//\{epoch\}/$epoch}"
 file_name="${file_name//\{date\}/$date}"
 file_name="${file_name//\{year\}/$year}"
 file_name="${file_name//\{month\}/$month}"
 file_name="${file_name//\{day\}/$day}"
 file_name="${file_name//\{hour\}/$hour}"
-file_name="${file_name//\{description\}/$description}"
+file_name="${file_name//\{direction\}/$direction}"
 
 echo "$file_name"

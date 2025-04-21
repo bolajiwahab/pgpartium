@@ -11,24 +11,7 @@
                 "{timestamp}__{description}.sql",
                 "{epoch}_{description}.up.sql"
             ],
-            "allOf": [
-                {
-                    "anyOf": [
-                        {
-                            "pattern": "\\{integer(:\\d+)?\\}"
-                        },
-                        {
-                            "pattern": "\\{timestamp\\}"
-                        },
-                        {
-                            "pattern": "\\{epoch\\}"
-                        }
-                    ]
-                },
-                {
-                    "pattern": "\\{description\\}"
-                }
-            ],
+            "pattern": "\\{description\\}",
             "minLength": 1
         },
         "description": {

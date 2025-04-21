@@ -51,7 +51,6 @@ echo "Setting up shellspec"
 wget --no-verbose https://github.com/shellspec/shellspec/archive/0.28.1.tar.gz --output-document=/tmp/shellspec-0.28.1.tar.gz
 tar xzf /tmp/shellspec-0.28.1.tar.gz -C /tmp
 ln -s /tmp/shellspec-0.28.1/bin/shellspec /usr/bin/shellspec
-# shellspec --init
 
 echo "Creating tablespace pgpartium"
 mkdir -p /var/lib/postgresql/tablespaces/pgpartium
