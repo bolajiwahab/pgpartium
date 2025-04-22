@@ -153,7 +153,7 @@ while read -r table; do
     skip_overlapping=$(yq '.partition.skip_overlapping // strenv(GLOBAL_SKIP_OVERLAPPING)' <<< "${table}")
     storage_parameters=$(yq '.partition.storage_parameters // strenv(GLOBAL_STORAGE_PARAMETERS)' <<< "${table}")
 
-    template_table=$(yq '.template' <<< "${table}")
+    template_table=$(yq '.template_table' <<< "${table}")
 
     if [[ "${template_table}" == "DEFAULT_PARTITION" ]]; then
         IFS=',' read -r template_table_schema template_table_name < <(
