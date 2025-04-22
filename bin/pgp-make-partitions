@@ -60,7 +60,7 @@ GLOBAL_RETENTION=$(yq '.generates[].retention // strenv(DEFAULT_RETENTION)' "${c
 GLOBAL_CREATE_DEFAULT=$(yq '.generates[].create_default // strenv(DEFAULT_CREATE_DEFAULT)' "${config}")
 GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE=$(yq '.generates[].default_partition_name_template' "${config}")
 GLOBAL_SKIP_OVERLAPPING=$(yq '.generates[].skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")
-GLOBAL_PARTITION_TABLESPACE=$(yq '.generates[].tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")
+GLOBAL_PARTITION_TABLESPACE=$(yq '.generates[].partition_tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")
 GLOBAL_STORAGE_PARAMETERS=$(yq -o=json '.generates[].storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")
 GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
 
@@ -121,7 +121,7 @@ while read -r table; do
         exit 1
     fi
 
-    partition_tablespace=$(yq '.partition.tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' <<< "${table}")
+    partition_tablespace=$(yq '.partition.partition_tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' <<< "${table}")
     index_tablespace=$(yq '.partition.index_tablespace // strenv(GLOBAL_INDEX_TABLESPACE)' <<< "${table}")
 
     partition_interval=$(yq '.partition.interval // strenv(GLOBAL_INTERVAL)' <<< "${table}")
