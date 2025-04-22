@@ -51,7 +51,7 @@ export DEFAULT_STORAGE_PARAMETERS="{}"
 export DEFAULT_TIMEZONE="Etc/UTC"
 
 # Extract global configs.
-GLOBAL_SCHEMA=$(yq '.generates[].schema' "${config}")
+GLOBAL_PARTITION_SCHEMA=$(yq '.generates[].partition_schema' "${config}")
 GLOBAL_PARTITION_NAME_TEMPLATE=$(yq '.generates[].name_template' "${config}")
 GLOBAL_PAST=$(yq '.generates[].past // strenv(DEFAULT_PAST)' "${config}")
 GLOBAL_FUTURE=$(yq '.generates[].future // strenv(DEFAULT_FUTURE)' "${config}")
@@ -64,7 +64,7 @@ GLOBAL_PARTITION_TABLESPACE=$(yq '.generates[].tablespace // strenv(DEFAULT_TABL
 GLOBAL_STORAGE_PARAMETERS=$(yq -o=json '.generates[].storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")
 GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
 
-export GLOBAL_PARTITION_TABLESPACE GLOBAL_SCHEMA GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL \
+export GLOBAL_PARTITION_TABLESPACE GLOBAL_PARTITION_SCHEMA GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL \
     GLOBAL_RETENTION GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE GLOBAL_SKIP_OVERLAPPING \
     GLOBAL_STORAGE_PARAMETERS GLOBAL_TIMEZONE
 
@@ -108,7 +108,7 @@ while read -r table; do
     output_filename=$(pgp-get-migration-filename -t "${file_name_template}" -d "${temp_migration_directory}" -m "${description}")
     echo "INFO: Making partitions for ${table_schema}.${table_name}"
 
-    partition_schema=$(yq '.partition.schema // strenv(GLOBAL_SCHEMA)' <<< "${table}")
+    partition_schema=$(yq '.partition.partition_schema // strenv(GLOBAL_PARTITION_SCHEMA)' <<< "${table}")
     # If no schema is provided either in the partition config or in the global config, default to table schema.
     if [[ "${partition_schema}" == "null" ]]; then
         partition_schema="${table_schema}"
