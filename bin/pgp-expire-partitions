@@ -81,10 +81,10 @@ pgp-setup-infra
 
 # Process each partitioned table
 while read -r table; do
-    table_schema=$(echo "${table}" | yq '.table_schema')
-    table_name=$(echo "${table}" | yq '.table_name')
-    file_name_template=$(echo "${table}" | yq '.file_name_template')
-    description=$(echo "${table}" | yq '.description.expire // "Expire partitions for {table_schema}.{table_name}"')
+    table_schema=$(yq '.table_schema' <<< "${table}")
+    table_name=$(yq '.table_name' <<< "${table}")
+    file_name_template=$(yq '.file_name_template' <<< "${table}")
+    description=$(yq '.description.expire // "Expire partitions for {table_schema}.{table_name}"' <<< "${table}")
     # Replace table_schema and table_name placeholders in the description
     description="${description//\{table_schema\}/$table_schema}"
     description="${description//\{table_name\}/$table_name}"
@@ -92,23 +92,23 @@ while read -r table; do
     output_filename=$(pgp-get-migration-filename -t "${file_name_template}" -d "${directory}" -m "${description}")
     echo "INFO: Expiring partitions for ${table_schema}.${table_name}"
 
-    timezone=$(echo "${table}" | yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)')
-    retention=$(echo "${table}" | yq '.partition.retention // strenv(GLOBAL_RETENTION)')
+    timezone=$(yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)' <<< "${table}")
+    retention=$(yq '.partition.retention // strenv(GLOBAL_RETENTION)' <<< "${table}")
 
     # Because yq default value operator is used to provide alternative (or default) values
     # when a particular expression is either null or false, we cannot use it here since detach_only is boolean
     # and we need to override it only when it is not set. Same for detach_first and detach_concurrently
-    detach_only=$(echo "${table}" | yq '.partition.detach_only')
+    detach_only=$(yq '.partition.detach_only' <<< "${table}")
     if [[ "${detach_only}" == "null" ]]; then
         detach_only="${GLOBAL_DETACH_ONLY}"
     fi
 
-    detach_first=$(echo "${table}" | yq '.partition.detach_first')
+    detach_first=$(yq '.partition.detach_first' <<< "${table}")
     if [[ "${detach_first}" == "null" ]]; then
         detach_first="${GLOBAL_DETACH_FIRST}"
     fi
 
-    detach_concurrently=$(echo "${table}" | yq '.partition.detach_concurrently')
+    detach_concurrently=$(yq '.partition.detach_concurrently' <<< "${table}")
     if [[ "${detach_concurrently}" == "null" ]]; then
         detach_concurrently="${GLOBAL_DETACH_CONCURRENTLY}"
     fi
