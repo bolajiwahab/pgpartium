@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage() {
-    cat <<-EOF
+    echo "
     ${0##*/}
 
     Generates partitions for partitioned tables.
@@ -12,7 +12,7 @@ usage() {
 
     SAMPLE USAGE:
         ${0##*/} -c config.yaml
-EOF
+"
 }
 
 while getopts "c:h" option; do
@@ -31,25 +31,21 @@ set -euo pipefail
 
 config=${config:-}
 
-# Ensure config is provided
+# Ensure config is provided.
 if [[ -z "${config}" ]]; then
     usage
     exit 1
 fi
 
-# # Setup infrastructure
-echo "INFO: Setting up infra"
-pgp-setup-infra
-
-# Validate schema
-yq -o=json '.' "${config}" | jsonschema schema.json
+# Validate schema.
+jsonschema schema.json <<< "$(yq -o=json "$config")"
 
 # Set defaults
 export DEFAULT_RETENTION='-1'
 export DEFAULT_DETACH_ONLY=false
 export DEFAULT_DETACH_FIRST=false
 export DEFAULT_DETACH_CONCURRENTLY=false
-export DEFAULT_TIMEZONE="UTC"
+export DEFAULT_TIMEZONE="Etc/UTC"
 
 # Extract global configs
 GLOBAL_RETENTION=$(yq '.generates[].retention // strenv(DEFAULT_RETENTION)' "${config}")
@@ -62,8 +58,29 @@ export GLOBAL_RETENTION GLOBAL_DETACH_ONLY GLOBAL_DETACH_FIRST GLOBAL_DETACH_CON
 
 directory=$(yq '.generates[].directory' "${config}")
 
+declare -A failed_tables=()
+
+# Staging area.
+temp_migration_directory=$(mktemp -d)
+temp_error_directory=$(mktemp -d)
+
+# Stage current migrations in staging area.
+echo "INFO: Staging current migrations"
+cp -a "${directory}/." "${temp_migration_directory}/"
+
+cleanup() {
+    rm -rf "${temp_migration_directory}"
+    rm -rf "${temp_error_directory}"
+}
+
+trap cleanup EXIT ERR
+
+# Setup infrastructure.
+echo "INFO: Setting up infra"
+pgp-setup-infra
+
 # Process each partitioned table
-yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
+while read -r table; do
     table_schema=$(echo "${table}" | yq '.table_schema')
     table_name=$(echo "${table}" | yq '.table_name')
     file_name_template=$(echo "${table}" | yq '.file_name_template')
@@ -73,8 +90,9 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
     description="${description//\{table_name\}/$table_name}"
 
     output_filename=$(pgp-get-migration-filename -t "${file_name_template}" -d "${directory}" -m "${description}")
-    echo "INFO: Expiring partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
+    echo "INFO: Expiring partitions for ${table_schema}.${table_name}"
 
+    timezone=$(echo "${table}" | yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)')
     retention=$(echo "${table}" | yq '.partition.retention // strenv(GLOBAL_RETENTION)')
 
     # Because yq default value operator is used to provide alternative (or default) values
@@ -95,14 +113,13 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
         detach_concurrently="${GLOBAL_DETACH_CONCURRENTLY}"
     fi
 
-    timezone=$(echo "${table}" | yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)')
+    error_file="${temp_error_directory}/${table_schema}.${table_name}.error"
 
-    psql --username=postgres \
+    if ! psql --username=postgres \
         --dbname=postgres \
         --tuples-only \
         --no-align \
         --quiet \
-        --echo-queries \
         -v "ON_ERROR_STOP=1" \
         -v table_schema="${table_schema}" \
         -v table_name="${table_name}" \
@@ -111,7 +128,8 @@ yq '.generates[].tables[] | @json' "${config}" | while read -r table; do
         -v detach_first="${detach_first}" \
         -v detach_concurrently="${detach_concurrently}" \
         -v timezone="${timezone}" \
-        --output="/tmp/${output_filename}" \
+        --output="${temp_migration_directory}/${output_filename}" \
+        2>"${error_file}" \
         <<EOF
 SELECT *
   FROM pgpartium.expire_partitions(
@@ -125,12 +143,28 @@ SELECT *
 )
 EOF
 
-    # If file is not empty, move it to directory
-    if [[ -s "/tmp/${output_filename}" ]]; then
-        mv "/tmp/${output_filename}" "${directory}/${output_filename}"
-        echo "INFO: Expired partitions for ${table_schema}.${table_name} in ${directory}/${output_filename}"
-    else
-        echo "INFO: No expired partitions for ${table_schema}.${table_name}"
+    then
+        failed_tables["${table_schema}.${table_name}"]=$(<"${error_file}")
+        continue
     fi
 
-done
+    if [[ -s "${temp_migration_directory}/${output_filename}" ]]; then
+        # PSQL sadly adds an empty line at the end, so remove it
+        sed -i -e '${/^$/d;}' "${temp_migration_directory}/${output_filename}"
+        echo "INFO: Expired partitions for ${table_schema}.${table_name}"
+    else
+        echo "INFO: No expired partitions for ${table_schema}.${table_name}"
+        rm "${temp_migration_directory}/${output_filename}"
+    fi
+
+done < <(yq '.generates[].tables[] | @json' "${config}")
+
+if [ ${#failed_tables[@]} -gt 0 ]; then
+    echo "ERROR: failed for ${#failed_tables[@]} tables:" 2>&1
+    for table in "${!failed_tables[@]}"; do
+        echo "  '${table}': ${failed_tables[${table}]}" 2>&1
+    done
+    exit 1
+else
+    cp -af "${temp_migration_directory}/." "${directory}/"
+fi

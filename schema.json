@@ -19,7 +19,7 @@
             "type": "object",
             "properties": {
                 "make": {
-                    "description": "The description for generation of partitions.",
+                    "description": "The description for making of partitions.",
                     "type": "string",
                     "minLength": 1
                 },
@@ -29,6 +29,7 @@
                     "minLength": 1
                 }
             },
+            "minProperties": 1,
             "additionalProperties": false
         },
         "timezone": {

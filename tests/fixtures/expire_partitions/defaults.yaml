@@ -1,0 +1,10 @@
+---
+generates:
+  - directory: "tests"
+    retention: "1 day"
+    tables:
+      - table_schema: "public"
+        table_name: "notifications"
+        file_name_template: "{description}.result"
+        description:
+          expire: "defaults"

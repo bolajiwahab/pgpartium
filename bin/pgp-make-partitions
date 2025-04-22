@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage() {
-    cat <<-EOF
+    echo "
     ${0##*/}
 
     Generates partitions for partitioned tables.
@@ -12,7 +12,7 @@ usage() {
 
     SAMPLE USAGE:
         ${0##*/} -c config.yaml
-EOF
+"
 }
 
 while getopts "c:h" option; do
@@ -38,7 +38,7 @@ if [[ -z "${config}" ]]; then
 fi
 
 # Validate schema.
-yq -o=json '.' "${config}" | jsonschema schema.json
+jsonschema schema.json <<< "$(yq -o=json "$config")"
 
 # Set defaults.
 export DEFAULT_TABLESPACE="pg_default"
@@ -48,7 +48,7 @@ export DEFAULT_RETENTION="-1"
 export DEFAULT_CREATE_DEFAULT=false
 export DEFAULT_SKIP_OVERLAPPING=false
 export DEFAULT_STORAGE_PARAMETERS="{}"
-export DEFAULT_TIMEZONE="UTC"
+export DEFAULT_TIMEZONE="Etc/UTC"
 
 # Extract global configs.
 GLOBAL_SCHEMA=$(yq '.generates[].schema' "${config}")
@@ -81,7 +81,7 @@ temp_migration_directory=$(mktemp -d)
 temp_error_directory=$(mktemp -d)
 
 # Stage current migrations in staging area.
-echo "INFO: Staging current migrations in ${temp_migration_directory}"
+echo "INFO: Staging current migrations in"
 cp -a "${directory}/." "${temp_migration_directory}/"
 
 cleanup() {
@@ -106,7 +106,7 @@ while read -r table; do
     description="${description//\{table_name\}/$table_name}"
 
     output_filename=$(pgp-get-migration-filename -t "${file_name_template}" -d "${temp_migration_directory}" -m "${description}")
-    echo "INFO: Generating partitions for ${table_schema}.${table_name}"
+    echo "INFO: Making partitions for ${table_schema}.${table_name}"
 
     partition_schema=$(echo "${table}" | yq '.partition.schema // strenv(GLOBAL_SCHEMA)')
     # If no schema is provided either in the partition config or in the global config, default to table schema.
@@ -282,20 +282,20 @@ EOF
     if [[ -s "${temp_migration_directory}/${output_filename}" ]]; then
         # PSQL sadly adds an empty line at the end, so remove it
         sed -i -e '${/^$/d;}' "${temp_migration_directory}/${output_filename}"
-        echo "INFO: Generated partitions for ${table_schema}.${table_name}"
+        echo "INFO: Made partitions for ${table_schema}.${table_name}"
     else
-        echo "INFO: No partitions generated for ${table_schema}.${table_name}"
+        echo "INFO: No partitions made for ${table_schema}.${table_name}"
         rm "${temp_migration_directory}/${output_filename}"
     fi
 
 done < <(yq '.generates[].tables[] | @json' "${config}")
 
 if [ ${#failed_tables[@]} -gt 0 ]; then
-    echo "PANIC: failed for ${#failed_tables[@]} tables:" 2>&1
+    echo "ERROR: failed for ${#failed_tables[@]} tables:" 2>&1
     for table in "${!failed_tables[@]}"; do
         echo "  '${table}': ${failed_tables[${table}]}" 2>&1
     done
     exit 1
 else
-    cp -a "${temp_migration_directory}/." "${directory}/"
+    cp -af "${temp_migration_directory}/." "${directory}/"
 fi
