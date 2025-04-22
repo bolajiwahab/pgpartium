@@ -14,7 +14,7 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_template_table_schema text = NULL
   , p_template_table_name text = NULL
   , p_retention interval = '-1'
-  , p_timezone text = 'UTC'
+  , p_timezone text = 'Etc/UTC'
   , p_skip_overlapping boolean = false
 )
 RETURNS SETOF text
@@ -32,6 +32,7 @@ DECLARE
     v_triggers                 text;
     v_storage_clause           text;
     v_default_partition_name   text;
+    v_partition_schema         text := COALESCE(p_partition_schema, p_table_schema);
     v_start_timestamp          timestamptz;
 
 BEGIN
@@ -278,20 +279,20 @@ BEGIN
                         || CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END
                         || format('%1$I', replace(index_name, p_template_table_name, v_partitions.partition_name))
                         || E'\n    ON '
-                        || format('%1$I.%2$I', COALESCE(p_partition_schema, p_table_schema), v_partitions.partition_name)
+                        || format('%1$I.%2$I', v_partition_schema, v_partitions.partition_name)
                         || E'\n '
                         || index_definition
                         , COALESCE(' ' || index_predicate, '')
                         , CASE
-                            WHEN COALESCE(p_index_tablespace, p_partition_tablespace) != 'pg_default'
-                              THEN format(E'\nTABLESPACE %1$I', COALESCE(p_index_tablespace, p_partition_tablespace))
+                            WHEN p_index_tablespace != 'pg_default'
+                              THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
                             ELSE ''
                           END
                           || E'\n ' || COALESCE(index_predicate, '')
                     )
                     || CASE
-                         WHEN index_predicate IS NULL AND COALESCE(p_index_tablespace, p_partition_tablespace) != 'pg_default'
-                           THEN format(E'\nTABLESPACE %1$I', COALESCE(p_index_tablespace, p_partition_tablespace))
+                         WHEN index_predicate IS NULL AND p_index_tablespace != 'pg_default'
+                           THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
                          ELSE ''
                        END
                     || E';\n'
@@ -315,14 +316,14 @@ BEGIN
                     || ' '
                     || trigger_event
                     || E'\n    ON '
-                    || format('%1$I.%2$I', COALESCE(p_partition_schema, p_table_schema), v_partitions.partition_name)
+                    || format('%1$I.%2$I', v_partition_schema, v_partitions.partition_name)
                     || E'\n   '
                     || trigger_body
                     || E';\n'
                     || CASE
                          WHEN NOT is_trigger_enabled
                            THEN E'\nALTER TABLE '
-                                || format('%1$I.%2$I', COALESCE(p_partition_schema, p_table_schema), v_partitions.partition_name)
+                                || format('%1$I.%2$I', v_partition_schema, v_partitions.partition_name)
                                 || E'\n    DISABLE TRIGGER '
                                 || format('%1$I', replace(trigger_name, p_template_table_name, v_partitions.partition_name))
                                 || E';\n'
@@ -352,16 +353,16 @@ which does not work with dollar quoting.
 $SQL$CREATE TABLE %1$I.%2$I
     PARTITION OF %3$I.%4$I%5$s
     FOR VALUES FROM (%6$L) TO (%7$L)%8$s%9$s;
-$SQL$,          COALESCE(p_partition_schema, p_table_schema)                                                                 -- <1>
-              , v_partitions.partition_name                                                                                  -- <2>
-              , p_table_schema                                                                                               -- <3>
-              , p_table_name                                                                                                 -- <4>
-              , CASE                                                                                                         -- <5>
+$SQL$,          v_partition_schema                                                             -- <1>
+              , v_partitions.partition_name                                                    -- <2>
+              , p_table_schema                                                                 -- <3>
+              , p_table_name                                                                   -- <4>
+              , CASE                                                                           -- <5>
                   WHEN v_constraints IS NULL
                     THEN E''
                   ELSE E' (\n' || v_constraints || E'\n    )'
                 END
-              , CASE v_partitioning_details.keys_data_types                                                                  -- <6>
+              , CASE v_partitioning_details.keys_data_types                                    -- <6>
                   WHEN 'timestamptz'
                     THEN v_partitions.lower_bound::timestamptz::text
                   WHEN 'timestamp'
@@ -373,9 +374,17 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
                   WHEN 'int8'
                     THEN (EXTRACT(EPOCH FROM v_partitions.lower_bound)::bigint * 1000)::text
                   WHEN 'uuid'
-                    THEN (overlay(overlay(pgpartium.gen_uuid_v7(v_partitions.lower_bound)::text PLACING '0000' FROM 15 FOR 4) PLACING '0000-000000000000' FROM 20))::text
+                    THEN (
+                        overlay(
+                            overlay(
+                                pgpartium.gen_uuid_v7(v_partitions.lower_bound)::text
+                                PLACING '0000' FROM 15 FOR 4
+                            )
+                            PLACING '0000-000000000000' FROM 20
+                        )
+                    )::text
                 END
-              , CASE v_partitioning_details.keys_data_types                                                                  -- <7>
+              , CASE v_partitioning_details.keys_data_types                                    -- <7>
                   WHEN 'timestamptz'
                     THEN v_partitions.upper_bound::timestamptz::text
                   WHEN 'timestamp'
@@ -387,10 +396,18 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
                   WHEN 'int8'
                     THEN (EXTRACT(EPOCH FROM v_partitions.upper_bound)::bigint * 1000)::text
                   WHEN 'uuid'
-                    THEN (overlay(overlay(pgpartium.gen_uuid_v7(v_partitions.upper_bound)::text PLACING '0000' FROM 15 FOR 4) PLACING '0000-000000000000' FROM 20))::text
+                    THEN (
+                        overlay(
+                            overlay(
+                                pgpartium.gen_uuid_v7(v_partitions.upper_bound)::text
+                                PLACING '0000' FROM 15 FOR 4
+                            )
+                            PLACING '0000-000000000000' FROM 20
+                        )
+                    )::text
                 END
-              , v_storage_clause                                                                                             -- <8>
-              , CASE                                                                                                         -- <9>
+              , v_storage_clause                                                               -- <8>
+              , CASE                                                                           -- <9>
                   WHEN p_partition_tablespace != 'pg_default'
                     THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
                   ELSE ''
@@ -448,20 +465,20 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
                     || CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END
                     || format('%1$I', replace(index_name, p_template_table_name, v_default_partition_name))
                     || E'\n    ON '
-                    || format('%1$I.%2$I', COALESCE(p_partition_schema, p_table_schema), v_default_partition_name)
+                    || format('%1$I.%2$I', v_partition_schema, v_default_partition_name)
                     || E'\n '
                     || index_definition
                     , COALESCE(index_predicate, '')
                     , CASE
-                        WHEN COALESCE(p_index_tablespace, p_partition_tablespace) != 'pg_default'
-                          THEN format(E'\nTABLESPACE %I', COALESCE(p_index_tablespace, p_partition_tablespace))
+                        WHEN p_index_tablespace != 'pg_default'
+                          THEN format(E'\nTABLESPACE %I', p_index_tablespace)
                         ELSE ''
                       END
                         || E'\n ' || COALESCE(index_predicate, '')
                 )
                 || CASE
-                     WHEN index_predicate IS NULL AND COALESCE(p_index_tablespace, p_partition_tablespace) != 'pg_default'
-                       THEN format(E'\nTABLESPACE %I', COALESCE(p_index_tablespace, p_partition_tablespace))
+                     WHEN index_predicate IS NULL AND p_index_tablespace != 'pg_default'
+                       THEN format(E'\nTABLESPACE %I', p_index_tablespace)
                      ELSE ''
                    END
                 || E';\n'
@@ -485,7 +502,7 @@ $SQL$,          COALESCE(p_partition_schema, p_table_schema)                    
                 || ' '
                 || trigger_event
                 || E'\n    ON '
-                || format('%1$I.%2$I', COALESCE(p_partition_schema, p_table_schema), v_default_partition_name)
+                || format('%1$I.%2$I', v_partition_schema, v_default_partition_name)
                 || E'\n   '
                 || trigger_body
                 || E';\n'
@@ -512,7 +529,7 @@ which does not work with dollar quoting.
 $SQL$CREATE TABLE %1$I.%2$I
     PARTITION OF %3$I.%4$I%5$s
     DEFAULT%6$s%7$s;
-$SQL$,      COALESCE(p_partition_schema, p_table_schema)                    -- <1>
+$SQL$,      v_partition_schema                                              -- <1>
           , v_default_partition_name                                        -- <2>
           , p_table_schema                                                  -- <3>
           , p_table_name                                                    -- <4>

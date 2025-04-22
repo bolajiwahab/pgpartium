@@ -5,7 +5,7 @@ CREATE OR REPLACE FUNCTION pgpartium.expire_partitions (
   , p_detach_only boolean = false
   , p_detach_first boolean = false
   , p_detach_concurrently boolean = false
-  , p_timezone text = 'UTC'
+  , p_timezone text = 'Etc/UTC'
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
