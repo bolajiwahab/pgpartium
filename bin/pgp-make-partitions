@@ -97,11 +97,10 @@ pgp-setup-infra
 
 # Process each partitioned table.
 while read -r table; do
-    # table_schema=$(echo "${table}" | yq '.table_schema')
     table_schema=$(yq '.table_schema' <<< "${table}")
-    table_name=$(echo "${table}" | yq '.table_name')
-    file_name_template=$(echo "${table}" | yq '.file_name_template')
-    description=$(echo "${table}" | yq '.description.make // "Add partitions for {table_schema}_{table_name}"')
+    table_name=$(yq '.table_name' <<< "${table}")
+    file_name_template=$(yq '.file_name_template' <<< "${table}")
+    description=$(yq '.description.make // "Add partitions for {table_schema}_{table_name}"' <<< "${table}")
     # Replace table_schema and table_name placeholders in the description.
     description="${description//\{table_schema\}/$table_schema}"
     description="${description//\{table_name\}/$table_name}"
@@ -109,52 +108,52 @@ while read -r table; do
     output_filename=$(pgp-get-migration-filename -t "${file_name_template}" -d "${temp_migration_directory}" -m "${description}")
     echo "INFO: Making partitions for ${table_schema}.${table_name}"
 
-    partition_schema=$(echo "${table}" | yq '.partition.schema // strenv(GLOBAL_SCHEMA)')
+    partition_schema=$(yq '.partition.schema // strenv(GLOBAL_SCHEMA)' <<< "${table}")
     # If no schema is provided either in the partition config or in the global config, default to table schema.
     if [[ "${partition_schema}" == "null" ]]; then
         partition_schema="${table_schema}"
     fi
 
-    partition_name_template=$(echo "${table}" | yq '.partition.name_template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)')
+    partition_name_template=$(yq '.partition.name_template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)' <<< "${table}")
     if [[ "${partition_name_template}" == "null" ]]; then
         echo "ERROR: Partition name template is required." >&2
         echo "HINT: Please provide a partition name template in the config file either in the partition config or in the global config." >&2
         exit 1
     fi
 
-    partition_tablespace=$(echo "${table}" | yq '.partition.tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)')
-    index_tablespace=$(echo "${table}" | yq '.partition.index_tablespace // strenv(GLOBAL_INDEX_TABLESPACE)')
+    partition_tablespace=$(yq '.partition.tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' <<< "${table}")
+    index_tablespace=$(yq '.partition.index_tablespace // strenv(GLOBAL_INDEX_TABLESPACE)' <<< "${table}")
 
-    partition_interval=$(echo "${table}" | yq '.partition.interval // strenv(GLOBAL_INTERVAL)')
+    partition_interval=$(yq '.partition.interval // strenv(GLOBAL_INTERVAL)' <<< "${table}")
     if [[ "${partition_interval}" == "null" ]]; then
         echo "ERROR: Partition interval is required." >&2
         echo "HINT: Please provide a partition interval in the config file either in the partition config or in the global config." >&2
         exit 1
     fi
 
-    past_partitions=$(echo "${table}" | yq '.partition.past // strenv(GLOBAL_PAST)')
-    future_partitions=$(echo "${table}" | yq '.partition.future // strenv(GLOBAL_FUTURE)')
-    retention=$(echo "${table}" | yq '.partition.retention // strenv(GLOBAL_RETENTION)')
-    timezone=$(echo "${table}" | yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)')
+    past_partitions=$(yq '.partition.past // strenv(GLOBAL_PAST)' <<< "${table}")
+    future_partitions=$(yq '.partition.future // strenv(GLOBAL_FUTURE)' <<< "${table}")
+    retention=$(yq '.partition.retention // strenv(GLOBAL_RETENTION)' <<< "${table}")
+    timezone=$(yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)' <<< "${table}")
     # Because yq default value operator is used to provide alternative (or default) values
     # when a particular expression is either null or false, we cannot use it here since create_default is boolean
     # and we need to override it only when it is not set.
-    create_default=$(echo "${table}" | yq '.partition.create_default')
+    create_default=$(yq '.partition.create_default' <<< "${table}")
     if [[ "${create_default}" == "null" ]]; then
         create_default="${GLOBAL_CREATE_DEFAULT}"
     fi
     # If create_default is true, default_partition_name_template is required.
-    default_partition_name_template=$(echo "${table}" | yq '.partition.default_partition_name_template // strenv(GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE)')
+    default_partition_name_template=$(yq '.partition.default_partition_name_template // strenv(GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE)' <<< "${table}")
     if [[ "${create_default}" == true && "${default_partition_name_template}" == "null" ]]; then
         echo "ERROR: Default partition name template is required when create_default is true." >&2
         echo "HINT: Please provide a default partition name template in the config file either in the partition config or in the global config." >&2
         exit 1
     fi
 
-    skip_overlapping=$(echo "${table}" | yq '.partition.skip_overlapping // strenv(GLOBAL_SKIP_OVERLAPPING)')
-    storage_parameters=$(echo "${table}" | yq '.partition.storage_parameters // strenv(GLOBAL_STORAGE_PARAMETERS)')
+    skip_overlapping=$(yq '.partition.skip_overlapping // strenv(GLOBAL_SKIP_OVERLAPPING)' <<< "${table}")
+    storage_parameters=$(yq '.partition.storage_parameters // strenv(GLOBAL_STORAGE_PARAMETERS)' <<< "${table}")
 
-    template_table=$(echo "${table}" | yq '.template')
+    template_table=$(yq '.template' <<< "${table}")
 
     if [[ "${template_table}" == "DEFAULT_PARTITION" ]]; then
         IFS=',' read -r template_table_schema template_table_name < <(
@@ -220,8 +219,8 @@ EOF
         }
 
     else
-        template_table_schema=$(echo "${template_table}" | yq '.table_schema // ""')
-        template_table_name=$(echo "${template_table}" | yq '.table_name // ""')
+        template_table_schema=$(yq '.table_schema // ""' <<< "${template_table}")
+        template_table_name=$(yq '.table_name // ""' <<< "${template_table}")
 
     fi
 
