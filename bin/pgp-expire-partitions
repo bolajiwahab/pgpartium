@@ -38,7 +38,7 @@ if [[ -z "${config}" ]]; then
 fi
 
 # Validate schema.
-jsonschema schema.json <<< "$(yq -o=json "$config")"
+jsonschema schema.json <<< "$(yq -o=json "${config}")"
 
 # Set defaults
 export DEFAULT_RETENTION='-1'

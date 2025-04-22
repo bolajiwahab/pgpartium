@@ -75,7 +75,7 @@ get_next_version() {
 
     next_version=$((latest_version + 1))
     # Format next_version with padding.
-    next_version=$(printf "%0${padding}d" "$next_version")
+    next_version=$(printf "%0${padding}d" "${next_version}")
 
     echo "${next_version}"
 }
@@ -94,7 +94,7 @@ template_to_pattern() {
     file_name_pattern="${file_name_pattern//\{integer\}/([0-9]+)}"
     file_name_pattern="${file_name_pattern//\{integer:[0-9]\}/([0-9]+)}"
 
-    echo "$file_name_pattern"
+    echo "${file_name_pattern}"
 }
 
 file_name="${template}"
@@ -142,4 +142,4 @@ file_name="${file_name//\{day\}/$day}"
 file_name="${file_name//\{hour\}/$hour}"
 file_name="${file_name//\{direction\}/$direction}"
 
-echo "$file_name"
+echo "${file_name}"
