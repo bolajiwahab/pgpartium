@@ -37,7 +37,8 @@ BEGIN
             format(
 /*
 This alignment is needed to have the right indentation in the generated migration scripts.
-We could use new lines characters instead, but that would require escaping with `E` which does not work with dollar quoting.
+We could use new lines characters instead for the alignment, but that would require escaping with `E`
+which does not work with dollar quoting.
 */
 $SQL$ALTER TABLE %1$I.%2$I
     DETACH PARTITION %3$I.%4$I%5$s;
@@ -63,7 +64,8 @@ $SQL$,
             format(
 /*
 This alignment is needed to have the right indentation in the generated migration scripts.
-We could use new lines characters instead, but that would require escaping with `E` which does not work with dollar quoting.
+We could use new lines characters instead for the alignment, but that would require escaping with `E`
+which does not work with dollar quoting.
 */
 $SQL$ALTER TABLE %1$I.%2$I
     DETACH PARTITION %3$I.%4$I%5$s;
@@ -91,7 +93,8 @@ $SQL$,
 
 /*
 This alignment is needed to have the right indentation in the generated migration scripts.
-We could use new lines characters instead, but that would require escaping with `E` which does not work with dollar quoting.
+We could use new lines characters instead for the alignment, but that would require escaping with `E`
+which does not work with dollar quoting.
 */
 $SQL$DROP TABLE %1$I.%2$I;
 $SQL$,

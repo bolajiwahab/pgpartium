@@ -4,6 +4,7 @@ CREATE OR REPLACE FUNCTION pgpartium.get_triggers (
 )
 RETURNS TABLE (
     trigger_name text
+  , is_trigger_enabled boolean
   , is_constraint_trigger boolean
   , event_timing text
   , trigger_event text
@@ -12,10 +13,15 @@ RETURNS TABLE (
 LANGUAGE SQL
 AS $BODY$
     SELECT tg.tgname AS trigger_name
+         , CASE tg.tgenabled
+             WHEN 'D'
+               THEN false
+             ELSE true
+           END AS is_trigger_enabled
          , CASE tg.tgconstraint
              WHEN 0
-               THEN FALSE
-             ELSE TRUE
+               THEN false
+             ELSE true
            END AS is_constraint_trigger
          , CASE CAST(tgtype AS integer) & 66
              WHEN 2

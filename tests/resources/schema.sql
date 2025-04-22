@@ -37,6 +37,13 @@ CREATE TRIGGER suppress_redundant_updates_trig
     BEFORE UPDATE ON public.transactions_template
     FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
 
+CREATE TRIGGER suppress_redundant_updates_trig_2
+    BEFORE UPDATE ON public.transactions_template
+    FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
+
+ALTER TABLE public.transactions_template
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
+
 CREATE INDEX transactions_template_account_id_idx
     ON public.transactions_template (account_id);
 

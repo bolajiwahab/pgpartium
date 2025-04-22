@@ -546,6 +546,13 @@ CREATE INDEX public__transactions__2025_03_account_id_idx
 CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
     ON public.public__transactions__2025_03
    FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON public.public__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE public.public__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
 $$);
 
 SELECT results_eq(
@@ -587,6 +594,13 @@ TABLESPACE pgpartium;
 CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
     ON public.public__transactions__2025_03
    FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON public.public__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE public.public__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
 $$);
 
 SELECT results_eq(
