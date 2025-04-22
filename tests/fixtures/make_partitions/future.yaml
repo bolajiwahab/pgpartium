@@ -1,0 +1,12 @@
+---
+generates:
+  - directory: "tests"
+    name_template: "{table_schema}__{table_name}__YYYY_MM"
+    interval: "1 mon"
+    future: 1
+    tables:
+      - table_schema: "public"
+        table_name: "transactions"
+        file_name_template: "{description}.result"
+        description:
+          make: "future"
