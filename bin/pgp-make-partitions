@@ -97,7 +97,8 @@ pgp-setup-infra
 
 # Process each partitioned table.
 while read -r table; do
-    table_schema=$(echo "${table}" | yq '.table_schema')
+    # table_schema=$(echo "${table}" | yq '.table_schema')
+    table_schema=$(yq '.table_schema' <<< "${table}")
     table_name=$(echo "${table}" | yq '.table_name')
     file_name_template=$(echo "${table}" | yq '.file_name_template')
     description=$(echo "${table}" | yq '.description.make // "Add partitions for {table_schema}_{table_name}"')
