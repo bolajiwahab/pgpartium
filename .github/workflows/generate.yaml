@@ -1,0 +1,50 @@
+---
+# yamllint disable rule:line-length
+name: Generate
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  pull-requests: write
+  packages: read
+  contents: write
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        postgresql:
+          - 16
+
+    name: 🐘 PostgreSQL ${{ matrix.postgresql }}
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/bolajiwahab/pgpartium:0.0.8
+      options: --user root
+    steps:
+      - name: Start PostgreSQL ${{ matrix.postgresql }}
+        run: pg-start -v ${{ matrix.postgresql }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Generate partitions using ${{ matrix.postgresql }}
+        run: pg-generate-partitions -c tests/fixtures/make_partitions/defaults.yaml
+
+      # - name: list files
+      #   run: cat enrichment.sql
+
+      - name: Check for uncommitted changes
+        run: git status
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          base: main
+          branch: generate-partitions
