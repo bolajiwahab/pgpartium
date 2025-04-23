@@ -2,7 +2,7 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
     p_table_schema text
   , p_table_name text
   , p_partition_name_template text
-  , p_interval text
+  , p_interval interval
   , p_past integer = 0
   , p_future integer = 0
   , p_create_default boolean = false
@@ -219,7 +219,7 @@ BEGIN
     FOR v_partitions IN
         WITH dateset AS (
             SELECT "date"
-              FROM generate_series((date_trunc(substring(p_interval FROM '\d+\s*(\w+)'), v_start_timestamp) - (p_interval::interval * p_past)), (now() + (p_interval::interval * p_future)), p_interval::interval) AS "date"
+              FROM generate_series((date_trunc(substring(p_interval::text FROM '\d+\s*(\w+)'), v_start_timestamp) - (p_interval * p_past)), (now() + (p_interval * p_future)), p_interval) AS "date"
         )
         SELECT replace(
                     replace(
@@ -231,7 +231,7 @@ BEGIN
                   , p_table_schema
                ) AS partition_name
              , "date" AS lower_bound
-             , ("date" + p_interval::interval) AS upper_bound
+             , ("date" + p_interval) AS upper_bound
           FROM dateset
     LOOP
 
@@ -244,6 +244,7 @@ BEGIN
             CONTINUE;
         END IF;
 
+        -- Skip if this partition will be older than the retention period.
         IF age(now(), CAST(v_partitions.upper_bound AS timestamptz)) > NULLIF(p_retention, '-1') THEN
             CONTINUE;
         END IF;
