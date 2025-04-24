@@ -81,7 +81,7 @@ temp_migration_directory=$(mktemp -d)
 temp_error_directory=$(mktemp -d)
 
 # Stage current migrations in staging area.
-echo "INFO: Staging current migrations in"
+echo "INFO: Staging current migrations"
 cp -a "${directory}/." "${temp_migration_directory}/"
 
 cleanup() {
@@ -291,7 +291,7 @@ EOF
 done < <(yq '.generates[].tables[] | @json' "${config}")
 
 if [ ${#failed_tables[@]} -gt 0 ]; then
-    echo "ERROR: failed for ${#failed_tables[@]} tables:" 2>&1
+    echo "ERROR: failed for ${#failed_tables[@]} table(s):" 2>&1
     for table in "${!failed_tables[@]}"; do
         echo "  '${table}': ${failed_tables[${table}]}" 2>&1
     done
