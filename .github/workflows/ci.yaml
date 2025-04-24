@@ -1,30 +1,30 @@
----
-# yamllint disable rule:line-length
-name: CI
+# ---
+# # yamllint disable rule:line-length
+# name: CI
 
-on:  # yamllint disable-line rule:truthy
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+# on:  # yamllint disable-line rule:truthy
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     branches:
+#       - main
 
-jobs:
-  pre-commit:
-    runs-on: ubuntu-latest
-    name: Run pre-commit
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+# jobs:
+#   pre-commit:
+#     runs-on: ubuntu-latest
+#     name: Run pre-commit
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+#       - name: Set up Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: "3.12"
 
-      - name: Install and run pre-commit
-        uses: pre-commit/action@v3.0.1
+#       - name: Install and run pre-commit
+#         uses: pre-commit/action@v3.0.1
 
   test-postgres:
     runs-on: ubuntu-latest

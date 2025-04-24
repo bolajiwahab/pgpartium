@@ -34,8 +34,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Generate partitions using ${{ matrix.postgresql }}
-        run: pg-generate-partitions -c tests/fixtures/make_partitions/defaults.yaml
+      - name: Make partitions using ${{ matrix.postgresql }}
+        run: pgp-make-partitions -c tests/fixtures/make_partitions/defaults.yaml
 
       # - name: list files
       #   run: cat enrichment.sql
