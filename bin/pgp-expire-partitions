@@ -8,17 +8,38 @@ usage() {
 
     OPTIONS:
     -c  the config file in yaml (Required)
+    -u  the database username (Default: postgres)
+    -w  the database password (Default: postgres)
+    -s  the database host (Default: localhost)
+    -p  the database port (Default: 5432)
+    -d  the database name (Default: postgres)
     -h  show this help message.
 
     SAMPLE USAGE:
         ${0##*/} -c config.yaml
+        ${0##*/} -c config.yaml -u user -w password -s host -p port -d database
 "
 }
 
-while getopts "c:h" option; do
+while getopts "c:u:w:s:p:d:h" option; do
     case "${option}" in
     c)
         config="${OPTARG}"
+        ;;
+    u)
+        dbuser="${OPTARG}"
+        ;;
+    w)
+        dbpassword="${OPTARG}"
+        ;;
+    s)
+        dbhost="${OPTARG}"
+        ;;
+    p)
+        dbport="${OPTARG}"
+        ;;
+    d)
+        dbname="${OPTARG}"
         ;;
     h | *)
         usage
@@ -30,6 +51,11 @@ done
 set -euo pipefail
 
 config=${config:-}
+dbuser=${dbuser:-postgres}
+dbpassword=${dbpassword:-postgres}
+dbhost=${dbhost:-localhost}
+dbport=${dbport:-5432}
+dbname=${dbname:-postgres}
 
 # Ensure config is provided.
 if [[ -z "${config}" ]]; then
@@ -115,8 +141,10 @@ while read -r table; do
 
     error_file="${temp_error_directory}/${table_schema}.${table_name}.error"
 
-    if ! psql --username=postgres \
-        --dbname=postgres \
+    if ! PGPASSWORD="${dbpassword}" psql --username="${dbuser}" \
+        --dbname="${dbname}" \
+        --host="${dbhost}" \
+        --port="${dbport}" \
         --tuples-only \
         --no-align \
         --quiet \
@@ -166,5 +194,5 @@ if [ ${#failed_tables[@]} -gt 0 ]; then
     done
     exit 1
 else
-    cp -af "${temp_migration_directory}/." "${directory}/"
+    cp -rf "${temp_migration_directory}/." "${directory}/"
 fi
