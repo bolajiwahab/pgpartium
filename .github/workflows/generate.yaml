@@ -27,6 +27,31 @@ jobs:
     container:
       image: ghcr.io/bolajiwahab/pgpartium:0.0.8
       options: --user root
+    services:
+      # postgres:
+      #   # Docker Hub image
+      #   image: postgres
+      #   # Provide the password for postgres
+      #   env:
+      #     POSTGRES_PASSWORD: postgres
+      #   # Set health checks to wait until postgres has started
+      #   options: >-
+      #     --health-cmd pg_isready
+      #     --health-interval 10s
+      #     --health-timeout 5s
+      # --health-retries 5
+      db:
+        image: postgres:${{ matrix.postgresql }}
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: P@ssw0rd
+          POSTGRES_DB: postgres
+      flyway:
+        image: flyway/flyway:11.8
+        command: -url=jdbc:postgresql://db:5432/postgres -user=postgres -password=P@ssw0rd -locations=filesystem:/flyway/sql migrate
+        # command: -configFiles=/flyway/conf/flyway.config -locations=filesystem:/flyway/sql migrate
+        volumes:
+          - ./tests/migrations:/flyway/sql
     steps:
       - name: Start PostgreSQL ${{ matrix.postgresql }}
         run: pg-start -v ${{ matrix.postgresql }}
