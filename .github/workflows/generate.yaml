@@ -27,25 +27,6 @@ jobs:
     container:
       image: ghcr.io/bolajiwahab/pgpartium:0.0.8
       options: --user root
-    services:
-      # postgres:
-      #   # Docker Hub image
-      #   image: postgres
-      #   # Provide the password for postgres
-      #   env:
-      #     POSTGRES_PASSWORD: postgres
-      #   # Set health checks to wait until postgres has started
-      #   options: >-
-      #     --health-cmd pg_isready
-      #     --health-interval 10s
-      #     --health-timeout 5s
-      # --health-retries 5
-      db:
-        image: postgres:${{ matrix.postgresql }}
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
     steps:
       - name: Start PostgreSQL ${{ matrix.postgresql }}
         run: pg-start -v ${{ matrix.postgresql }}
@@ -54,7 +35,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Make partitions using ${{ matrix.postgresql }}
-        run: pgp-make-partitions -c tests/fixtures/make_partitions/defaults.yaml -s db
+        run: pgp-make-partitions -c tests/fixtures/make_partitions/defaults.yaml
 
       # - name: list files
       #   run: cat enrichment.sql
