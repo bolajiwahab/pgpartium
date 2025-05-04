@@ -62,3 +62,12 @@ find sql -type f -iname "*.sql" -print0 | sort -z | xargs -0 printf -- ' -f %s' 
         --quiet \
         -v "ON_ERROR_STOP=1" \
         --single-transaction
+
+echo "INFO: Setting up flyway"
+# apt-get install -y openjdk-17-jre-headless
+# apt-get install -y --no-install-recommends libc6 libgcc1 libgcc-s1 libgssapi-krb5-2 liblttng-ust1 libssl3 libstdc++6 libunwind8 zlib1g
+wget --no-verbose https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/11.8.0/flyway-commandline-11.8.0-linux-x64.tar.gz --output-document=/tmp/flyway-commandline-11.8.0-linux-x64.tar.gz && \
+tar xzf /tmp/flyway-commandline-11.8.0-linux-x64.tar.gz -C /tmp
+ln -s /tmp/flyway-11.8.0/flyway /usr/bin/flyway
+
+flyway -url="jdbc:postgresql://${dbhost}:${dbport}/${dbname}" -user="${dbuser}" -password="${dbpassword}" -locations="filesystem:tests/migrations" migrate
