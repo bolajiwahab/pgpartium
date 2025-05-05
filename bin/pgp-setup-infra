@@ -4,9 +4,10 @@ usage() {
     echo "
     ${0##*/}
 
-    Generates partitions for partitioned tables.
+    Sets infrastruture.
 
     OPTIONS:
+    -c  the config file in yaml (Required)
     -u  the database username (Default: postgres)
     -w  the database password (Default: postgres)
     -s  the database host (Default: localhost)
@@ -15,13 +16,16 @@ usage() {
     -h  show this help message.
 
     SAMPLE USAGE:
-        ${0##*/}
-        ${0##*/} -u user -w password -s host -p port -d database
+        ${0##*/} -c config.yaml
+        ${0##*/} -c config.yaml -u user -w password -s host -p port -d database
 "
 }
 
-while getopts "u:w:s:p:d:h" option; do
+while getopts "c:u:w:s:p:d:h" option; do
     case "${option}" in
+    c)
+        config="${OPTARG}"
+        ;;
     u)
         dbuser="${OPTARG}"
         ;;
@@ -46,11 +50,22 @@ done
 
 set -euo pipefail
 
+config=${config:-}
 dbuser=${dbuser:-postgres}
 dbpassword=${dbpassword:-postgres}
 dbhost=${dbhost:-localhost}
 dbport=${dbport:-5432}
 dbname=${dbname:-postgres}
+
+# Ensure config is provided.
+if [[ -z "${config}" ]]; then
+    usage
+    exit 1
+fi
+
+directory=$(yq '.generates.directory' "${config}")
+tool=$(yq '.generates.migration-tool.name' "${config}")
+version=$(yq '.generates.migration-tool.version' "${config}")
 
 # Setup infrastructure
 find sql -type f -iname "*.sql" -print0 | sort -z | xargs -0 printf -- ' -f %s' |
@@ -62,3 +77,17 @@ find sql -type f -iname "*.sql" -print0 | sort -z | xargs -0 printf -- ' -f %s' 
         --quiet \
         -v "ON_ERROR_STOP=1" \
         --single-transaction
+
+run_flyway() {
+    echo "INFO: Setting up flyway"
+    wget --no-clobber --no-verbose "https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/${version}/flyway-commandline-${version}-linux-x64.tar.gz" \
+        --output-document="/tmp/flyway-commandline-${version}-linux-x64.tar.gz" && \
+    tar xzf "/tmp/flyway-commandline-${version}-linux-x64.tar.gz" -C /tmp
+    ln -s "/tmp/flyway-${version}/flyway" /usr/bin/flyway
+    echo "INFO: Applying current migrations"
+    flyway -url="jdbc:postgresql://${dbhost}:${dbport}/${dbname}" -user="${dbuser}" -password="${dbpassword}" -locations="filesystem:${directory}" migrate
+}
+
+if [[ "${tool}" == "flyway" ]]; then
+    run_flyway
+fi

@@ -1,90 +1,93 @@
 # Generate migration files.
 generates:
-  - directory: "/migrations" # The directory to generate migration files in.
-    partition_schema: "partitions" # The schema for the partitions. Defaults to the parent's schema.
-    partition_tablespace: "pg_default" # The tablespace for the partitions. Defaults to "pg_default".
-    index_tablespace: "pg_default" # The tablespace for the indexes. Defaults to the partition's tablespace.
-    storage_parameters: # The storage parameters for the partitions.
-      fillfactor: 90 # The fillfactor for a table is a percentage between 10 and 100. 100 (complete packing) is the default.
-      toast_tuple_target: 2048 # Specifies the minimum tuple length required before compression/moving to TOAST tables.
-      parallel_workers: 2 # This sets the number of workers that should be used to assist a parallel scan of a table.
-      autovacuum_enabled: false # Enables or disables the autovacuum daemon for a table.
-      vacuum_index_cleanup: false # Enables or disables index cleanup when VACUUM is run on a table.
-      vacuum_truncate: false # Enables or disables vacuum to try to truncate off any empty pages at the end of a table.
-      autovacuum_vacuum_threshold: 50 # Specifies the minimum number of updated or deleted tuples needed to trigger a VACUUM in a table.
-      autovacuum_vacuum_scale_factor: 0.2 # Specifies a fraction of a table size to add to autovacuum_vacuum_threshold when deciding whether to trigger a VACUUM.
-      autovacuum_vacuum_insert_threshold: 1000 # Specifies the number of inserted tuples needed to trigger a VACUUM in a table.
-      autovacuum_vacuum_insert_scale_factor: 0.2 # Specifies a fraction of a table size to add to autovacuum_vacuum_insert_threshold when deciding whether to trigger a VACUUM.
-      autovacuum_analyze_threshold: 50 # Specifies the minimum number of inserted, updated, or deleted tuples needed to trigger an ANALYZE in a table.
-      autovacuum_analyze_scale_factor: 0.1 # Specifies a fraction of a table size to add to autovacuum_analyze_threshold when deciding whether to trigger an ANALYZE.
-      autovacuum_vacuum_cost_delay: 2 # Specifies the cost delay value that will be used in automatic VACUUM operations.
-      autovacuum_vacuum_cost_limit: 0 # Specifies the cost limit value that will be used in automatic VACUUM operations.
-      autovacuum_freeze_min_age: 50000000 # Specifies the cutoff age (in transactions) that VACUUM should use to decide whether to freeze row versions while scanning a table.
-      autovacuum_freeze_max_age: 200000000 # Specifies the maximum age (in transactions) that a table's pg_class.relfrozenxid field can attain before a VACUUM operation is forced to prevent transaction ID wraparound within a table.
-      autovacuum_freeze_table_age: 150000000 # VACUUM performs an aggressive scan if a table's pg_class.relfrozenxid field has reached the age specified by this setting.
-      autovacuum_multixact_freeze_min_age: 5000000 # Specifies the cutoff age (in multixacts) that VACUUM should use to decide whether to replace multixact IDs with a newer transaction ID or multixact ID while scanning a table.
-      autovacuum_multixact_freeze_max_age: 400000000 # Specifies the maximum age (in multixacts) that a table's pg_class.relminmxid field can attain before a VACUUM operation is forced to prevent multixact ID wraparound within a table.
-      autovacuum_multixact_freeze_table_age: 150000000 # VACUUM performs an aggressive scan if a table's pg_class.relminmxid field has reached the age specified by this setting.
-      log_autovacuum_min_duration: -1 # Causes each action executed by autovacuum to be logged if it ran for at least the specified amount of time. Setting this to zero logs all autovacuum actions.
-      user_catalog_table: false # Declares a table as an additional catalog table for purposes of logical replication.
-    name_template: "{table_schema}__{table_name}__YYYY_MM" # The name template for the partitions.
-    interval: "1 mon" # The partition interval.
-    past: 0 # The number of past partitions to make.
-    future: 0 # The number of future partitions to make.
-    create_default: false # Whether to create a default partition.
-    default_partition_name_template: "{table_schema}__{table_name}__DEFAULT" # The name template for the default partition.
-    retention: "11 mons" # The retention time interval to expire partitions containing data older than the given interval.
-    detach_first: false # Whether to detach the expired partitions first before dropping them.
-    detach_only: false # Whether to only detach the expired partitions.
-    detach_concurrently: false # Whether to detach the expired partitions concurrently.
-    skip_overlapping: false # Whether to skip overlapping partitions.
-    timezone: "Etc/UTC" # The timezone to use for the generation of the migration files.
-    tables: # List of tables to make or expire partitions for.
-      - table_schema: "public" # The schema of a table.
-        table_name: "measurement" # The name of a table.
-        file_name_template: "V{integer}__{description}.sql" # The template for the migration filename.
-        description: # The description of the migration.
-          make: "Add partitions for {table_schema}_{table_name} table" # The description for generation of partitions.
-          expire: "Expire partitions for {table_schema}_{table_name} table" # The description for expiration of partitions.
-        partition: # The partition configuration for a table.
-          partition_schema: "partitions" # The schema for the partitions.
-          partition_tablespace: "pg_default" # The tablespace for the partitions.
-          index_tablespace: "pg_default" # The tablespace for the indexes. Defaults to "pg_default".
-          storage_parameters: # The storage parameters for the partitions.
-            fillfactor: 90 # The fillfactor for a table is a percentage between 10 and 100. 100 (complete packing) is the default.
-            toast_tuple_target: 2048 # Specifies the minimum tuple length required before compression/moving to TOAST tables.
-            parallel_workers: 2 # This sets the number of workers that should be used to assist a parallel scan of a table.
-            autovacuum_enabled: false # Enables or disables the autovacuum daemon for a table.
-            vacuum_index_cleanup: false # Enables or disables index cleanup when VACUUM is run on a table.
-            vacuum_truncate: false # Enables or disables vacuum to try to truncate off any empty pages at the end of a table.
-            autovacuum_vacuum_threshold: 50 # Specifies the minimum number of updated or deleted tuples needed to trigger a VACUUM in a table.
-            autovacuum_vacuum_scale_factor: 0.2 # Specifies a fraction of a table size to add to autovacuum_vacuum_threshold when deciding whether to trigger a VACUUM.
-            autovacuum_vacuum_insert_threshold: 1000 # Specifies the number of inserted tuples needed to trigger a VACUUM in a table.
-            autovacuum_vacuum_insert_scale_factor: 0.2 # Specifies a fraction of a table size to add to autovacuum_vacuum_insert_threshold when deciding whether to trigger a VACUUM.
-            autovacuum_analyze_threshold: 50 # Specifies the minimum number of inserted, updated, or deleted tuples needed to trigger an ANALYZE in a table.
-            autovacuum_analyze_scale_factor: 0.1 # Specifies a fraction of a table size to add to autovacuum_analyze_threshold when deciding whether to trigger an ANALYZE.
-            autovacuum_vacuum_cost_delay: 2 # Specifies the cost delay value that will be used in automatic VACUUM operations.
-            autovacuum_vacuum_cost_limit: 0 # Specifies the cost limit value that will be used in automatic VACUUM operations.
-            autovacuum_freeze_min_age: 50000000 # Specifies the cutoff age (in transactions) that VACUUM should use to decide whether to freeze row versions while scanning a table.
-            autovacuum_freeze_max_age: 200000000 # Specifies the maximum age (in transactions) that a table's pg_class.relfrozenxid field can attain before a VACUUM operation is forced to prevent transaction ID wraparound within a table.
-            autovacuum_freeze_table_age: 150000000 # VACUUM performs an aggressive scan if a table's pg_class.relfrozenxid field has reached the age specified by this setting.
-            autovacuum_multixact_freeze_min_age: 5000000 # Specifies the cutoff age (in multixacts) that VACUUM should use to decide whether to replace multixact IDs with a newer transaction ID or multixact ID while scanning a table.
-            autovacuum_multixact_freeze_max_age: 400000000 # Specifies the maximum age (in multixacts) that a table's pg_class.relminmxid field can attain before a VACUUM operation is forced to prevent multixact ID wraparound within a table.
-            autovacuum_multixact_freeze_table_age: 150000000 # VACUUM performs an aggressive scan if a table's pg_class.relminmxid field has reached the age specified by this setting.
-            log_autovacuum_min_duration: -1 # Causes each action executed by autovacuum to be logged if it ran for at least the specified amount of time. Setting this to zero logs all autovacuum actions.
-            user_catalog_table: false # Declares a table as an additional catalog table for purposes of logical replication.
-          name_template: "{table_schema}__{table_name}__YYYY_MM" # The name template for the partitions.
-          interval: "1 mon" # The partition interval.
-          past: 0 # The number of past partitions to make.
-          future: 0 # The number of future partitions to make.
-          create_default: false # Whether to create a default partition.
-          default_partition_name_template: "{table_schema}__{table_name}__DEFAULT" # The name template for the default partition.
-          retention: "11 mons" # The retention time interval to expire partitions containing data older than the given interval.
-          detach_first: false # Whether to detach the expired partitions first before dropping them.
-          detach_only: false # Whether to only detach the expired partitions.
-          detach_concurrently: false # Whether to detach the expired partitions concurrently.
-          skip_overlapping: false # Whether to skip overlapping partitions.
-          timezone: "Etc/UTC" # The timezone to use for the generation of the migration files.
-        template_table: # The template table to replicate objects such as constraints, indexes, triggers from.
-          table_schema: "public" # Schema of the template table.
-          table_name: "measurement_template" # Name of the template table.
+  directory: "/migrations" # The directory to generate migration files in.
+  migration-tool:
+    name: "flyway" # The migration tool to use.
+    version: "11.8.0" # The version of the migration tool.
+  partition_schema: "partitions" # The schema for the partitions. Defaults to the parent's schema.
+  partition_tablespace: "pg_default" # The tablespace for the partitions. Defaults to "pg_default".
+  index_tablespace: "pg_default" # The tablespace for the indexes. Defaults to the partition's tablespace.
+  storage_parameters: # The storage parameters for the partitions.
+    fillfactor: 90 # The fillfactor for a table is a percentage between 10 and 100. 100 (complete packing) is the default.
+    toast_tuple_target: 2048 # Specifies the minimum tuple length required before compression/moving to TOAST tables.
+    parallel_workers: 2 # This sets the number of workers that should be used to assist a parallel scan of a table.
+    autovacuum_enabled: false # Enables or disables the autovacuum daemon for a table.
+    vacuum_index_cleanup: false # Enables or disables index cleanup when VACUUM is run on a table.
+    vacuum_truncate: false # Enables or disables vacuum to try to truncate off any empty pages at the end of a table.
+    autovacuum_vacuum_threshold: 50 # Specifies the minimum number of updated or deleted tuples needed to trigger a VACUUM in a table.
+    autovacuum_vacuum_scale_factor: 0.2 # Specifies a fraction of a table size to add to autovacuum_vacuum_threshold when deciding whether to trigger a VACUUM.
+    autovacuum_vacuum_insert_threshold: 1000 # Specifies the number of inserted tuples needed to trigger a VACUUM in a table.
+    autovacuum_vacuum_insert_scale_factor: 0.2 # Specifies a fraction of a table size to add to autovacuum_vacuum_insert_threshold when deciding whether to trigger a VACUUM.
+    autovacuum_analyze_threshold: 50 # Specifies the minimum number of inserted, updated, or deleted tuples needed to trigger an ANALYZE in a table.
+    autovacuum_analyze_scale_factor: 0.1 # Specifies a fraction of a table size to add to autovacuum_analyze_threshold when deciding whether to trigger an ANALYZE.
+    autovacuum_vacuum_cost_delay: 2 # Specifies the cost delay value that will be used in automatic VACUUM operations.
+    autovacuum_vacuum_cost_limit: 0 # Specifies the cost limit value that will be used in automatic VACUUM operations.
+    autovacuum_freeze_min_age: 50000000 # Specifies the cutoff age (in transactions) that VACUUM should use to decide whether to freeze row versions while scanning a table.
+    autovacuum_freeze_max_age: 200000000 # Specifies the maximum age (in transactions) that a table's pg_class.relfrozenxid field can attain before a VACUUM operation is forced to prevent transaction ID wraparound within a table.
+    autovacuum_freeze_table_age: 150000000 # VACUUM performs an aggressive scan if a table's pg_class.relfrozenxid field has reached the age specified by this setting.
+    autovacuum_multixact_freeze_min_age: 5000000 # Specifies the cutoff age (in multixacts) that VACUUM should use to decide whether to replace multixact IDs with a newer transaction ID or multixact ID while scanning a table.
+    autovacuum_multixact_freeze_max_age: 400000000 # Specifies the maximum age (in multixacts) that a table's pg_class.relminmxid field can attain before a VACUUM operation is forced to prevent multixact ID wraparound within a table.
+    autovacuum_multixact_freeze_table_age: 150000000 # VACUUM performs an aggressive scan if a table's pg_class.relminmxid field has reached the age specified by this setting.
+    log_autovacuum_min_duration: -1 # Causes each action executed by autovacuum to be logged if it ran for at least the specified amount of time. Setting this to zero logs all autovacuum actions.
+    user_catalog_table: false # Declares a table as an additional catalog table for purposes of logical replication.
+  name_template: "{table_schema}__{table_name}__YYYY_MM" # The name template for the partitions.
+  interval: "1 mon" # The partition interval.
+  past: 0 # The number of past partitions to make.
+  future: 0 # The number of future partitions to make.
+  create_default: false # Whether to create a default partition.
+  default_partition_name_template: "{table_schema}__{table_name}__DEFAULT" # The name template for the default partition.
+  retention: "11 mons" # The retention time interval to expire partitions containing data older than the given interval.
+  detach_first: false # Whether to detach the expired partitions first before dropping them.
+  detach_only: false # Whether to only detach the expired partitions.
+  detach_concurrently: false # Whether to detach the expired partitions concurrently.
+  skip_overlapping: false # Whether to skip overlapping partitions.
+  timezone: "Etc/UTC" # The timezone to use for the generation of the migration files.
+  tables: # List of tables to make or expire partitions for.
+    - table_schema: "public" # The schema of a table.
+      table_name: "measurement" # The name of a table.
+      file_name_template: "V{integer}__{description}.sql" # The template for the migration filename.
+      description: # The description of the migration.
+        make: "Add partitions for {table_schema}_{table_name} table" # The description for generation of partitions.
+        expire: "Expire partitions for {table_schema}_{table_name} table" # The description for expiration of partitions.
+      partition: # The partition configuration for a table.
+        partition_schema: "partitions" # The schema for the partitions.
+        partition_tablespace: "pg_default" # The tablespace for the partitions.
+        index_tablespace: "pg_default" # The tablespace for the indexes. Defaults to "pg_default".
+        storage_parameters: # The storage parameters for the partitions.
+          fillfactor: 90 # The fillfactor for a table is a percentage between 10 and 100. 100 (complete packing) is the default.
+          toast_tuple_target: 2048 # Specifies the minimum tuple length required before compression/moving to TOAST tables.
+          parallel_workers: 2 # This sets the number of workers that should be used to assist a parallel scan of a table.
+          autovacuum_enabled: false # Enables or disables the autovacuum daemon for a table.
+          vacuum_index_cleanup: false # Enables or disables index cleanup when VACUUM is run on a table.
+          vacuum_truncate: false # Enables or disables vacuum to try to truncate off any empty pages at the end of a table.
+          autovacuum_vacuum_threshold: 50 # Specifies the minimum number of updated or deleted tuples needed to trigger a VACUUM in a table.
+          autovacuum_vacuum_scale_factor: 0.2 # Specifies a fraction of a table size to add to autovacuum_vacuum_threshold when deciding whether to trigger a VACUUM.
+          autovacuum_vacuum_insert_threshold: 1000 # Specifies the number of inserted tuples needed to trigger a VACUUM in a table.
+          autovacuum_vacuum_insert_scale_factor: 0.2 # Specifies a fraction of a table size to add to autovacuum_vacuum_insert_threshold when deciding whether to trigger a VACUUM.
+          autovacuum_analyze_threshold: 50 # Specifies the minimum number of inserted, updated, or deleted tuples needed to trigger an ANALYZE in a table.
+          autovacuum_analyze_scale_factor: 0.1 # Specifies a fraction of a table size to add to autovacuum_analyze_threshold when deciding whether to trigger an ANALYZE.
+          autovacuum_vacuum_cost_delay: 2 # Specifies the cost delay value that will be used in automatic VACUUM operations.
+          autovacuum_vacuum_cost_limit: 0 # Specifies the cost limit value that will be used in automatic VACUUM operations.
+          autovacuum_freeze_min_age: 50000000 # Specifies the cutoff age (in transactions) that VACUUM should use to decide whether to freeze row versions while scanning a table.
+          autovacuum_freeze_max_age: 200000000 # Specifies the maximum age (in transactions) that a table's pg_class.relfrozenxid field can attain before a VACUUM operation is forced to prevent transaction ID wraparound within a table.
+          autovacuum_freeze_table_age: 150000000 # VACUUM performs an aggressive scan if a table's pg_class.relfrozenxid field has reached the age specified by this setting.
+          autovacuum_multixact_freeze_min_age: 5000000 # Specifies the cutoff age (in multixacts) that VACUUM should use to decide whether to replace multixact IDs with a newer transaction ID or multixact ID while scanning a table.
+          autovacuum_multixact_freeze_max_age: 400000000 # Specifies the maximum age (in multixacts) that a table's pg_class.relminmxid field can attain before a VACUUM operation is forced to prevent multixact ID wraparound within a table.
+          autovacuum_multixact_freeze_table_age: 150000000 # VACUUM performs an aggressive scan if a table's pg_class.relminmxid field has reached the age specified by this setting.
+          log_autovacuum_min_duration: -1 # Causes each action executed by autovacuum to be logged if it ran for at least the specified amount of time. Setting this to zero logs all autovacuum actions.
+          user_catalog_table: false # Declares a table as an additional catalog table for purposes of logical replication.
+        name_template: "{table_schema}__{table_name}__YYYY_MM" # The name template for the partitions.
+        interval: "1 mon" # The partition interval.
+        past: 0 # The number of past partitions to make.
+        future: 0 # The number of future partitions to make.
+        create_default: false # Whether to create a default partition.
+        default_partition_name_template: "{table_schema}__{table_name}__DEFAULT" # The name template for the default partition.
+        retention: "11 mons" # The retention time interval to expire partitions containing data older than the given interval.
+        detach_first: false # Whether to detach the expired partitions first before dropping them.
+        detach_only: false # Whether to only detach the expired partitions.
+        detach_concurrently: false # Whether to detach the expired partitions concurrently.
+        skip_overlapping: false # Whether to skip overlapping partitions.
+        timezone: "Etc/UTC" # The timezone to use for the generation of the migration files.
+      template_table: # The template table to replicate objects such as constraints, indexes, triggers from.
+        table_schema: "public" # Schema of the template table.
+        table_name: "measurement_template" # Name of the template table.

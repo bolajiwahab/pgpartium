@@ -74,15 +74,15 @@ export DEFAULT_DETACH_CONCURRENTLY=false
 export DEFAULT_TIMEZONE="Etc/UTC"
 
 # Extract global configs
-GLOBAL_RETENTION=$(yq '.generates[].retention // strenv(DEFAULT_RETENTION)' "${config}")
-GLOBAL_DETACH_ONLY=$(yq '.generates[].detach_only // strenv(DEFAULT_DETACH_ONLY)' "${config}")
-GLOBAL_DETACH_FIRST=$(yq '.generates[].detach_first // strenv(DEFAULT_DETACH_FIRST)' "${config}")
-GLOBAL_DETACH_CONCURRENTLY=$(yq '.generates[].detach_concurrently // strenv(DEFAULT_DETACH_CONCURRENTLY)' "${config}")
-GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
+GLOBAL_RETENTION=$(yq '.generates.retention // strenv(DEFAULT_RETENTION)' "${config}")
+GLOBAL_DETACH_ONLY=$(yq '.generates.detach_only // strenv(DEFAULT_DETACH_ONLY)' "${config}")
+GLOBAL_DETACH_FIRST=$(yq '.generates.detach_first // strenv(DEFAULT_DETACH_FIRST)' "${config}")
+GLOBAL_DETACH_CONCURRENTLY=$(yq '.generates.detach_concurrently // strenv(DEFAULT_DETACH_CONCURRENTLY)' "${config}")
+GLOBAL_TIMEZONE=$(yq '.generates.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
 
 export GLOBAL_RETENTION GLOBAL_DETACH_ONLY GLOBAL_DETACH_FIRST GLOBAL_DETACH_CONCURRENTLY GLOBAL_TIMEZONE
 
-directory=$(yq '.generates[].directory' "${config}")
+directory=$(yq '.generates.directory' "${config}")
 
 declare -A failed_tables=()
 
@@ -103,7 +103,7 @@ trap cleanup EXIT ERR
 
 # Setup infrastructure.
 echo "INFO: Setting up infra"
-pgp-setup-infra
+pgp-setup-infra -c "${config}" -u "${dbuser}" -w "${dbpassword}" -s "${dbhost}" -p "${dbport}" -d "${dbname}"
 
 # Process each partitioned table
 while read -r table; do
@@ -185,7 +185,7 @@ EOF
         rm "${temp_migration_directory}/${output_filename}"
     fi
 
-done < <(yq '.generates[].tables[] | @json' "${config}")
+done < <(yq '.generates.tables[] | @json' "${config}")
 
 if [ ${#failed_tables[@]} -gt 0 ]; then
     echo "ERROR: failed for ${#failed_tables[@]} table(s):" 2>&1
