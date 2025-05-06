@@ -138,7 +138,8 @@ run_dbmate() {
     else
         echo "INFO: Setting up dbmate v${version}"
         wget --no-clobber --no-verbose "${base_url}/v${version}/dbmate-linux-amd64" \
-            --output-document="${dbmate_bin}"
+            --output-document="${dbmate_bin}" && \
+        chmod +x "${dbmate_bin}"
     fi
 
     # Create a symbolic link if not already linked.
