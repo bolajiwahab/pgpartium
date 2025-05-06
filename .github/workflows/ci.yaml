@@ -26,7 +26,7 @@ jobs:
       - name: Install and run pre-commit
         uses: pre-commit/action@v3.0.1
 
-  test:
+  test-postgres:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -37,6 +37,20 @@ jobs:
           - 15
           - 16
           - 17
+    name: Run tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        run: |
+          PGVERSION=${{ matrix.postgresql }} ./run_tests.sh
+
+  test-migration-tool:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
         migration_tool:
           - flyway
           - go-migrate
@@ -47,5 +61,4 @@ jobs:
 
       - name: Run tests
         run: |
-          PGVERSION=${{ matrix.postgresql }} \
           MIGRATION_TOOL=${{ matrix.migration_tool }} ./run_tests.sh
