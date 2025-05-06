@@ -37,10 +37,21 @@ jobs:
           - 15
           - 16
           - 17
+        include:
+          - tool: flyway
+            version: 11.8.0
+            migration_path: tests/migrations/flyway
+          - tool: gomigrate
+            version: 4.18.3
+            migration_path: tests/migrations/gomigrate
     name: Run tests
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Run tests
-        run: PGVERSION=${{ matrix.postgresql }} ./run_tests.sh
+        run: |
+          PGVERSION=${{ matrix.postgresql }} \
+          MIGRATION_TOOL=${{ matrix.tool }} \
+          MIGRATION_TOOL_VERSION=${{ matrix.version }} \
+          MIGRATION_DIRECTORY=${{ matrix.migration_path }} ./run_tests.sh
