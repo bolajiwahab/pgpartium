@@ -41,9 +41,9 @@ jobs:
           - tool: flyway
             version: 11.8.0
             migration_path: tests/migrations/flyway
-          - tool: gomigrate
+          - tool: go-migrate
             version: 4.18.3
-            migration_path: tests/migrations/gomigrate
+            migration_path: tests/migrations/go-migrate
     name: Run tests
     steps:
       - name: Checkout repository
