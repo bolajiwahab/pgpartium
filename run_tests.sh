@@ -9,7 +9,7 @@ case "${MIGRATION_TOOL}" in
     ;;
   go-migrate)
     MIGRATION_TOOL_VERSION="4.18.3"
-    MIGRATION_DIRECTORY="tests/migrations/gomigrate"
+    MIGRATION_DIRECTORY="tests/migrations/go-migrate"
     ;;
   *)
     echo "Unsupported tool: ${MIGRATION_TOOL}"
