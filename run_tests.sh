@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+MIGRATION_TOOL=${MIGRATION_TOOL:-flyway}
+PGVERSION=${PGVERSION:-17}
+
 case "${MIGRATION_TOOL}" in
   flyway)
     MIGRATION_TOOL_VERSION="11.8.0"
@@ -12,12 +15,12 @@ case "${MIGRATION_TOOL}" in
     MIGRATION_DIRECTORY="tests/migrations/go-migrate"
     ;;
   *)
-    echo "Unsupported tool: ${MIGRATION_TOOL}"
+    echo "ERROR: Unsupported migration tool: ${MIGRATION_TOOL}"
     exit 1
     ;;
 esac
 
-# export PGVERSION="${PGVERSION:-17}"
+export PGVERSION="${PGVERSION}"
 export MIGRATION_DIRECTORY="${MIGRATION_DIRECTORY}"
 export MIGRATION_TOOL="${MIGRATION_TOOL}"
 export MIGRATION_TOOL_VERSION="${MIGRATION_TOOL_VERSION}"
