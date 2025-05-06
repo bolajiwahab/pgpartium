@@ -2,6 +2,26 @@
 
 set -euo pipefail
 
+case "${MIGRATION_TOOL}" in
+  flyway)
+    MIGRATION_TOOL_VERSION="11.8.0"
+    MIGRATION_DIRECTORY="tests/migrations/flyway"
+    ;;
+  go-migrate)
+    MIGRATION_TOOL_VERSION="4.18.3"
+    MIGRATION_DIRECTORY="tests/migrations/gomigrate"
+    ;;
+  *)
+    echo "Unsupported tool: ${MIGRATION_TOOL}"
+    exit 1
+    ;;
+esac
+
+# export PGVERSION="${PGVERSION:-17}"
+export MIGRATION_DIRECTORY="${MIGRATION_DIRECTORY}"
+export MIGRATION_TOOL="${MIGRATION_TOOL}"
+export MIGRATION_TOOL_VERSION="${MIGRATION_TOOL_VERSION}"
+
 compose_file="docker-compose-test.yaml"
 
 docker compose -f ${compose_file} build --no-cache
