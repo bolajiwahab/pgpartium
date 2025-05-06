@@ -95,6 +95,37 @@ run_flyway() {
            -password="${dbpassword}" \
            -locations="filesystem:${directory}" \
            -schemas="public" \
+           -placeholderReplacement="false" \
+           -postgresql.transactional.lock="false" \
+           migrate
+}
+
+run_migrate() {
+    base_url="https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline"
+    flyway_dir="/tmp/flyway-${version}"
+    flyway_bin="${flyway_dir}/flyway"
+
+    if [[ -x "${flyway_bin}" ]]; then
+        echo "INFO: Flyway ${version} already set up. Skipping..."
+    else
+        echo "INFO: Setting up flyway ${version}"
+        wget --no-clobber --no-verbose "${base_url}/${version}/flyway-commandline-${version}-linux-x64.tar.gz" \
+            --output-document="/tmp/flyway-commandline-${version}-linux-x64.tar.gz" && \
+        tar --extract --gzip --file="/tmp/flyway-commandline-${version}-linux-x64.tar.gz" --directory="/tmp"
+    fi
+
+    # Create a symbolic link if not already linked.
+    if ! command -v flyway >/dev/null 2>&1; then
+        ln -s "${flyway_bin}" /usr/bin/flyway
+    fi
+
+    flyway -url="jdbc:postgresql://${dbhost}:${dbport}/${dbname}" \
+           -user="${dbuser}" \
+           -password="${dbpassword}" \
+           -locations="filesystem:${directory}" \
+           -schemas="public" \
+           -placeholderReplacement="false" \
+           -postgresql.transactional.lock="false" \
            migrate
 }
 
