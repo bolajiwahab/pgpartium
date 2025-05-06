@@ -57,10 +57,7 @@ mkdir -p /var/lib/postgresql/tablespaces/pgpartium
 chown -R postgres:postgres /var/lib/postgresql/tablespaces/pgpartium
 psql -v "ON_ERROR_STOP=1" --quiet --username=postgres --dbname=postgres -c "CREATE TABLESPACE pgpartium LOCATION '/var/lib/postgresql/tablespaces/pgpartium';"
 
-# echo "Setting up schema"
-# psql -v "ON_ERROR_STOP=1" --quiet --single-transaction --username=postgres --dbname=postgres -f tests/resources/mock.sql -f tests/resources/schema.sql
-
-echo "INFO: Setting up infra"
+echo "INFO: Setting up infrastructure"
 pgp-setup-infra
 
 # We need to include mock in our search_path

@@ -85,12 +85,11 @@ run_flyway() {
         tar --extract --gzip --file="/tmp/flyway-commandline-${version}-linux-x64.tar.gz" --directory="/tmp"
     fi
 
-    # Link if not already linked
+    # Create a symbolic link if not already linked.
     if ! command -v flyway >/dev/null 2>&1; then
         ln -s "${flyway_bin}" /usr/bin/flyway
     fi
 
-    # ln -s "/tmp/flyway-${version}/flyway" /usr/bin/flyway
     flyway -url="jdbc:postgresql://${dbhost}:${dbport}/${dbname}" \
            -user="${dbuser}" \
            -password="${dbpassword}" \
