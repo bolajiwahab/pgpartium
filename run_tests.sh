@@ -14,6 +14,10 @@ case "${MIGRATION_TOOL}" in
     MIGRATION_TOOL_VERSION="4.18.3"
     MIGRATION_DIRECTORY="tests/migrations/go-migrate"
     ;;
+  dbmate)
+    MIGRATION_TOOL_VERSION="2.27.0"
+    MIGRATION_DIRECTORY="tests/migrations/dbmate"
+    ;;
   *)
     echo "ERROR: Unsupported migration tool: ${MIGRATION_TOOL}"
     exit 1

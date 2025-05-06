@@ -104,9 +104,6 @@ run_go_migrate() {
     base_url="https://github.com/golang-migrate/migrate/releases/download"
     go_migrate_dir="/tmp/migrate-v${version}"
     go_migrate_bin="${go_migrate_dir}/migrate"
-    # curl -L https://github.com/golang-migrate/migrate/releases/download/v4.18.3/migrate.linux-amd64.tar.gz | tar xvz
-    # v4.18.3
-    # https://github.com/golang-migrate/migrate/releases
 
     if [[ -x "${go_migrate_bin}" ]]; then
         echo "INFO: Go-migrate v${version} already downloaded. Skipping..."
@@ -114,7 +111,7 @@ run_go_migrate() {
         echo "INFO: Setting up go-migrate v${version}"
         wget --no-clobber --no-verbose "${base_url}/v${version}/migrate.linux-amd64.tar.gz" \
             --output-document="/tmp/migrate-v${version}.linux-amd64.tar.gz" && \
-        mkdir -p "/tmp/migrate-v${version}" && \
+        mkdir -p "${go_migrate_dir}" && \
         tar --extract --gzip --file="/tmp/migrate-v${version}.linux-amd64.tar.gz" --directory="${go_migrate_dir}"
     fi
 
@@ -126,10 +123,38 @@ run_go_migrate() {
     migrate -path "${directory}" -database "postgres://${dbuser}:${dbpassword}@${dbhost}:${dbport}/${dbname}" up
 }
 
+run_dbmate() {
+    # sudo curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
+    # sudo chmod +x /usr/local/bin/dbmate
+    # /usr/local/bin/dbmate --help
+    # v2.27.0
+
+    base_url="https://github.com/amacneil/dbmate/releases/download"
+    # dbmate_dir="/tmp/dbmate-v${version}"
+    dbmate_bin="/tmp/dbmate-v${version}"
+
+    if [[ -x "${dbmate_bin}" ]]; then
+        echo "INFO: Dbmate v${version} already downloaded. Skipping..."
+    else
+        echo "INFO: Setting up dbmate v${version}"
+        wget --no-clobber --no-verbose "${base_url}/v${version}/dbmate-linux-amd64" \
+            --output-document="${dbmate_bin}"
+    fi
+
+    # Create a symbolic link if not already linked.
+    if ! command -v dbmate >/dev/null 2>&1; then
+        ln -s "${dbmate_bin}" /usr/bin/dbmate
+    fi
+
+    dbmate --migrations-dir "${directory}" --url "postgres://${dbuser}:${dbpassword}@${dbhost}:${dbport}/${dbname}" up
+}
+
 if [[ "${tool}" == "flyway" ]]; then
     run_flyway
 elif [[ "${tool}" == "go-migrate" ]]; then
     run_go_migrate
+elif [[ "${tool}" == "dbmate" ]]; then
+    run_dbmate
 else
     echo "ERROR: Unsupported migration tool: ${tool}"
     exit 1

@@ -54,6 +54,7 @@ jobs:
         migration_tool:
           - flyway
           - go-migrate
+          - dbmate
     name: Run tests on migration tool ${{ matrix.migration_tool }}
     steps:
       - name: Checkout repository
