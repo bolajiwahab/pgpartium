@@ -99,8 +99,8 @@ GLOBAL_INDEX_TABLESPACE=$(yq '.generates.index_tablespace // strenv(GLOBAL_PARTI
 export GLOBAL_INDEX_TABLESPACE
 
 directory=$(yq '.generates.directory' "${config}")
-tool=$(yq '.generates.migration-tool.name' "${config}")
-version=$(yq '.generates.migration-tool.version' "${config}")
+# tool=$(yq '.generates.migration-tool.name' "${config}")
+# version=$(yq '.generates.migration-tool.version' "${config}")
 
 declare -A failed_tables=()
 
@@ -123,9 +123,9 @@ trap cleanup EXIT ERR
 echo "INFO: Setting up infrastructure"
 pgp-setup-infra -u "${dbuser}" -w "${dbpassword}" -s "${dbhost}" -p "${dbport}" -d "${dbname}"
 
-echo "INFO: Applying current migrations"
-pgp-migrate -m "${directory}" -t "${tool}" -v "${version}" -u "${dbuser}" -w "${dbpassword}" -s "${dbhost}" -p "${dbport}" -d "${dbname}"
-echo "INFO: Current migrations applied"
+# echo "INFO: Applying current migrations"
+# pgp-migrate -m "${directory}" -t "${tool}" -v "${version}" -u "${dbuser}" -w "${dbpassword}" -s "${dbhost}" -p "${dbport}" -d "${dbname}"
+# echo "INFO: Current migrations applied"
 
 # Process each partitioned table.
 while read -r table; do

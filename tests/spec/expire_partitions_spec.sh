@@ -14,8 +14,8 @@ Describe "pgp-expire-partitions"
 
     It "expires partitions with valid config ($1)"
         When run script pgp-expire-partitions -c "$1"
-        #The output should be present # See: https://github.com/shellspec/shellspec/issues/122
-        #diff -u "$2" "$3"
+        The output should be present # See: https://github.com/shellspec/shellspec/issues/122
+        diff -u "$2" "$3"
         The status should be success
     End
 End
