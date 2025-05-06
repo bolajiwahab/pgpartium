@@ -39,7 +39,7 @@ jobs:
           - 17
         migration_tool:
           - flyway
-          - gomigrate
+          - go-migrate
     name: Run tests
     steps:
       - name: Checkout repository
