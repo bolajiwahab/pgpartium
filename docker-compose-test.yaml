@@ -12,7 +12,8 @@ services:
     command: >
       sh -c "
         pg-start -v ${PGVERSION:-17} &&
-        tests/resources/setup.sh -v ${PGVERSION:-17} && \
+        tests/setup.sh -v ${PGVERSION:-17} && \
+        pgp-migrate -m tests/migrations -t flyway -v 11.8.0 && \
         pg_prove --username=postgres --dbname=postgres --verbose --failures tests/t/*.sql && \
         bash shellspec tests/spec
         #&&

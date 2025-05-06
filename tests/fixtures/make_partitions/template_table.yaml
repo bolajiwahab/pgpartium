@@ -1,6 +1,6 @@
 ---
 generates:
-  directory: "tests"
+  directory: "tests/migrations"
   migration-tool:
     name: "flyway"
     version: "11.8.0"

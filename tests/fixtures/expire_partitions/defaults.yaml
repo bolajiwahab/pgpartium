@@ -1,6 +1,6 @@
 ---
 generates:
-  - directory: "tests"
+  - directory: "tests/migrations"
     retention: "1 day"
     tables:
       - table_schema: "public"
