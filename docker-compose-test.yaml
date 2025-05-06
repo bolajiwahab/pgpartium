@@ -12,11 +12,8 @@ services:
     command: >
       sh -c "
         pg-start -v ${PGVERSION:-17} &&
-        pgp-migrate -m tests/migrations -t ${MIGRATION_TOOL:-flyway} -v ${MIGRATION_TOOL_VERSION:-11.8.0} && \
+        pgp-migrate -m ${MIGRATION_DIRECTORY:-tests/migrations/flyway} -t ${MIGRATION_TOOL:-flyway} -v ${MIGRATION_TOOL_VERSION:-11.8.0} && \
         tests/setup.sh -v ${PGVERSION:-17} && \
         pg_prove --username=postgres --dbname=postgres --verbose --failures tests/t/*.sql && \
         bash shellspec tests/spec
-        #&&
-        #pgp-make-partitions -c /migrations/config.sample.yaml
-        # pg-expire-partitions -c /migrations/config.yml
       "

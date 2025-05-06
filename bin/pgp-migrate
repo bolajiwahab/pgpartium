@@ -102,7 +102,7 @@ run_flyway() {
 
 run_go_migrate() {
     base_url="https://github.com/golang-migrate/migrate/releases/download"
-    go_migrate_dir="/tmp/migrate-${version}.linux-amd64.tar.gz"
+    go_migrate_dir="/tmp/migrate-v${version}"
     go_migrate_bin="${go_migrate_dir}/migrate"
     # curl -L https://github.com/golang-migrate/migrate/releases/download/v4.18.3/migrate.linux-amd64.tar.gz | tar xvz
     # v4.18.3
@@ -114,7 +114,8 @@ run_go_migrate() {
         echo "INFO: Setting up go-migrate v${version}"
         wget --no-clobber --no-verbose "${base_url}/v${version}/migrate.linux-amd64.tar.gz" \
             --output-document="/tmp/migrate-v${version}.linux-amd64.tar.gz" && \
-        tar --extract --gzip --file="/tmp/migrate-v${version}.linux-amd64.tar.gz" --directory="/tmp"
+        mkdir -p "/tmp/migrate-v${version}" && \
+        tar --extract --gzip --file="/tmp/migrate-v${version}.linux-amd64.tar.gz" --directory="${go_migrate_dir}"
     fi
 
     # Create a symbolic link if not already linked.
@@ -122,7 +123,7 @@ run_go_migrate() {
         ln -s "${go_migrate_bin}" /usr/bin/migrate
     fi
 
-    migrate -source file://path/to/migrations -database "postgres://${dbhost}:${dbport}/${dbname}" up
+    migrate -path "${directory}" -database "postgres://${dbuser}:${dbpassword}@${dbhost}:${dbport}/${dbname}" up
 }
 
 if [[ "${tool}" == "flyway" ]]; then
