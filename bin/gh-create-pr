@@ -7,10 +7,10 @@ usage() {
     Creates or updates a pull request on github.
 
     OPTIONS:
-    -b  the branch name to use
-    -t  the title of the pull request
-    -m  the commit message
-    -h  show this help message.
+      -b  the branch name to use
+      -t  the title of the pull request
+      -m  the commit message
+      -h  show this help message.
 
     SAMPLE USAGE:
         ${0##*/} -b generate-partitions

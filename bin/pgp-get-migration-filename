@@ -7,10 +7,10 @@ usage() {
     Creates or updates a pull request on github.
 
     OPTIONS:
-        -t  the template to use for the migration file
-        -d  the directory to the migration files
-        -m  the description of the migration
-        -h  show this help message.
+      -t  the template to use for the migration file
+      -d  the directory to the migration files
+      -m  the description of the migration
+      -h  show this help message.
 
     SAMPLE USAGE:
         ${0##*/} -t \"V{integer}__{description}.sql\" -d \"migrations\" -m \"Add partitions for sample table\"

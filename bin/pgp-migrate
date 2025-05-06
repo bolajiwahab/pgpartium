@@ -7,15 +7,15 @@ usage() {
     Apply database migrations.
 
     OPTIONS:
-    -m the directory to the migration files (Required)
-    -t the migration tool (Required)
-    -v the migration tool version (Required)
-    -u the database username (Default: postgres)
-    -w the database password (Default: postgres)
-    -s the database host (Default: localhost)
-    -p the database port (Default: 5432)
-    -d the database name (Default: postgres)
-    -h show this help message.
+      -m  the directory to the migration files (Required)
+      -t  the migration tool (Required)
+      -v  the migration tool version (Required)
+      -u  the database username (Default: postgres)
+      -w  the database password (Default: postgres)
+      -s  the database host (Default: localhost)
+      -p  the database port (Default: 5432)
+      -d  the database name (Default: postgres)
+      -h  show this help message.
 
     SAMPLE USAGE:
         ${0##*/} -m \"migrations\" -t flyway -v 11.8.0

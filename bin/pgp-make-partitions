@@ -7,13 +7,13 @@ usage() {
     Generates partitions for partitioned tables.
 
     OPTIONS:
-    -c  the config file in yaml (Required)
-    -u  the database username (Default: postgres)
-    -w  the database password (Default: postgres)
-    -s  the database host (Default: localhost)
-    -p  the database port (Default: 5432)
-    -d  the database name (Default: postgres)
-    -h  show this help message.
+      -c  the config file in yaml (Required)
+      -u  the database username (Default: postgres)
+      -w  the database password (Default: postgres)
+      -s  the database host (Default: localhost)
+      -p  the database port (Default: 5432)
+      -d  the database name (Default: postgres)
+      -h  show this help message.
 
     SAMPLE USAGE:
         ${0##*/} -c config.yaml

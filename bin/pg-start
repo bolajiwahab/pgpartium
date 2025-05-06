@@ -8,8 +8,8 @@ cat <<-EOF
     Creates a postgres cluster for a postgres version and start it.
 
     OPTIONS:
-    -v  the postgres version to use (Required)
-    -h  show this help message.
+      -v  the postgres version to use (Required)
+      -h  show this help message.
 
     SAMPLE USAGE:
         ${0##*/} -v 17
