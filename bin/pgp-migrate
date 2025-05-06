@@ -77,7 +77,7 @@ run_flyway() {
     flyway_bin="${flyway_dir}/flyway"
 
     if [[ -x "${flyway_bin}" ]]; then
-        echo "INFO: Flyway ${version} already set up. Skipping..."
+        echo "INFO: Flyway ${version} already downloaded. Skipping..."
     else
         echo "INFO: Setting up flyway ${version}"
         wget --no-clobber --no-verbose "${base_url}/${version}/flyway-commandline-${version}-linux-x64.tar.gz" \
@@ -91,44 +91,45 @@ run_flyway() {
     fi
 
     flyway -url="jdbc:postgresql://${dbhost}:${dbport}/${dbname}" \
-           -user="${dbuser}" \
-           -password="${dbpassword}" \
-           -locations="filesystem:${directory}" \
-           -schemas="public" \
-           -placeholderReplacement="false" \
-           -postgresql.transactional.lock="false" \
-           migrate
+        -user="${dbuser}" \
+        -password="${dbpassword}" \
+        -locations="filesystem:${directory}" \
+        -schemas="public" \
+        -placeholderReplacement="false" \
+        -postgresql.transactional.lock="false" \
+        migrate
 }
 
-run_migrate() {
-    base_url="https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline"
-    flyway_dir="/tmp/flyway-${version}"
-    flyway_bin="${flyway_dir}/flyway"
+run_go_migrate() {
+    base_url="https://github.com/golang-migrate/migrate/releases/download"
+    go_migrate_dir="/tmp/migrate-${version}.linux-amd64.tar.gz"
+    go_migrate_bin="${go_migrate_dir}/migrate"
+    # curl -L https://github.com/golang-migrate/migrate/releases/download/v4.18.3/migrate.linux-amd64.tar.gz | tar xvz
+    # v4.18.3
+    # https://github.com/golang-migrate/migrate/releases
 
-    if [[ -x "${flyway_bin}" ]]; then
-        echo "INFO: Flyway ${version} already set up. Skipping..."
+    if [[ -x "${go_migrate_bin}" ]]; then
+        echo "INFO: Go-migrate v${version} already downloaded. Skipping..."
     else
-        echo "INFO: Setting up flyway ${version}"
-        wget --no-clobber --no-verbose "${base_url}/${version}/flyway-commandline-${version}-linux-x64.tar.gz" \
-            --output-document="/tmp/flyway-commandline-${version}-linux-x64.tar.gz" && \
-        tar --extract --gzip --file="/tmp/flyway-commandline-${version}-linux-x64.tar.gz" --directory="/tmp"
+        echo "INFO: Setting up go-migrate v${version}"
+        wget --no-clobber --no-verbose "${base_url}/v${version}/migrate.linux-amd64.tar.gz" \
+            --output-document="/tmp/migrate-v${version}.linux-amd64.tar.gz" && \
+        tar --extract --gzip --file="/tmp/migrate-v${version}.linux-amd64.tar.gz" --directory="/tmp"
     fi
 
     # Create a symbolic link if not already linked.
-    if ! command -v flyway >/dev/null 2>&1; then
-        ln -s "${flyway_bin}" /usr/bin/flyway
+    if ! command -v migrate >/dev/null 2>&1; then
+        ln -s "${go_migrate_bin}" /usr/bin/migrate
     fi
 
-    flyway -url="jdbc:postgresql://${dbhost}:${dbport}/${dbname}" \
-           -user="${dbuser}" \
-           -password="${dbpassword}" \
-           -locations="filesystem:${directory}" \
-           -schemas="public" \
-           -placeholderReplacement="false" \
-           -postgresql.transactional.lock="false" \
-           migrate
+    migrate -source file://path/to/migrations -database "postgres://${dbhost}:${dbport}/${dbname}" up
 }
 
 if [[ "${tool}" == "flyway" ]]; then
     run_flyway
+elif [[ "${tool}" == "go-migrate" ]]; then
+    run_go_migrate
+else
+    echo "ERROR: Unsupported migration tool: ${tool}"
+    exit 1
 fi
