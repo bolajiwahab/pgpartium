@@ -42,7 +42,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run tests
+      - name: Run tests on PostgreSQL ${{ matrix.postgresql }}
         run: |
           PGVERSION=${{ matrix.postgresql }} ./run_tests.sh
 
@@ -59,6 +59,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run tests
+      - name: Run tests on migration tool ${{ matrix.migration_tool }}
         run: |
           MIGRATION_TOOL=${{ matrix.migration_tool }} ./run_tests.sh
