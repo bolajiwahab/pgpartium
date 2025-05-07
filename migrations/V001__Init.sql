@@ -18,6 +18,10 @@ CREATE TABLE public.transactions (
 )
 PARTITION BY RANGE (created_at);
 
+CREATE TABLE public.public__transactions__2025_01
+    PARTITION OF public.transactions
+    FOR VALUES FROM ('2025-01-01 00:00:00+00') TO ('2025-02-01 00:00:00+00');
+
 CREATE INDEX transactions_updated_at_idx
     ON public.transactions (updated_at);
 

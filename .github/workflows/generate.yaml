@@ -40,6 +40,8 @@ jobs:
       - name: Make partitions using ${{ matrix.postgresql }}
         run: pgp-make-partitions -c partition_config.yaml
 
+      - name: Expire partitions using ${{ matrix.postgresql }}
+        run: pgp-expire-partitions -c partition_config.yaml
       # - name: list files
       #   run: cat enrichment.sql
 
