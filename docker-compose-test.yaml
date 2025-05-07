@@ -11,11 +11,9 @@ services:
     tty: true
     command: >
       sh -c "
-        pg-start -v ${PGVERSION:-17} &&
-        tests/resources/setup.sh -v ${PGVERSION:-17} && \
+        pg-start -v ${PGVERSION} &&
+        pgp-migrate -m ${MIGRATION_DIRECTORY} -t ${MIGRATION_TOOL} -v ${MIGRATION_TOOL_VERSION} && \
+        tests/setup.sh -v ${PGVERSION} && \
         pg_prove --username=postgres --dbname=postgres --verbose --failures tests/t/*.sql && \
         bash shellspec tests/spec
-        #&&
-        #pgp-make-partitions -c /migrations/config.sample.yaml
-        # pg-expire-partitions -c /migrations/config.yml
       "

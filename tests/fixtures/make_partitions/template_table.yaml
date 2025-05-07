@@ -1,14 +1,17 @@
 ---
 generates:
-  - directory: "tests"
-    name_template: "{table_schema}__{table_name}__YYYY_MM"
-    interval: "1 mon"
-    tables:
-      - table_schema: "public"
-        table_name: "transactions"
-        file_name_template: "{description}.result"
-        description:
-          make: "template_table"
-        template_table:
-          table_schema: "public"
-          table_name: "transactions_template"
+  directory: "tests/migrations"
+  migration-tool:
+    name: "flyway"
+    version: "11.8.0"
+  name_template: "{table_schema}__{table_name}__YYYY_MM"
+  interval: "1 mon"
+  tables:
+    - table_schema: "public"
+      table_name: "transactions"
+      file_name_template: "{description}.result"
+      description:
+        make: "template_table"
+      template_table:
+        table_schema: "public"
+        table_name: "transactions_template"

@@ -1,10 +1,13 @@
 ---
 generates:
-  - directory: "tests"
-    retention: "1 day"
-    tables:
-      - table_schema: "public"
-        table_name: "notifications"
-        file_name_template: "{description}.result"
-        description:
-          expire: "defaults"
+  directory: "tests/migrations"
+  migration-tool:
+    name: "flyway"
+    version: "11.8.0"
+  retention: "1 day"
+  tables:
+    - table_schema: "public"
+      table_name: "notifications"
+      file_name_template: "{description}.result"
+      description:
+        expire: "defaults"

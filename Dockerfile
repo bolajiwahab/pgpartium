@@ -14,9 +14,12 @@ COPY sql sql
 
 COPY schema.json schema.json
 
+# Enable amd64 architecture in case we are running on arm64
+RUN dpkg --add-architecture amd64
+
 # Install dependencies
 RUN apt-get update \
-    && apt-get install -y wget python3-jsonschema=4.10.3-1 git ca-certificates gnupg2 \
+    && apt-get install -y wget python3-jsonschema=4.10.3-1 git ca-certificates gnupg2 libc6:amd64 \
     && apt-get clean \
     && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
 

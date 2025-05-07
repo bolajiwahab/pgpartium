@@ -4,15 +4,15 @@ usage() {
     echo "
     ${0##*/}
 
-    Generates partitions for partitioned tables.
+    Set up infrastruture.
 
     OPTIONS:
-    -u  the database username (Default: postgres)
-    -w  the database password (Default: postgres)
-    -s  the database host (Default: localhost)
-    -p  the database port (Default: 5432)
-    -d  the database name (Default: postgres)
-    -h  show this help message.
+      -u  the database username (Default: postgres)
+      -w  the database password (Default: postgres)
+      -s  the database host (Default: localhost)
+      -p  the database port (Default: 5432)
+      -d  the database name (Default: postgres)
+      -h  show this help message.
 
     SAMPLE USAGE:
         ${0##*/}

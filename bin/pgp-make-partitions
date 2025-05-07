@@ -7,13 +7,13 @@ usage() {
     Generates partitions for partitioned tables.
 
     OPTIONS:
-    -c  the config file in yaml (Required)
-    -u  the database username (Default: postgres)
-    -w  the database password (Default: postgres)
-    -s  the database host (Default: localhost)
-    -p  the database port (Default: 5432)
-    -d  the database name (Default: postgres)
-    -h  show this help message.
+      -c  the config file in yaml (Required)
+      -u  the database username (Default: postgres)
+      -w  the database password (Default: postgres)
+      -s  the database host (Default: localhost)
+      -p  the database port (Default: 5432)
+      -d  the database name (Default: postgres)
+      -h  show this help message.
 
     SAMPLE USAGE:
         ${0##*/} -c config.yaml
@@ -77,28 +77,28 @@ export DEFAULT_STORAGE_PARAMETERS="{}"
 export DEFAULT_TIMEZONE="Etc/UTC"
 
 # Extract global configs.
-GLOBAL_PARTITION_SCHEMA=$(yq '.generates[].partition_schema' "${config}")
-GLOBAL_PARTITION_NAME_TEMPLATE=$(yq '.generates[].name_template' "${config}")
-GLOBAL_PAST=$(yq '.generates[].past // strenv(DEFAULT_PAST)' "${config}")
-GLOBAL_FUTURE=$(yq '.generates[].future // strenv(DEFAULT_FUTURE)' "${config}")
-GLOBAL_INTERVAL=$(yq '.generates[].interval' "${config}")
-GLOBAL_RETENTION=$(yq '.generates[].retention // strenv(DEFAULT_RETENTION)' "${config}")
-GLOBAL_CREATE_DEFAULT=$(yq '.generates[].create_default // strenv(DEFAULT_CREATE_DEFAULT)' "${config}")
-GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE=$(yq '.generates[].default_partition_name_template' "${config}")
-GLOBAL_SKIP_OVERLAPPING=$(yq '.generates[].skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")
-GLOBAL_PARTITION_TABLESPACE=$(yq '.generates[].partition_tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")
-GLOBAL_STORAGE_PARAMETERS=$(yq -o=json '.generates[].storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")
-GLOBAL_TIMEZONE=$(yq '.generates[].timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
+GLOBAL_PARTITION_SCHEMA=$(yq '.generates.partition_schema' "${config}")
+GLOBAL_PARTITION_NAME_TEMPLATE=$(yq '.generates.name_template' "${config}")
+GLOBAL_PAST=$(yq '.generates.past // strenv(DEFAULT_PAST)' "${config}")
+GLOBAL_FUTURE=$(yq '.generates.future // strenv(DEFAULT_FUTURE)' "${config}")
+GLOBAL_INTERVAL=$(yq '.generates.interval' "${config}")
+GLOBAL_RETENTION=$(yq '.generates.retention // strenv(DEFAULT_RETENTION)' "${config}")
+GLOBAL_CREATE_DEFAULT=$(yq '.generates.create_default // strenv(DEFAULT_CREATE_DEFAULT)' "${config}")
+GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE=$(yq '.generates.default_partition_name_template' "${config}")
+GLOBAL_SKIP_OVERLAPPING=$(yq '.generates.skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")
+GLOBAL_PARTITION_TABLESPACE=$(yq '.generates.partition_tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")
+GLOBAL_STORAGE_PARAMETERS=$(yq -o=json '.generates.storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")
+GLOBAL_TIMEZONE=$(yq '.generates.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
 
 export GLOBAL_PARTITION_TABLESPACE GLOBAL_PARTITION_SCHEMA GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL \
     GLOBAL_RETENTION GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE GLOBAL_SKIP_OVERLAPPING \
     GLOBAL_STORAGE_PARAMETERS GLOBAL_TIMEZONE
 
-GLOBAL_INDEX_TABLESPACE=$(yq '.generates[].index_tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' "${config}")
+GLOBAL_INDEX_TABLESPACE=$(yq '.generates.index_tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' "${config}")
 
 export GLOBAL_INDEX_TABLESPACE
 
-directory=$(yq '.generates[].directory' "${config}")
+directory=$(yq '.generates.directory' "${config}")
 
 declare -A failed_tables=()
 
@@ -118,8 +118,8 @@ cleanup() {
 trap cleanup EXIT ERR
 
 # Setup infrastructure.
-echo "INFO: Setting up infra"
-pgp-setup-infra
+echo "INFO: Setting up infrastructure"
+pgp-setup-infrastructure -u "${dbuser}" -w "${dbpassword}" -s "${dbhost}" -p "${dbport}" -d "${dbname}"
 
 # Process each partitioned table.
 while read -r table; do
@@ -322,7 +322,7 @@ EOF
         rm "${temp_migration_directory}/${output_filename}"
     fi
 
-done < <(yq '.generates[].tables[] | @json' "${config}")
+done < <(yq '.generates.tables[] | @json' "${config}")
 
 if [ ${#failed_tables[@]} -gt 0 ]; then
     echo "ERROR: failed for ${#failed_tables[@]} table(s):" 2>&1
