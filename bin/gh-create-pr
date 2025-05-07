@@ -46,10 +46,10 @@ if git diff --quiet -- && [ -z "$(git ls-files --others --exclude-standard)" ]; 
     exit 0
 fi
 
-if ! gh auth status &>/dev/null; then
-    echo "ERROR: ❌ GitHub CLI is not authenticated. Run 'gh auth login'." >&2
-    exit 1
-fi
+# if ! gh auth status &>/dev/null; then
+#     echo "ERROR: ❌ GitHub CLI is not authenticated. Run 'gh auth login'." >&2
+#     exit 1
+# fi
 
 full_branch="pgpartium/${branch}"
 base_branch=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
