@@ -1,0 +1,1 @@
+DROP TABLE public.public__transactions__2025_01;
