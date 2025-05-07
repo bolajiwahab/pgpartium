@@ -17,22 +17,25 @@ permissions:
 
 jobs:
   test:
-    strategy:
-      matrix:
-        postgresql:
-          - 16
+    # strategy:
+    #   matrix:
+    #     postgresql:
+    #       - 16
 
-    name: 🐘 PostgreSQL ${{ matrix.postgresql }}
+    name: 🐘 Prepare PostgreSQL 16
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/bolajiwahab/pgpartium:0.0.8
+      image: ghcr.io/bolajiwahab/pgpartium:0.0.9
       options: --user root
     steps:
-      - name: Start PostgreSQL ${{ matrix.postgresql }}
-        run: pg-start -v ${{ matrix.postgresql }}
+      - name: Start PostgreSQL
+        run: pg-start -v 16
 
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Run migrations
+        run: pgp-migrate -m migrations -t flyway -v 11.8.0
 
       - name: Make partitions using ${{ matrix.postgresql }}
         run: pgp-make-partitions -c tests/fixtures/make_partitions/defaults.yaml
