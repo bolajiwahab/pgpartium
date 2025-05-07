@@ -6,9 +6,15 @@ generates:
     version: "11.8.0"
   name_template: "{table_schema}__{table_name}__YYYY_MM"
   interval: "1 mon"
+  past: 2
+  future: 10
+  retention: "2 mon"
   tables:
     - table_schema: "public"
       table_name: "transactions"
-      file_name_template: "V{integer}__{description}.sql"
+      file_name_template: "V{integer:3}__{description}.sql"
       description:
         make: "make partitions with defaults config"
+      template_table:
+        table_schema: "public"
+        table_name: "transactions_template"
