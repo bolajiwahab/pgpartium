@@ -124,13 +124,7 @@ run_go_migrate() {
 }
 
 run_dbmate() {
-    # sudo curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
-    # sudo chmod +x /usr/local/bin/dbmate
-    # /usr/local/bin/dbmate --help
-    # v2.27.0
-
     base_url="https://github.com/amacneil/dbmate/releases/download"
-    # dbmate_dir="/tmp/dbmate-v${version}"
     dbmate_bin="/tmp/dbmate-v${version}"
 
     if [[ -x "${dbmate_bin}" ]]; then
