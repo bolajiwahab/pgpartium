@@ -19,7 +19,7 @@ case "${MIGRATION_TOOL}" in
     MIGRATION_DIRECTORY="tests/migrations/dbmate"
     ;;
   goose)
-    MIGRATION_TOOL_VERSION="3.12.0"
+    MIGRATION_TOOL_VERSION="3.24.2"
     MIGRATION_DIRECTORY="tests/migrations/goose"
     ;;
   *)
