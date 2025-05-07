@@ -162,3 +162,5 @@ CREATE TABLE public.accounts (
   , CONSTRAINT accounts_pkey PRIMARY KEY (user_id, created_at)
   , CONSTRAINT accounts_charge_id_key UNIQUE (charge_id)
 );
+
+-- migrate:down

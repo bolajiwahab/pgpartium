@@ -13,3 +13,5 @@ PARALLEL SAFE
 AS $BODY$
     SELECT CAST('2025-03-01 00:00:00' AS timestamptz);
 $BODY$;
+
+-- migrate:down
