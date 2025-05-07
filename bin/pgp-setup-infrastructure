@@ -1,0 +1,64 @@
+#!/bin/bash
+
+usage() {
+    echo "
+    ${0##*/}
+
+    Set up infrastruture.
+
+    OPTIONS:
+      -u  the database username (Default: postgres)
+      -w  the database password (Default: postgres)
+      -s  the database host (Default: localhost)
+      -p  the database port (Default: 5432)
+      -d  the database name (Default: postgres)
+      -h  show this help message.
+
+    SAMPLE USAGE:
+        ${0##*/}
+        ${0##*/} -u user -w password -s host -p port -d database
+"
+}
+
+while getopts "u:w:s:p:d:h" option; do
+    case "${option}" in
+    u)
+        dbuser="${OPTARG}"
+        ;;
+    w)
+        dbpassword="${OPTARG}"
+        ;;
+    s)
+        dbhost="${OPTARG}"
+        ;;
+    p)
+        dbport="${OPTARG}"
+        ;;
+    d)
+        dbname="${OPTARG}"
+        ;;
+    h | *)
+        usage
+        exit 0
+        ;;
+    esac
+done
+
+set -euo pipefail
+
+dbuser=${dbuser:-postgres}
+dbpassword=${dbpassword:-postgres}
+dbhost=${dbhost:-localhost}
+dbport=${dbport:-5432}
+dbname=${dbname:-postgres}
+
+# Setup infrastructure
+find sql -type f -iname "*.sql" -print0 | sort -z | xargs -0 printf -- ' -f %s' |
+    PGPASSWORD="${dbpassword}" PGOPTIONS='--client_min_messages=warning' xargs \
+    psql --username="${dbuser}" \
+        --dbname="${dbname}" \
+        --host="${dbhost}" \
+        --port="${dbport}" \
+        --quiet \
+        -v "ON_ERROR_STOP=1" \
+        --single-transaction
