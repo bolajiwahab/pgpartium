@@ -1,0 +1,59 @@
+---
+# yamllint disable rule:line-length
+name: Generate
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  pull-requests: write
+  packages: read
+  contents: write
+
+jobs:
+  test:
+    # strategy:
+    #   matrix:
+    #     postgresql:
+    #       - 16
+
+    name: 🐘 Prepare PostgreSQL 16
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/bolajiwahab/pgpartium:0.1.0
+      options: --user root
+    steps:
+      - name: Start PostgreSQL
+        run: pg-start -v 16
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Run migrations
+        run: pgp-migrate -m migrations -t flyway -v 11.8.0
+
+      - name: Make partitions using ${{ matrix.postgresql }}
+        run: pgp-make-partitions -c partition_config.yaml
+
+      # - name: list files
+      #   run: cat enrichment.sql
+
+      # - name: Check for uncommitted changes
+      #   run: git status
+
+      - name: Create Pull Request
+        run: |
+          # git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # git config --global user.name "github-actions[bot]"
+          gh-create-pr -b generate-partitions -t "Add/Expire partitions"
+
+      # - name: Create Pull Request
+      #   uses: peter-evans/create-pull-request@v7
+      #   with:
+      #     base: main
+      #     branch: generate-partitions

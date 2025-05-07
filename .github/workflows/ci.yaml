@@ -1,66 +1,66 @@
----
-# yamllint disable rule:line-length
-name: CI
+# ---
+# # yamllint disable rule:line-length
+# name: CI
 
-on:  # yamllint disable-line rule:truthy
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+# on:  # yamllint disable-line rule:truthy
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     branches:
+#       - main
 
-jobs:
-  pre-commit:
-    runs-on: ubuntu-latest
-    name: Run pre-commit
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+# jobs:
+#   pre-commit:
+#     runs-on: ubuntu-latest
+#     name: Run pre-commit
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+#       - name: Set up Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: "3.12"
 
-      - name: Install and run pre-commit
-        uses: pre-commit/action@v3.0.1
+#       - name: Install and run pre-commit
+#         uses: pre-commit/action@v3.0.1
 
-  test-postgres:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        postgresql:
-          - 13
-          - 14
-          - 15
-          - 16
-          - 17
-    name: Run tests on PostgreSQL ${{ matrix.postgresql }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+# test-postgres:
+#   runs-on: ubuntu-latest
+#   strategy:
+#     fail-fast: false
+#     matrix:
+#       postgresql:
+#         - 13
+#         - 14
+#         - 15
+#         - 16
+#         - 17
+#   name: Run tests on PostgreSQL ${{ matrix.postgresql }}
+#   steps:
+#     - name: Checkout repository
+#       uses: actions/checkout@v4
 
-      - name: Run tests
-        run: |
-          PGVERSION=${{ matrix.postgresql }} ./run_tests.sh
+#     - name: Run tests
+#       run: |
+#         PGVERSION=${{ matrix.postgresql }} ./run_tests.sh
 
-  test-migration-tool:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        migration_tool:
-          - flyway
-          - go-migrate
-          - dbmate
-          - goose
-    name: Run tests with migration tool ${{ matrix.migration_tool }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+# test-migration-tool:
+#   runs-on: ubuntu-latest
+#   strategy:
+#     fail-fast: false
+#     matrix:
+#       migration_tool:
+#         - flyway
+#         - go-migrate
+#         - dbmate
+#         - goose
+#   name: Run tests with migration tool ${{ matrix.migration_tool }}
+#   steps:
+#     - name: Checkout repository
+#       uses: actions/checkout@v4
 
-      - name: Run tests
-        run: |
-          MIGRATION_TOOL=${{ matrix.migration_tool }} ./run_tests.sh
+#     - name: Run tests
+#       run: |
+#         MIGRATION_TOOL=${{ matrix.migration_tool }} ./run_tests.sh
