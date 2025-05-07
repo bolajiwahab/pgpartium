@@ -62,7 +62,7 @@ git config --global user.name "github-actions[bot]"
 git fetch origin "${base_branch}"
 # git checkout "${base_branch}"
 
-git checkout -b new_branch from_branch
+# git checkout -b new_branch from_branch
 
 # Always create/reset our branch from HEAD to retain untracked files
 git checkout -b "$full_branch" "${base_branch}"
