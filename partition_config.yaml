@@ -1,0 +1,14 @@
+---
+generates:
+  directory: "migrations"
+  migration-tool:
+    name: "flyway"
+    version: "11.8.0"
+  name_template: "{table_schema}__{table_name}__YYYY_MM"
+  interval: "1 mon"
+  tables:
+    - table_schema: "public"
+      table_name: "transactions"
+      file_name_template: "V{integer}__{description}.sql"
+      description:
+        make: "make partitions with defaults config"
