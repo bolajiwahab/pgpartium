@@ -110,7 +110,7 @@ while read -r table; do
     table_schema=$(yq '.table_schema' <<< "${table}")
     table_name=$(yq '.table_name' <<< "${table}")
     file_name_template=$(yq '.file_name_template' <<< "${table}")
-    description=$(yq '.description.expire // "Expire partitions for {table_schema}.{table_name}"' <<< "${table}")
+    description=$(yq '.description.expire // "Expire partitions for {table_schema}_{table_name}"' <<< "${table}")
     # Replace table_schema and table_name placeholders in the description
     description="${description//\{table_schema\}/$table_schema}"
     description="${description//\{table_name\}/$table_name}"
