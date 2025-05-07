@@ -54,11 +54,18 @@ fi
 full_branch="pgpartium/${branch}"
 base_branch=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
 
+# Set up git config
+git config --global user.email "github-actions[bot]@users.noreply.github.com"
+git config --global user.name "github-actions[bot]"
+
 # Ensure we have the latest remote info
-git fetch origin
+git fetch origin "${base_branch}"
+# git checkout "${base_branch}"
+
+git checkout -b new_branch from_branch
 
 # Always create/reset our branch from HEAD to retain untracked files
-git checkout -B "$full_branch" HEAD
+git checkout -b "$full_branch" "${base_branch}"
 
 git add -A
 git commit -m "${commit_msg}"
