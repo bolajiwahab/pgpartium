@@ -158,7 +158,7 @@ run_goose() {
         echo "INFO: Goose v${version} already downloaded. Skipping..."
     else
         echo "INFO: Setting up goose v${version}"
-        wget --no-clobber --no-verbose "${base_url}/v${version}/goose-linux-amd64" \
+        wget --no-clobber --no-verbose "${base_url}/v${version}/goose_linux_amd64" \
             --output-document="${goose_bin}" && \
         chmod +x "${goose_bin}"
     fi
