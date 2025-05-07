@@ -103,7 +103,7 @@ trap cleanup EXIT ERR
 
 # Setup infrastructure.
 echo "INFO: Setting up infrastructure"
-pgp-setup-infra -u "${dbuser}" -w "${dbpassword}" -s "${dbhost}" -p "${dbport}" -d "${dbname}"
+pgp-setup-infrastructure -u "${dbuser}" -w "${dbpassword}" -s "${dbhost}" -p "${dbport}" -d "${dbname}"
 
 # Process each partitioned table
 while read -r table; do
