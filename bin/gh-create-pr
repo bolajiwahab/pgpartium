@@ -1,20 +1,20 @@
 #!/bin/bash
 
 usage() {
-    cat <<-EOF
+    echo "
     ${0##*/}
 
     Creates or updates a pull request on github.
 
     OPTIONS:
-      -b  the branch name to use
-      -t  the title of the pull request
-      -m  the commit message
+      -b  the branch name to use (Default: add-expire-partitions)
+      -t  the title of the pull request (Default: Add/Expire partitions)
+      -m  the commit message (Default: Add/Expire partitions)
       -h  show this help message.
 
     SAMPLE USAGE:
         ${0##*/} -b generate-partitions
-EOF
+"
 }
 
 while getopts "b:t:m:h" option; do
@@ -46,11 +46,6 @@ if git diff --quiet -- && [ -z "$(git ls-files --others --exclude-standard)" ]; 
     exit 0
 fi
 
-# if ! gh auth status &>/dev/null; then
-#     echo "ERROR: ❌ GitHub CLI is not authenticated. Run 'gh auth login'." >&2
-#     exit 1
-# fi
-
 full_branch="pgpartium/${branch}"
 base_branch=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
 
@@ -58,15 +53,11 @@ base_branch=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
 git config --global user.email "github-actions[bot]@users.noreply.github.com"
 git config --global user.name "github-actions[bot]"
 
-# Ensure we have the latest remote info
+# Fetch latest base branch from remote
 git fetch origin "${base_branch}"
-# git checkout "${base_branch}"
 
-# git checkout -b new_branch from_branch
-
-# Always create/reset our branch from HEAD to retain untracked files
-git checkout -B "$full_branch" "origin/${base_branch}"
-# git checkout -b "$full_branch"
+# Create or reset our branch
+git checkout -B "${full_branch}" "origin/${base_branch}"
 
 git add -A
 git commit -m "${commit_msg}"
@@ -79,9 +70,10 @@ if [[ -n "${PR_URL}" ]]; then
     echo "INFO: PR already exists -> ${PR_URL}. Exiting..."
     exit 0
 else
-    echo "INFO: Creating PR"
+    echo "INFO: Creating PR..."
     gh pr create --base "${base_branch}" \
         --head "${full_branch}" \
         --title "${title}" \
         --body "This PR adds/expires partitions."
+    echo "INFO: PR created -> ${PR_URL}"
 fi
