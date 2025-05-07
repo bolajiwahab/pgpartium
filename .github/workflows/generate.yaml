@@ -38,7 +38,7 @@ jobs:
         run: pgp-migrate -m migrations -t flyway -v 11.8.0
 
       - name: Make partitions using ${{ matrix.postgresql }}
-        run: pgp-make-partitions -c tests/fixtures/make_partitions/defaults.yaml
+        run: pgp-make-partitions -c partition_config.yaml
 
       # - name: list files
       #   run: cat enrichment.sql
