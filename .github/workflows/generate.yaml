@@ -51,9 +51,5 @@ jobs:
           # git config --global user.email "github-actions[bot]@users.noreply.github.com"
           # git config --global user.name "github-actions[bot]"
           gh-create-pr -b generate-partitions -t "Add/Expire partitions"
-
-      # - name: Create Pull Request
-      #   uses: peter-evans/create-pull-request@v7
-      #   with:
-      #     base: main
-      #     branch: generate-partitions
+        env:
+          GH_TOKEN: ${{ github.token }}
