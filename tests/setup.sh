@@ -58,7 +58,7 @@ chown -R postgres:postgres /var/lib/postgresql/tablespaces/pgpartium
 psql -v "ON_ERROR_STOP=1" --quiet --username=postgres --dbname=postgres -c "CREATE TABLESPACE pgpartium LOCATION '/var/lib/postgresql/tablespaces/pgpartium';"
 
 echo "INFO: Setting up infrastructure"
-pgp-setup-infra
+pgp-setup-infrastructure
 
 # We need to include mock in our search_path
 echo "INFO: Adding mock to search_path"
