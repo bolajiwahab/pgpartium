@@ -25,7 +25,7 @@ jobs:
     name: 🐘 Prepare PostgreSQL 16
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/bolajiwahab/pgpartium:0.1.4
+      image: ghcr.io/bolajiwahab/pgpartium:0.1.5
       options: --user root
     steps:
       - name: Start PostgreSQL
