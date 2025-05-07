@@ -6,7 +6,7 @@ generates:
     version: "11.8.0"
   name_template: "{table_schema}__{table_name}__YYYY_MM"
   interval: "1 mon"
-  past: 2
+  past: 3
   future: 10
   retention: "2 mon"
   tables:
