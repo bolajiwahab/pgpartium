@@ -1,3 +1,5 @@
+-- migrate:up
+
 CREATE SCHEMA mock;
 
 -- We are mocking now() to return a fixed timestamptz value

@@ -1,3 +1,5 @@
+-- migrate:up
+
 -- Seed data for testing.
 CREATE SCHEMA partitions;
 
