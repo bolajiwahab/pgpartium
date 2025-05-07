@@ -18,6 +18,10 @@ case "${MIGRATION_TOOL}" in
     MIGRATION_TOOL_VERSION="2.27.0"
     MIGRATION_DIRECTORY="tests/migrations/dbmate"
     ;;
+  goose)
+    MIGRATION_TOOL_VERSION="3.12.0"
+    MIGRATION_DIRECTORY="tests/migrations/goose"
+    ;;
   *)
     echo "ERROR: Unsupported migration tool: ${MIGRATION_TOOL}"
     exit 1
