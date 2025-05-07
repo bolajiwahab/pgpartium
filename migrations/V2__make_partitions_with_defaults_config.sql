@@ -1,0 +1,3 @@
+CREATE TABLE public.public__transactions__2025_05
+    PARTITION OF public.transactions
+    FOR VALUES FROM ('2025-05-01 00:00:00+00') TO ('2025-06-01 00:00:00+00');
