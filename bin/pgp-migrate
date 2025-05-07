@@ -123,31 +123,25 @@ run_go_migrate() {
     migrate -path "${directory}" -database "postgres://${dbuser}:${dbpassword}@${dbhost}:${dbport}/${dbname}" up
 }
 
-run_dbmate() {
-    # sudo curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
-    # sudo chmod +x /usr/local/bin/dbmate
-    # /usr/local/bin/dbmate --help
-    # v2.27.0
+run_goose() {
+    base_url="https://github.com/pressly/goose/releases/download"
+    goose_bin="/tmp/goose-v${version}"
 
-    base_url="https://github.com/amacneil/dbmate/releases/download"
-    # dbmate_dir="/tmp/dbmate-v${version}"
-    dbmate_bin="/tmp/dbmate-v${version}"
-
-    if [[ -x "${dbmate_bin}" ]]; then
-        echo "INFO: Dbmate v${version} already downloaded. Skipping..."
+    if [[ -x "${goose_bin}" ]]; then
+        echo "INFO: Goose v${version} already downloaded. Skipping..."
     else
-        echo "INFO: Setting up dbmate v${version}"
-        wget --no-clobber --no-verbose "${base_url}/v${version}/dbmate-linux-amd64" \
-            --output-document="${dbmate_bin}" && \
-        chmod +x "${dbmate_bin}"
+        echo "INFO: Setting up goose v${version}"
+        wget --no-clobber --no-verbose "${base_url}/v${version}/goose-linux-amd64" \
+            --output-document="${goose_bin}" && \
+        chmod +x "${goose_bin}"
     fi
 
     # Create a symbolic link if not already linked.
-    if ! command -v dbmate >/dev/null 2>&1; then
-        ln -s "${dbmate_bin}" /usr/bin/dbmate
+    if ! command -v goose >/dev/null 2>&1; then
+        ln -s "${goose_bin}" /usr/bin/goose
     fi
 
-    dbmate --migrations-dir "${directory}" --url "postgres://${dbuser}:${dbpassword}@${dbhost}:${dbport}/${dbname}" up
+    goose postgres  "postgres://${dbuser}:${dbpassword}@${dbhost}:${dbport}/${dbname}" -dir "${directory}" up
 }
 
 if [[ "${tool}" == "flyway" ]]; then
@@ -156,6 +150,8 @@ elif [[ "${tool}" == "go-migrate" ]]; then
     run_go_migrate
 elif [[ "${tool}" == "dbmate" ]]; then
     run_dbmate
+elif [[ "${tool}" == "goose" ]]; then
+    run_goose
 else
     echo "ERROR: Unsupported migration tool: ${tool}"
     exit 1
