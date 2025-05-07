@@ -48,7 +48,7 @@ apt-get install -y postgresql-"${pgversion}"-pgtap
 psql -v "ON_ERROR_STOP=1" --quiet --username=postgres --dbname=postgres -c "CREATE EXTENSION pgtap;"
 
 echo "INFO: Setting up shellspec"
-wget --no-verbose https://github.com/shellspec/shellspec/archive/0.28.1.tar.gz --output-document=/tmp/shellspec-0.28.1.tar.gz
+wget --quiet https://github.com/shellspec/shellspec/archive/0.28.1.tar.gz --output-document=/tmp/shellspec-0.28.1.tar.gz
 tar xzf /tmp/shellspec-0.28.1.tar.gz -C /tmp
 ln -s /tmp/shellspec-0.28.1/bin/shellspec /usr/bin/shellspec
 

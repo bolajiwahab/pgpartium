@@ -80,7 +80,7 @@ run_flyway() {
         echo "INFO: Flyway ${version} already downloaded. Skipping..."
     else
         echo "INFO: Setting up flyway ${version}"
-        wget --no-clobber --no-verbose "${base_url}/${version}/flyway-commandline-${version}-linux-x64.tar.gz" \
+        wget --no-clobber --quiet "${base_url}/${version}/flyway-commandline-${version}-linux-x64.tar.gz" \
             --output-document="/tmp/flyway-commandline-${version}-linux-x64.tar.gz" && \
         tar --extract --gzip --file="/tmp/flyway-commandline-${version}-linux-x64.tar.gz" --directory="/tmp"
     fi
@@ -109,7 +109,7 @@ run_go_migrate() {
         echo "INFO: Go-migrate v${version} already downloaded. Skipping..."
     else
         echo "INFO: Setting up go-migrate v${version}"
-        wget --no-clobber --no-verbose "${base_url}/v${version}/migrate.linux-amd64.tar.gz" \
+        wget --no-clobber --quiet "${base_url}/v${version}/migrate.linux-amd64.tar.gz" \
             --output-document="/tmp/migrate-v${version}.linux-amd64.tar.gz" && \
         mkdir -p "${go_migrate_dir}" && \
         tar --extract --gzip --file="/tmp/migrate-v${version}.linux-amd64.tar.gz" --directory="${go_migrate_dir}"
@@ -131,7 +131,7 @@ run_dbmate() {
         echo "INFO: Dbmate v${version} already downloaded. Skipping..."
     else
         echo "INFO: Setting up dbmate v${version}"
-        wget --no-clobber --no-verbose "${base_url}/v${version}/dbmate-linux-amd64" \
+        wget --no-clobber --quiet "${base_url}/v${version}/dbmate-linux-amd64" \
             --output-document="${dbmate_bin}" && \
         chmod +x "${dbmate_bin}"
     fi
@@ -152,7 +152,7 @@ run_goose() {
         echo "INFO: Goose v${version} already downloaded. Skipping..."
     else
         echo "INFO: Setting up goose v${version}"
-        wget --no-clobber --no-verbose "${base_url}/v${version}/goose_linux_x86_64" \
+        wget --no-clobber --quiet "${base_url}/v${version}/goose_linux_x86_64" \
             --output-document="${goose_bin}" && \
         chmod +x "${goose_bin}"
     fi
