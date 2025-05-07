@@ -2,7 +2,7 @@
 
 usage()
 {
-cat <<-EOF
+    echo "
     ${0##*/}
 
     Creates a postgres cluster for a postgres version and start it.
@@ -13,7 +13,7 @@ cat <<-EOF
 
     SAMPLE USAGE:
         ${0##*/} -v 17
-EOF
+"
 }
 
 while getopts "v:h" option
