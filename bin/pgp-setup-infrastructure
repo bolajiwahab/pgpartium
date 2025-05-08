@@ -53,7 +53,7 @@ dbport=${dbport:-5432}
 dbname=${dbname:-postgres}
 
 # Setup infrastructure
-find sql -type f -iname "*.sql" -print0 | sort -z | xargs -0 printf -- ' -f %s' |
+find /src/sql -type f -iname "*.sql" -print0 | sort -z | xargs -0 printf -- ' -f %s' |
     PGPASSWORD="${dbpassword}" PGOPTIONS='--client_min_messages=warning' xargs \
     psql --username="${dbuser}" \
         --dbname="${dbname}" \
