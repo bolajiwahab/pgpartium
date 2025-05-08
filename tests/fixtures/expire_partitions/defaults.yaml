@@ -1,9 +1,6 @@
 ---
 generates:
   directory: "tests/migrations"
-  migration-tool:
-    name: "flyway"
-    version: "11.8.0"
   retention: "1 day"
   tables:
     - table_schema: "public"

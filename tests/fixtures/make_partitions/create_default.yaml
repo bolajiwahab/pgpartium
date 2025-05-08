@@ -1,9 +1,6 @@
 ---
 generates:
   directory: "tests/migrations"
-  migration-tool:
-    name: "flyway"
-    version: "11.8.0"
   name_template: "{table_schema}__{table_name}__YYYY_MM"
   interval: "1 mon"
   default_partition_name_template: "{table_schema}__{table_name}__default"
