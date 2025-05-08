@@ -75,5 +75,5 @@ else
         --head "${full_branch}" \
         --title "${title}" \
         --body "This PR adds/expires partitions."
-    echo "INFO: PR created -> ${PR_URL}"
+    echo "INFO: PR created"
 fi

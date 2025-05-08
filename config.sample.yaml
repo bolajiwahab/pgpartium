@@ -1,9 +1,6 @@
 # Generate migration files.
 generates:
   directory: "/migrations" # The directory to generate migration files in.
-  migration-tool:
-    name: "flyway" # The migration tool to use.
-    version: "11.8.0" # The version of the migration tool.
   partition_schema: "partitions" # The schema for the partitions. Defaults to the parent's schema.
   partition_tablespace: "pg_default" # The tablespace for the partitions. Defaults to "pg_default".
   index_tablespace: "pg_default" # The tablespace for the indexes. Defaults to the partition's tablespace.

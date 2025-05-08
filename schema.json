@@ -768,29 +768,6 @@
             "$ref": "#/definitions/name",
             "description": "The directory to generate migrations in."
         },
-        "migration-tool": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "description": "The migration tool to use.",
-                    "type": "string",
-                    "enum": [
-                        "flyway",
-                        "go-migrate"
-                    ]
-                },
-                "version": {
-                    "description": "The version of the migration tool to use.",
-                    "type": "string",
-                    "minLength": 1
-                }
-            },
-            "required": [
-                "name",
-                "version"
-            ],
-            "additionalProperties": false
-        },
         "schema": {
             "$ref": "#/definitions/name"
         },
@@ -894,9 +871,6 @@
             "properties": {
                 "directory": {
                     "$ref": "#/definitions/directory"
-                },
-                "migration-tool": {
-                    "ref": "#/definitions/migration-tool"
                 },
                 "partition_schema": {
                     "$ref": "#/definitions/partition_schema"
@@ -1055,7 +1029,6 @@
             },
             "required": [
                 "directory",
-                "migration-tool",
                 "tables"
             ],
             "additionalProperties": false
