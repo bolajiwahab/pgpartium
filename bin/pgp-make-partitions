@@ -64,7 +64,7 @@ if [[ -z "${config}" ]]; then
 fi
 
 # Validate schema.
-jsonschema schema.json <<< "$(yq -o=json "${config}")"
+jsonschema /src/schema.json <<< "$(yq -o=json "${config}")"
 
 # Set defaults.
 export DEFAULT_TABLESPACE="pg_default"
