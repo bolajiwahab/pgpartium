@@ -15,6 +15,7 @@ env:
 
 jobs:
   details:
+    name: Extract tag details
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -26,7 +27,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract tag and Details
+      - name: Extract tag details
         id: release
         run: |
             if [ "${{ github.ref_type }}" = "tag" ]; then
