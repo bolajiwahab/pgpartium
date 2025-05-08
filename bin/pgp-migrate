@@ -58,7 +58,9 @@ done
 
 set -euo pipefail
 
-config=${config:-}
+directory=${directory:-}
+tool=${tool:-}
+version=${version:-}
 dbuser=${dbuser:-postgres}
 dbpassword=${dbpassword:-postgres}
 dbhost=${dbhost:-localhost}
