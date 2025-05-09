@@ -1,0 +1,10 @@
+---
+template_name: js_offline
+description_is_markdown: false
+default_from_description: true
+examples_as_yaml: true
+footer_show_time: false
+expand_buttons: true
+show_breadcrumbs: false
+show_toc: false
+link_to_reused_ref: false
