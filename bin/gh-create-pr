@@ -37,14 +37,14 @@ done
 
 set -euo pipefail
 
-branch=${branch:-"partition-maintenance"}
-title=${title:-"chore: partition maintenance"}
-commit_msg=${commit_msg:-"${title}"}
-
 if git diff --quiet -- && [ -z "$(git ls-files --others --exclude-standard)" ]; then
     echo "INFO: No changes detected. Exiting..."
     exit 0
 fi
+
+branch=${branch:-"partition-maintenance"}
+title=${title:-"chore: partition maintenance"}
+commit_msg=${commit_msg:-"${title}"}
 
 full_branch="pgpartium/${branch}"
 base_branch=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
@@ -78,8 +78,9 @@ ${log}
 # Create PR
 PR_URL="$(gh pr list --head "${full_branch}" --state open --json url --jq .[].url)"
 if [[ -n "${PR_URL}" ]]; then
-    echo "INFO: PR already exists -> ${PR_URL}. Exiting..."
-    exit 0
+    echo "INFO: PR already exists -> ${PR_URL}...."
+    echo "INFO: Editing the body of ${PR_URL}"
+    gh pr edit "${PR_URL}" --body "${body}"
 else
     echo "INFO: Creating PR..."
     gh pr create --base "${base_branch}" \
