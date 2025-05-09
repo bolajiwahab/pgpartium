@@ -1,5 +1,5 @@
 ---
-template_name: js_offline
+template_name: js
 description_is_markdown: false
 default_from_description: true
 examples_as_yaml: true
