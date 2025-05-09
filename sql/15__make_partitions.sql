@@ -219,7 +219,7 @@ BEGIN
     FOR v_partitions IN
         WITH dateset AS (
             SELECT "date"
-              FROM generate_series((date_trunc(substring(p_interval::text FROM '\d+\s*(\w+)'), v_start_timestamp) - (p_interval * p_past)), (v_start_timestamp + (p_interval * p_future)), p_interval) AS "date"
+              FROM generate_series((date_trunc(substring(p_interval::text FROM '\d+\s*(\w+)'), v_start_timestamp) - (p_interval * p_past)), (now() + (p_interval * p_future)), p_interval) AS "date"
         )
         SELECT replace(
                     replace(

@@ -717,6 +717,10 @@ PREPARE expected_with_latest_partition_as_start_time AS VALUES (
 $$CREATE TABLE public.public__notifications__2025_02
     PARTITION OF public.notifications
     FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
+
+CREATE TABLE public.public__notifications__2025_03
+    PARTITION OF public.notifications
+    FOR VALUES FROM ('2025-03-01') TO ('2025-04-01');
 $$);
 
 SELECT results_eq(
