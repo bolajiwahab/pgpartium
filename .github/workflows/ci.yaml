@@ -64,3 +64,12 @@ jobs:
       - name: Run tests
         run: |
           MIGRATION_TOOL=${{ matrix.migration_tool }} ./run_tests.sh
+
+  ensure-up-to-date-schema-doc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure schema doc is up to date
+        run: tools/ensure_up_to_date_schema_doc.sh
