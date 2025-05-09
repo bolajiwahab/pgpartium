@@ -11,8 +11,8 @@
     <!-- <script src="js/facf9fa52c.js"></script> -->
     <script src="js/schema_doc.min.js"></script>
     <meta charset="utf-8"/>
-
-
+        
+    
     <title>pgpartium configuration schema</title>
 </head>
 <body onload="anchorOnLoad();" id="root"><div class="text-right">
@@ -22,12 +22,12 @@
 
      <h1>pgpartium configuration schema</h1><span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Schema for partition maintenance.</span> <span class="badge badge-info no-additional">No Additional Properties</span>
+        
 
+        
+        
 
-
-
-
-
+        
 <div class="accordion" id="accordiongenerates">
     <div class="card">
         <div class="card-header" id="headinggenerates">
@@ -44,12 +44,12 @@
 
     <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Generate migration files.</span> <span class="badge badge-info no-additional">No Additional Properties</span>
+        
 
+        
+        
 
-
-
-
-
+        
 <div class="accordion" id="accordiongenerates_directory">
     <div class="card">
         <div class="card-header" id="headinggenerates_directory">
@@ -67,15 +67,15 @@
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">The directory to generate migrations in.</span>
 
+    
 
+    
+        
 
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_directory_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -97,17 +97,17 @@
     <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "parent's schema"</span><br/>
 <span class="description">The schema for partitions.</span>
 
+    
 
+    
 
+    
+        
 
-
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_partition_schema_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -129,17 +129,17 @@
     <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "pg_default"</span><br/>
 <span class="description">The tablespace for the partitions.</span>
 
+    
 
+    
 
+    
+        
 
-
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_partition_tablespace_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -161,17 +161,17 @@
     <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "partition's tablespace"</span><br/>
 <span class="description">The tablespace for the indexes.</span>
 
+    
 
+    
 
+    
+        
 
-
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_index_tablespace_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -194,12 +194,12 @@
 <span class="description">The storage parameters for the partitions.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
+        
 
+        
+        
 
-
-
-
-
+        
 <div class="accordion" id="accordiongenerates_storage_parameters_fillfactor">
     <div class="card">
         <div class="card-header" id="headinggenerates_storage_parameters_fillfactor">
@@ -216,12 +216,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span><br/>
 <span class="description">The fillfactor for a table is a percentage between 10 and 100. 100 (complete packing) is the default.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_fillfactor_number">Value must be greater or equal to <code>10</code> and lesser or equal to <code>100</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -242,12 +242,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span><br/>
 <span class="description">Specifies the minimum tuple length required before we try to compress and/or move long column values into TOAST tables, and is also the target length we try to reduce the length below once toasting begins.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_toast_tuple_target_number">Value must be greater or equal to <code>128</code> and lesser or equal to <code>8160</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -268,12 +268,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span><br/>
 <span class="description">This sets the number of workers that should be used to assist a parallel scan of a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_parallel_workers_number">Value must be greater or equal to <code>0</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -294,12 +294,12 @@
 
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: null</span><br/>
 <span class="description">Enables or disables the autovacuum daemon for a table.</span>
+        
 
+        
+        
 
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -320,12 +320,12 @@
 
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: true</span><br/>
 <span class="description">Enables or disables index cleanup when VACUUM is run on a table.</span>
+        
 
+        
+        
 
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -346,12 +346,12 @@
 
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: true</span><br/>
 <span class="description">Enables or disables vacuum to try to truncate off any empty pages at the end of a table.</span>
+        
 
+        
+        
 
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -372,12 +372,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 50</span><br/>
 <span class="description">Specifies the minimum number of updated or deleted tuples needed to trigger a VACUUM in a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_autovacuum_vacuum_threshold_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>2147483647</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -398,12 +398,12 @@
 
     <span class="badge badge-dark value-type">Type: number</span> <span class="badge badge-success default-value">Default: 20</span><br/>
 <span class="description">Specifies a fraction of a table size to add to autovacuum_vacuum_threshold when deciding whether to trigger a VACUUM</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_autovacuum_vacuum_scale_factor_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>100</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -424,12 +424,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 1000</span><br/>
 <span class="description">Specifies the number of inserted tuples needed to trigger a VACUUM in a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_autovacuum_vacuum_insert_threshold_number">Value must be greater or equal to <code>-1</code> and lesser or equal to <code>2147483647</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -450,12 +450,12 @@
 
     <span class="badge badge-dark value-type">Type: number</span> <span class="badge badge-success default-value">Default: 20</span><br/>
 <span class="description">Specifies a fraction of a table size to add to autovacuum_vacuum_insert_threshold when deciding whether to trigger a VACUUM.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_autovacuum_vacuum_insert_scale_factor_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>100</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -476,12 +476,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 50</span><br/>
 <span class="description">Specifies the minimum number of inserted, updated or deleted tuples needed to trigger an ANALYZE in a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_autovacuum_analyze_threshold_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>2147483647</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -502,12 +502,12 @@
 
     <span class="badge badge-dark value-type">Type: number</span> <span class="badge badge-success default-value">Default: 10</span><br/>
 <span class="description">Specifies a fraction of a table size to add to autovacuum_analyze_threshold when deciding whether to trigger an ANALYZE.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_autovacuum_analyze_scale_factor_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>100</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -528,12 +528,12 @@
 
     <span class="badge badge-dark value-type">Type: number</span> <span class="badge badge-success default-value">Default: 2</span><br/>
 <span class="description">Specifies the cost delay value that will be used in automatic VACUUM operations.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_autovacuum_vacuum_cost_delay_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>100</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -554,12 +554,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: -1</span><br/>
 <span class="description">Specifies the cost limit value that will be used in automatic VACUUM operations.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_autovacuum_vacuum_cost_limit_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>10000</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -580,12 +580,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 50000000</span><br/>
 <span class="description">Specifies the cutoff age (in transactions) that VACUUM should use to decide whether to freeze row versions while scanning a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_autovacuum_freeze_min_age_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>1000000000</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -606,12 +606,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 200000000</span><br/>
 <span class="description">Specifies the maximum age (in transactions) that a table's pg_class.relfrozenxid field can attain before a VACUUM operation is forced to prevent transaction ID wraparound within a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_autovacuum_freeze_max_age_number">Value must be greater or equal to <code>100000</code> and lesser or equal to <code>2000000000</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -632,12 +632,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 150000000</span><br/>
 <span class="description">VACUUM performs an aggressive scan if a table's pg_class.relfrozenxid field has reached the age specified by this setting.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_autovacuum_freeze_table_age_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>2000000000</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -658,12 +658,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 5000000</span><br/>
 <span class="description">Specifies the cutoff age (in multixacts) that VACUUM should use to decide whether to replace multixact IDs with a newer transaction ID or multixact ID while scanning a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_autovacuum_multixact_freeze_min_age_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>1000000000</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -684,12 +684,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 400000000</span><br/>
 <span class="description">Specifies the maximum age (in multixacts) that a table's pg_class.relminmxid field can attain before a VACUUM operation is forced to prevent multixact ID wraparound within a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_autovacuum_multixact_freeze_max_age_number">Value must be greater or equal to <code>10000</code> and lesser or equal to <code>2000000000</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -710,12 +710,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 150000000</span><br/>
 <span class="description">VACUUM performs an aggressive scan if a table's pg_class.relminmxid field has reached the age specified by this setting.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_autovacuum_multixact_freeze_table_age_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>2000000000</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -736,12 +736,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: -1</span><br/>
 <span class="description">Causes each action executed by autovacuum to be logged if it ran for at least the specified amount of time. Setting this to zero logs all autovacuum actions</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_storage_parameters_log_autovacuum_min_duration_number">Value must be greater or equal to <code>-1</code> and lesser or equal to <code>2147483647</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -762,12 +762,12 @@
 
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
 <span class="description">Declare a table as an additional catalog table for purposes of logical replication</span>
+        
 
+        
+        
 
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -793,12 +793,12 @@
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">The name template for the partitions.</span>
 
+    
 
+    
+        
 
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_name_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
@@ -829,13 +829,13 @@
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">The partition interval.</span>
 
+    
+        
 
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_interval_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -857,13 +857,13 @@
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 0</span><br/>
 <span class="description">The number of past partitions to make.</span>
 
+    
+        
 
-
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_past_number">Value must be greater or equal to <code>0</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -885,13 +885,13 @@
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 0</span><br/>
 <span class="description">The number of future partitions to make.</span>
 
+    
+        
 
-
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_future_number">Value must be greater or equal to <code>0</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -913,13 +913,13 @@
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
 <span class="description">Whether to create default partition.</span>
 
+    
+        
 
+        
+        
 
-
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -941,12 +941,12 @@
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">The name template for the default partition.</span>
 
+    
 
+    
+        
 
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_default_partition_name_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
@@ -975,13 +975,13 @@
     <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "null"</span><br/>
 <span class="description">The retention time interval to expire partitions containing data older than the given interval.</span>
 
+    
+        
 
+        
+        
 
-
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -1003,13 +1003,13 @@
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
 <span class="description">Whether to detach the expired partitions first before dropping them.</span>
 
+    
+        
 
+        
+        
 
-
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -1031,13 +1031,13 @@
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
 <span class="description">Whether to only detach the expired partitions.</span>
 
+    
+        
 
+        
+        
 
-
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -1059,13 +1059,13 @@
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
 <span class="description">Whether to detach the expired partitions concurrently.</span>
 
+    
+        
 
+        
+        
 
-
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -1087,13 +1087,13 @@
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
 <span class="description">Whether to skip overlapping partitions.</span>
 
+    
+        
 
+        
+        
 
-
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -1119,12 +1119,12 @@
                 <h4>Must be one of:</h4>
                 <ul class="list-group"><li class="list-group-item enum-item">"Africa/Abidjan"</li><li class="list-group-item enum-item">"Africa/Accra"</li><li class="list-group-item enum-item">"Africa/Addis_Ababa"</li><li class="list-group-item enum-item">"Africa/Algiers"</li><li class="list-group-item enum-item">"Africa/Asmara"</li><li class="list-group-item enum-item">"Africa/Asmera"</li><li class="list-group-item enum-item">"Africa/Bamako"</li><li class="list-group-item enum-item">"Africa/Bangui"</li><li class="list-group-item enum-item">"Africa/Banjul"</li><li class="list-group-item enum-item">"Africa/Bissau"</li><li class="list-group-item enum-item">"Africa/Blantyre"</li><li class="list-group-item enum-item">"Africa/Brazzaville"</li><li class="list-group-item enum-item">"Africa/Bujumbura"</li><li class="list-group-item enum-item">"Africa/Cairo"</li><li class="list-group-item enum-item">"Africa/Casablanca"</li><li class="list-group-item enum-item">"Africa/Ceuta"</li><li class="list-group-item enum-item">"Africa/Conakry"</li><li class="list-group-item enum-item">"Africa/Dakar"</li><li class="list-group-item enum-item">"Africa/Dar_es_Salaam"</li><li class="list-group-item enum-item">"Africa/Djibouti"</li><li class="list-group-item enum-item">"Africa/Douala"</li><li class="list-group-item enum-item">"Africa/El_Aaiun"</li><li class="list-group-item enum-item">"Africa/Freetown"</li><li class="list-group-item enum-item">"Africa/Gaborone"</li><li class="list-group-item enum-item">"Africa/Harare"</li><li class="list-group-item enum-item">"Africa/Johannesburg"</li><li class="list-group-item enum-item">"Africa/Juba"</li><li class="list-group-item enum-item">"Africa/Kampala"</li><li class="list-group-item enum-item">"Africa/Khartoum"</li><li class="list-group-item enum-item">"Africa/Kigali"</li><li class="list-group-item enum-item">"Africa/Kinshasa"</li><li class="list-group-item enum-item">"Africa/Lagos"</li><li class="list-group-item enum-item">"Africa/Libreville"</li><li class="list-group-item enum-item">"Africa/Lome"</li><li class="list-group-item enum-item">"Africa/Luanda"</li><li class="list-group-item enum-item">"Africa/Lubumbashi"</li><li class="list-group-item enum-item">"Africa/Lusaka"</li><li class="list-group-item enum-item">"Africa/Malabo"</li><li class="list-group-item enum-item">"Africa/Maputo"</li><li class="list-group-item enum-item">"Africa/Maseru"</li><li class="list-group-item enum-item">"Africa/Mbabane"</li><li class="list-group-item enum-item">"Africa/Mogadishu"</li><li class="list-group-item enum-item">"Africa/Monrovia"</li><li class="list-group-item enum-item">"Africa/Nairobi"</li><li class="list-group-item enum-item">"Africa/Ndjamena"</li><li class="list-group-item enum-item">"Africa/Niamey"</li><li class="list-group-item enum-item">"Africa/Nouakchott"</li><li class="list-group-item enum-item">"Africa/Ouagadougou"</li><li class="list-group-item enum-item">"Africa/Porto-Novo"</li><li class="list-group-item enum-item">"Africa/Sao_Tome"</li><li class="list-group-item enum-item">"Africa/Timbuktu"</li><li class="list-group-item enum-item">"Africa/Tripoli"</li><li class="list-group-item enum-item">"Africa/Tunis"</li><li class="list-group-item enum-item">"Africa/Windhoek"</li><li class="list-group-item enum-item">"America/Adak"</li><li class="list-group-item enum-item">"America/Anchorage"</li><li class="list-group-item enum-item">"America/Anguilla"</li><li class="list-group-item enum-item">"America/Antigua"</li><li class="list-group-item enum-item">"America/Araguaina"</li><li class="list-group-item enum-item">"America/Argentina/Buenos_Aires"</li><li class="list-group-item enum-item">"America/Argentina/Catamarca"</li><li class="list-group-item enum-item">"America/Argentina/ComodRivadavia"</li><li class="list-group-item enum-item">"America/Argentina/Cordoba"</li><li class="list-group-item enum-item">"America/Argentina/Jujuy"</li><li class="list-group-item enum-item">"America/Argentina/La_Rioja"</li><li class="list-group-item enum-item">"America/Argentina/Mendoza"</li><li class="list-group-item enum-item">"America/Argentina/Rio_Gallegos"</li><li class="list-group-item enum-item">"America/Argentina/Salta"</li><li class="list-group-item enum-item">"America/Argentina/San_Juan"</li><li class="list-group-item enum-item">"America/Argentina/San_Luis"</li><li class="list-group-item enum-item">"America/Argentina/Tucuman"</li><li class="list-group-item enum-item">"America/Argentina/Ushuaia"</li><li class="list-group-item enum-item">"America/Aruba"</li><li class="list-group-item enum-item">"America/Asuncion"</li><li class="list-group-item enum-item">"America/Atikokan"</li><li class="list-group-item enum-item">"America/Atka"</li><li class="list-group-item enum-item">"America/Bahia"</li><li class="list-group-item enum-item">"America/Bahia_Banderas"</li><li class="list-group-item enum-item">"America/Barbados"</li><li class="list-group-item enum-item">"America/Belem"</li><li class="list-group-item enum-item">"America/Belize"</li><li class="list-group-item enum-item">"America/Blanc-Sablon"</li><li class="list-group-item enum-item">"America/Boa_Vista"</li><li class="list-group-item enum-item">"America/Bogota"</li><li class="list-group-item enum-item">"America/Boise"</li><li class="list-group-item enum-item">"America/Buenos_Aires"</li><li class="list-group-item enum-item">"America/Cambridge_Bay"</li><li class="list-group-item enum-item">"America/Campo_Grande"</li><li class="list-group-item enum-item">"America/Cancun"</li><li class="list-group-item enum-item">"America/Caracas"</li><li class="list-group-item enum-item">"America/Catamarca"</li><li class="list-group-item enum-item">"America/Cayenne"</li><li class="list-group-item enum-item">"America/Cayman"</li><li class="list-group-item enum-item">"America/Chicago"</li><li class="list-group-item enum-item">"America/Chihuahua"</li><li class="list-group-item enum-item">"America/Coral_Harbour"</li><li class="list-group-item enum-item">"America/Cordoba"</li><li class="list-group-item enum-item">"America/Costa_Rica"</li><li class="list-group-item enum-item">"America/Creston"</li><li class="list-group-item enum-item">"America/Cuiaba"</li><li class="list-group-item enum-item">"America/Curacao"</li><li class="list-group-item enum-item">"America/Danmarkshavn"</li><li class="list-group-item enum-item">"America/Dawson"</li><li class="list-group-item enum-item">"America/Dawson_Creek"</li><li class="list-group-item enum-item">"America/Denver"</li><li class="list-group-item enum-item">"America/Detroit"</li><li class="list-group-item enum-item">"America/Dominica"</li><li class="list-group-item enum-item">"America/Edmonton"</li><li class="list-group-item enum-item">"America/Eirunepe"</li><li class="list-group-item enum-item">"America/El_Salvador"</li><li class="list-group-item enum-item">"America/Ensenada"</li><li class="list-group-item enum-item">"America/Fort_Nelson"</li><li class="list-group-item enum-item">"America/Fort_Wayne"</li><li class="list-group-item enum-item">"America/Fortaleza"</li><li class="list-group-item enum-item">"America/Glace_Bay"</li><li class="list-group-item enum-item">"America/Godthab"</li><li class="list-group-item enum-item">"America/Goose_Bay"</li><li class="list-group-item enum-item">"America/Grand_Turk"</li><li class="list-group-item enum-item">"America/Grenada"</li><li class="list-group-item enum-item">"America/Guadeloupe"</li><li class="list-group-item enum-item">"America/Guatemala"</li><li class="list-group-item enum-item">"America/Guayaquil"</li><li class="list-group-item enum-item">"America/Guyana"</li><li class="list-group-item enum-item">"America/Halifax"</li><li class="list-group-item enum-item">"America/Havana"</li><li class="list-group-item enum-item">"America/Hermosillo"</li><li class="list-group-item enum-item">"America/Indiana/Indianapolis"</li><li class="list-group-item enum-item">"America/Indiana/Knox"</li><li class="list-group-item enum-item">"America/Indiana/Marengo"</li><li class="list-group-item enum-item">"America/Indiana/Petersburg"</li><li class="list-group-item enum-item">"America/Indiana/Tell_City"</li><li class="list-group-item enum-item">"America/Indiana/Vevay"</li><li class="list-group-item enum-item">"America/Indiana/Vincennes"</li><li class="list-group-item enum-item">"America/Indiana/Winamac"</li><li class="list-group-item enum-item">"America/Indianapolis"</li><li class="list-group-item enum-item">"America/Inuvik"</li><li class="list-group-item enum-item">"America/Iqaluit"</li><li class="list-group-item enum-item">"America/Jamaica"</li><li class="list-group-item enum-item">"America/Jujuy"</li><li class="list-group-item enum-item">"America/Juneau"</li><li class="list-group-item enum-item">"America/Kentucky/Louisville"</li><li class="list-group-item enum-item">"America/Kentucky/Monticello"</li><li class="list-group-item enum-item">"America/Knox_IN"</li><li class="list-group-item enum-item">"America/Kralendijk"</li><li class="list-group-item enum-item">"America/La_Paz"</li><li class="list-group-item enum-item">"America/Lima"</li><li class="list-group-item enum-item">"America/Los_Angeles"</li><li class="list-group-item enum-item">"America/Louisville"</li><li class="list-group-item enum-item">"America/Lower_Princes"</li><li class="list-group-item enum-item">"America/Maceio"</li><li class="list-group-item enum-item">"America/Managua"</li><li class="list-group-item enum-item">"America/Manaus"</li><li class="list-group-item enum-item">"America/Marigot"</li><li class="list-group-item enum-item">"America/Martinique"</li><li class="list-group-item enum-item">"America/Matamoros"</li><li class="list-group-item enum-item">"America/Mazatlan"</li><li class="list-group-item enum-item">"America/Mendoza"</li><li class="list-group-item enum-item">"America/Menominee"</li><li class="list-group-item enum-item">"America/Merida"</li><li class="list-group-item enum-item">"America/Metlakatla"</li><li class="list-group-item enum-item">"America/Mexico_City"</li><li class="list-group-item enum-item">"America/Miquelon"</li><li class="list-group-item enum-item">"America/Moncton"</li><li class="list-group-item enum-item">"America/Monterrey"</li><li class="list-group-item enum-item">"America/Montevideo"</li><li class="list-group-item enum-item">"America/Montreal"</li><li class="list-group-item enum-item">"America/Montserrat"</li><li class="list-group-item enum-item">"America/Nassau"</li><li class="list-group-item enum-item">"America/New_York"</li><li class="list-group-item enum-item">"America/Nipigon"</li><li class="list-group-item enum-item">"America/Nome"</li><li class="list-group-item enum-item">"America/Noronha"</li><li class="list-group-item enum-item">"America/North_Dakota/Beulah"</li><li class="list-group-item enum-item">"America/North_Dakota/Center"</li><li class="list-group-item enum-item">"America/North_Dakota/New_Salem"</li><li class="list-group-item enum-item">"America/Nuuk"</li><li class="list-group-item enum-item">"America/Ojinaga"</li><li class="list-group-item enum-item">"America/Panama"</li><li class="list-group-item enum-item">"America/Pangnirtung"</li><li class="list-group-item enum-item">"America/Paramaribo"</li><li class="list-group-item enum-item">"America/Phoenix"</li><li class="list-group-item enum-item">"America/Port-au-Prince"</li><li class="list-group-item enum-item">"America/Port_of_Spain"</li><li class="list-group-item enum-item">"America/Porto_Acre"</li><li class="list-group-item enum-item">"America/Porto_Velho"</li><li class="list-group-item enum-item">"America/Puerto_Rico"</li><li class="list-group-item enum-item">"America/Punta_Arenas"</li><li class="list-group-item enum-item">"America/Rainy_River"</li><li class="list-group-item enum-item">"America/Rankin_Inlet"</li><li class="list-group-item enum-item">"America/Recife"</li><li class="list-group-item enum-item">"America/Regina"</li><li class="list-group-item enum-item">"America/Resolute"</li><li class="list-group-item enum-item">"America/Rio_Branco"</li><li class="list-group-item enum-item">"America/Rosario"</li><li class="list-group-item enum-item">"America/Santa_Isabel"</li><li class="list-group-item enum-item">"America/Santarem"</li><li class="list-group-item enum-item">"America/Santiago"</li><li class="list-group-item enum-item">"America/Santo_Domingo"</li><li class="list-group-item enum-item">"America/Sao_Paulo"</li><li class="list-group-item enum-item">"America/Scoresbysund"</li><li class="list-group-item enum-item">"America/Shiprock"</li><li class="list-group-item enum-item">"America/Sitka"</li><li class="list-group-item enum-item">"America/St_Barthelemy"</li><li class="list-group-item enum-item">"America/St_Johns"</li><li class="list-group-item enum-item">"America/St_Kitts"</li><li class="list-group-item enum-item">"America/St_Lucia"</li><li class="list-group-item enum-item">"America/St_Thomas"</li><li class="list-group-item enum-item">"America/St_Vincent"</li><li class="list-group-item enum-item">"America/Swift_Current"</li><li class="list-group-item enum-item">"America/Tegucigalpa"</li><li class="list-group-item enum-item">"America/Thule"</li><li class="list-group-item enum-item">"America/Thunder_Bay"</li><li class="list-group-item enum-item">"America/Tijuana"</li><li class="list-group-item enum-item">"America/Toronto"</li><li class="list-group-item enum-item">"America/Tortola"</li><li class="list-group-item enum-item">"America/Vancouver"</li><li class="list-group-item enum-item">"America/Virgin"</li><li class="list-group-item enum-item">"America/Whitehorse"</li><li class="list-group-item enum-item">"America/Winnipeg"</li><li class="list-group-item enum-item">"America/Yakutat"</li><li class="list-group-item enum-item">"America/Yellowknife"</li><li class="list-group-item enum-item">"Antarctica/Casey"</li><li class="list-group-item enum-item">"Antarctica/Davis"</li><li class="list-group-item enum-item">"Antarctica/DumontDUrville"</li><li class="list-group-item enum-item">"Antarctica/Macquarie"</li><li class="list-group-item enum-item">"Antarctica/Mawson"</li><li class="list-group-item enum-item">"Antarctica/McMurdo"</li><li class="list-group-item enum-item">"Antarctica/Palmer"</li><li class="list-group-item enum-item">"Antarctica/Rothera"</li><li class="list-group-item enum-item">"Antarctica/South_Pole"</li><li class="list-group-item enum-item">"Antarctica/Syowa"</li><li class="list-group-item enum-item">"Antarctica/Troll"</li><li class="list-group-item enum-item">"Antarctica/Vostok"</li><li class="list-group-item enum-item">"Arctic/Longyearbyen"</li><li class="list-group-item enum-item">"Asia/Aden"</li><li class="list-group-item enum-item">"Asia/Almaty"</li><li class="list-group-item enum-item">"Asia/Amman"</li><li class="list-group-item enum-item">"Asia/Anadyr"</li><li class="list-group-item enum-item">"Asia/Aqtau"</li><li class="list-group-item enum-item">"Asia/Aqtobe"</li><li class="list-group-item enum-item">"Asia/Ashgabat"</li><li class="list-group-item enum-item">"Asia/Ashkhabad"</li><li class="list-group-item enum-item">"Asia/Atyrau"</li><li class="list-group-item enum-item">"Asia/Baghdad"</li><li class="list-group-item enum-item">"Asia/Bahrain"</li><li class="list-group-item enum-item">"Asia/Baku"</li><li class="list-group-item enum-item">"Asia/Bangkok"</li><li class="list-group-item enum-item">"Asia/Barnaul"</li><li class="list-group-item enum-item">"Asia/Beirut"</li><li class="list-group-item enum-item">"Asia/Bishkek"</li><li class="list-group-item enum-item">"Asia/Brunei"</li><li class="list-group-item enum-item">"Asia/Calcutta"</li><li class="list-group-item enum-item">"Asia/Chita"</li><li class="list-group-item enum-item">"Asia/Choibalsan"</li><li class="list-group-item enum-item">"Asia/Chongqing"</li><li class="list-group-item enum-item">"Asia/Chungking"</li><li class="list-group-item enum-item">"Asia/Colombo"</li><li class="list-group-item enum-item">"Asia/Dacca"</li><li class="list-group-item enum-item">"Asia/Damascus"</li><li class="list-group-item enum-item">"Asia/Dhaka"</li><li class="list-group-item enum-item">"Asia/Dili"</li><li class="list-group-item enum-item">"Asia/Dubai"</li><li class="list-group-item enum-item">"Asia/Dushanbe"</li><li class="list-group-item enum-item">"Asia/Famagusta"</li><li class="list-group-item enum-item">"Asia/Gaza"</li><li class="list-group-item enum-item">"Asia/Harbin"</li><li class="list-group-item enum-item">"Asia/Hebron"</li><li class="list-group-item enum-item">"Asia/Ho_Chi_Minh"</li><li class="list-group-item enum-item">"Asia/Hong_Kong"</li><li class="list-group-item enum-item">"Asia/Hovd"</li><li class="list-group-item enum-item">"Asia/Irkutsk"</li><li class="list-group-item enum-item">"Asia/Istanbul"</li><li class="list-group-item enum-item">"Asia/Jakarta"</li><li class="list-group-item enum-item">"Asia/Jayapura"</li><li class="list-group-item enum-item">"Asia/Jerusalem"</li><li class="list-group-item enum-item">"Asia/Kabul"</li><li class="list-group-item enum-item">"Asia/Kamchatka"</li><li class="list-group-item enum-item">"Asia/Karachi"</li><li class="list-group-item enum-item">"Asia/Kashgar"</li><li class="list-group-item enum-item">"Asia/Kathmandu"</li><li class="list-group-item enum-item">"Asia/Katmandu"</li><li class="list-group-item enum-item">"Asia/Khandyga"</li><li class="list-group-item enum-item">"Asia/Kolkata"</li><li class="list-group-item enum-item">"Asia/Krasnoyarsk"</li><li class="list-group-item enum-item">"Asia/Kuala_Lumpur"</li><li class="list-group-item enum-item">"Asia/Kuching"</li><li class="list-group-item enum-item">"Asia/Kuwait"</li><li class="list-group-item enum-item">"Asia/Macao"</li><li class="list-group-item enum-item">"Asia/Macau"</li><li class="list-group-item enum-item">"Asia/Magadan"</li><li class="list-group-item enum-item">"Asia/Makassar"</li><li class="list-group-item enum-item">"Asia/Manila"</li><li class="list-group-item enum-item">"Asia/Muscat"</li><li class="list-group-item enum-item">"Asia/Nicosia"</li><li class="list-group-item enum-item">"Asia/Novokuznetsk"</li><li class="list-group-item enum-item">"Asia/Novosibirsk"</li><li class="list-group-item enum-item">"Asia/Omsk"</li><li class="list-group-item enum-item">"Asia/Oral"</li><li class="list-group-item enum-item">"Asia/Phnom_Penh"</li><li class="list-group-item enum-item">"Asia/Pontianak"</li><li class="list-group-item enum-item">"Asia/Pyongyang"</li><li class="list-group-item enum-item">"Asia/Qatar"</li><li class="list-group-item enum-item">"Asia/Qostanay"</li><li class="list-group-item enum-item">"Asia/Qyzylorda"</li><li class="list-group-item enum-item">"Asia/Rangoon"</li><li class="list-group-item enum-item">"Asia/Riyadh"</li><li class="list-group-item enum-item">"Asia/Saigon"</li><li class="list-group-item enum-item">"Asia/Sakhalin"</li><li class="list-group-item enum-item">"Asia/Samarkand"</li><li class="list-group-item enum-item">"Asia/Seoul"</li><li class="list-group-item enum-item">"Asia/Shanghai"</li><li class="list-group-item enum-item">"Asia/Singapore"</li><li class="list-group-item enum-item">"Asia/Srednekolymsk"</li><li class="list-group-item enum-item">"Asia/Taipei"</li><li class="list-group-item enum-item">"Asia/Tashkent"</li><li class="list-group-item enum-item">"Asia/Tbilisi"</li><li class="list-group-item enum-item">"Asia/Tehran"</li><li class="list-group-item enum-item">"Asia/Tel_Aviv"</li><li class="list-group-item enum-item">"Asia/Thimbu"</li><li class="list-group-item enum-item">"Asia/Thimphu"</li><li class="list-group-item enum-item">"Asia/Tokyo"</li><li class="list-group-item enum-item">"Asia/Tomsk"</li><li class="list-group-item enum-item">"Asia/Ujung_Pandang"</li><li class="list-group-item enum-item">"Asia/Ulaanbaatar"</li><li class="list-group-item enum-item">"Asia/Ulan_Bator"</li><li class="list-group-item enum-item">"Asia/Urumqi"</li><li class="list-group-item enum-item">"Asia/Ust-Nera"</li><li class="list-group-item enum-item">"Asia/Vientiane"</li><li class="list-group-item enum-item">"Asia/Vladivostok"</li><li class="list-group-item enum-item">"Asia/Yakutsk"</li><li class="list-group-item enum-item">"Asia/Yangon"</li><li class="list-group-item enum-item">"Asia/Yekaterinburg"</li><li class="list-group-item enum-item">"Asia/Yerevan"</li><li class="list-group-item enum-item">"Atlantic/Azores"</li><li class="list-group-item enum-item">"Atlantic/Bermuda"</li><li class="list-group-item enum-item">"Atlantic/Canary"</li><li class="list-group-item enum-item">"Atlantic/Cape_Verde"</li><li class="list-group-item enum-item">"Atlantic/Faeroe"</li><li class="list-group-item enum-item">"Atlantic/Faroe"</li><li class="list-group-item enum-item">"Atlantic/Jan_Mayen"</li><li class="list-group-item enum-item">"Atlantic/Madeira"</li><li class="list-group-item enum-item">"Atlantic/Reykjavik"</li><li class="list-group-item enum-item">"Atlantic/South_Georgia"</li><li class="list-group-item enum-item">"Atlantic/St_Helena"</li><li class="list-group-item enum-item">"Atlantic/Stanley"</li><li class="list-group-item enum-item">"Australia/ACT"</li><li class="list-group-item enum-item">"Australia/Adelaide"</li><li class="list-group-item enum-item">"Australia/Brisbane"</li><li class="list-group-item enum-item">"Australia/Broken_Hill"</li><li class="list-group-item enum-item">"Australia/Canberra"</li><li class="list-group-item enum-item">"Australia/Currie"</li><li class="list-group-item enum-item">"Australia/Darwin"</li><li class="list-group-item enum-item">"Australia/Eucla"</li><li class="list-group-item enum-item">"Australia/Hobart"</li><li class="list-group-item enum-item">"Australia/LHI"</li><li class="list-group-item enum-item">"Australia/Lindeman"</li><li class="list-group-item enum-item">"Australia/Lord_Howe"</li><li class="list-group-item enum-item">"Australia/Melbourne"</li><li class="list-group-item enum-item">"Australia/North"</li><li class="list-group-item enum-item">"Australia/NSW"</li><li class="list-group-item enum-item">"Australia/Perth"</li><li class="list-group-item enum-item">"Australia/Queensland"</li><li class="list-group-item enum-item">"Australia/South"</li><li class="list-group-item enum-item">"Australia/Sydney"</li><li class="list-group-item enum-item">"Australia/Tasmania"</li><li class="list-group-item enum-item">"Australia/Victoria"</li><li class="list-group-item enum-item">"Australia/West"</li><li class="list-group-item enum-item">"Australia/Yancowinna"</li><li class="list-group-item enum-item">"Brazil/Acre"</li><li class="list-group-item enum-item">"Brazil/DeNoronha"</li><li class="list-group-item enum-item">"Brazil/East"</li><li class="list-group-item enum-item">"Brazil/West"</li><li class="list-group-item enum-item">"Canada/Atlantic"</li><li class="list-group-item enum-item">"Canada/Central"</li><li class="list-group-item enum-item">"Canada/Eastern"</li><li class="list-group-item enum-item">"Canada/Mountain"</li><li class="list-group-item enum-item">"Canada/Newfoundland"</li><li class="list-group-item enum-item">"Canada/Pacific"</li><li class="list-group-item enum-item">"Canada/Saskatchewan"</li><li class="list-group-item enum-item">"Canada/Yukon"</li><li class="list-group-item enum-item">"Chile/Continental"</li><li class="list-group-item enum-item">"Chile/EasterIsland"</li><li class="list-group-item enum-item">"Cuba"</li><li class="list-group-item enum-item">"Egypt"</li><li class="list-group-item enum-item">"Eire"</li><li class="list-group-item enum-item">"Etc/GMT"</li><li class="list-group-item enum-item">"Etc/GMT+0"</li><li class="list-group-item enum-item">"Etc/GMT+1"</li><li class="list-group-item enum-item">"Etc/GMT+10"</li><li class="list-group-item enum-item">"Etc/GMT+11"</li><li class="list-group-item enum-item">"Etc/GMT+12"</li><li class="list-group-item enum-item">"Etc/GMT+2"</li><li class="list-group-item enum-item">"Etc/GMT+3"</li><li class="list-group-item enum-item">"Etc/GMT+4"</li><li class="list-group-item enum-item">"Etc/GMT+5"</li><li class="list-group-item enum-item">"Etc/GMT+6"</li><li class="list-group-item enum-item">"Etc/GMT+7"</li><li class="list-group-item enum-item">"Etc/GMT+8"</li><li class="list-group-item enum-item">"Etc/GMT+9"</li><li class="list-group-item enum-item">"Etc/GMT-0"</li><li class="list-group-item enum-item">"Etc/GMT-1"</li><li class="list-group-item enum-item">"Etc/GMT-10"</li><li class="list-group-item enum-item">"Etc/GMT-11"</li><li class="list-group-item enum-item">"Etc/GMT-12"</li><li class="list-group-item enum-item">"Etc/GMT-13"</li><li class="list-group-item enum-item">"Etc/GMT-14"</li><li class="list-group-item enum-item">"Etc/GMT-2"</li><li class="list-group-item enum-item">"Etc/GMT-3"</li><li class="list-group-item enum-item">"Etc/GMT-4"</li><li class="list-group-item enum-item">"Etc/GMT-5"</li><li class="list-group-item enum-item">"Etc/GMT-6"</li><li class="list-group-item enum-item">"Etc/GMT-7"</li><li class="list-group-item enum-item">"Etc/GMT-8"</li><li class="list-group-item enum-item">"Etc/GMT-9"</li><li class="list-group-item enum-item">"Etc/GMT0"</li><li class="list-group-item enum-item">"Etc/Greenwich"</li><li class="list-group-item enum-item">"Etc/UCT"</li><li class="list-group-item enum-item">"Etc/Universal"</li><li class="list-group-item enum-item">"Etc/UTC"</li><li class="list-group-item enum-item">"Etc/Zulu"</li><li class="list-group-item enum-item">"Europe/Amsterdam"</li><li class="list-group-item enum-item">"Europe/Andorra"</li><li class="list-group-item enum-item">"Europe/Astrakhan"</li><li class="list-group-item enum-item">"Europe/Athens"</li><li class="list-group-item enum-item">"Europe/Belfast"</li><li class="list-group-item enum-item">"Europe/Belgrade"</li><li class="list-group-item enum-item">"Europe/Berlin"</li><li class="list-group-item enum-item">"Europe/Bratislava"</li><li class="list-group-item enum-item">"Europe/Brussels"</li><li class="list-group-item enum-item">"Europe/Bucharest"</li><li class="list-group-item enum-item">"Europe/Budapest"</li><li class="list-group-item enum-item">"Europe/Busingen"</li><li class="list-group-item enum-item">"Europe/Chisinau"</li><li class="list-group-item enum-item">"Europe/Copenhagen"</li><li class="list-group-item enum-item">"Europe/Dublin"</li><li class="list-group-item enum-item">"Europe/Gibraltar"</li><li class="list-group-item enum-item">"Europe/Guernsey"</li><li class="list-group-item enum-item">"Europe/Helsinki"</li><li class="list-group-item enum-item">"Europe/Isle_of_Man"</li><li class="list-group-item enum-item">"Europe/Istanbul"</li><li class="list-group-item enum-item">"Europe/Jersey"</li><li class="list-group-item enum-item">"Europe/Kaliningrad"</li><li class="list-group-item enum-item">"Europe/Kiev"</li><li class="list-group-item enum-item">"Europe/Kirov"</li><li class="list-group-item enum-item">"Europe/Kyiv"</li><li class="list-group-item enum-item">"Europe/Lisbon"</li><li class="list-group-item enum-item">"Europe/Ljubljana"</li><li class="list-group-item enum-item">"Europe/London"</li><li class="list-group-item enum-item">"Europe/Luxembourg"</li><li class="list-group-item enum-item">"Europe/Madrid"</li><li class="list-group-item enum-item">"Europe/Malta"</li><li class="list-group-item enum-item">"Europe/Mariehamn"</li><li class="list-group-item enum-item">"Europe/Minsk"</li><li class="list-group-item enum-item">"Europe/Monaco"</li><li class="list-group-item enum-item">"Europe/Moscow"</li><li class="list-group-item enum-item">"Europe/Nicosia"</li><li class="list-group-item enum-item">"Europe/Oslo"</li><li class="list-group-item enum-item">"Europe/Paris"</li><li class="list-group-item enum-item">"Europe/Podgorica"</li><li class="list-group-item enum-item">"Europe/Prague"</li><li class="list-group-item enum-item">"Europe/Riga"</li><li class="list-group-item enum-item">"Europe/Rome"</li><li class="list-group-item enum-item">"Europe/Samara"</li><li class="list-group-item enum-item">"Europe/San_Marino"</li><li class="list-group-item enum-item">"Europe/Sarajevo"</li><li class="list-group-item enum-item">"Europe/Saratov"</li><li class="list-group-item enum-item">"Europe/Simferopol"</li><li class="list-group-item enum-item">"Europe/Skopje"</li><li class="list-group-item enum-item">"Europe/Sofia"</li><li class="list-group-item enum-item">"Europe/Stockholm"</li><li class="list-group-item enum-item">"Europe/Tallinn"</li><li class="list-group-item enum-item">"Europe/Tirane"</li><li class="list-group-item enum-item">"Europe/Tiraspol"</li><li class="list-group-item enum-item">"Europe/Ulyanovsk"</li><li class="list-group-item enum-item">"Europe/Uzhgorod"</li><li class="list-group-item enum-item">"Europe/Vaduz"</li><li class="list-group-item enum-item">"Europe/Vatican"</li><li class="list-group-item enum-item">"Europe/Vienna"</li><li class="list-group-item enum-item">"Europe/Vilnius"</li><li class="list-group-item enum-item">"Europe/Volgograd"</li><li class="list-group-item enum-item">"Europe/Warsaw"</li><li class="list-group-item enum-item">"Europe/Zagreb"</li><li class="list-group-item enum-item">"Europe/Zaporozhye"</li><li class="list-group-item enum-item">"Europe/Zurich"</li><li class="list-group-item enum-item">"GB"</li><li class="list-group-item enum-item">"GB-Eire"</li><li class="list-group-item enum-item">"Hongkong"</li><li class="list-group-item enum-item">"Iceland"</li><li class="list-group-item enum-item">"Indian/Antananarivo"</li><li class="list-group-item enum-item">"Indian/Chagos"</li><li class="list-group-item enum-item">"Indian/Christmas"</li><li class="list-group-item enum-item">"Indian/Cocos"</li><li class="list-group-item enum-item">"Indian/Comoro"</li><li class="list-group-item enum-item">"Indian/Kerguelen"</li><li class="list-group-item enum-item">"Indian/Mahe"</li><li class="list-group-item enum-item">"Indian/Maldives"</li><li class="list-group-item enum-item">"Indian/Mauritius"</li><li class="list-group-item enum-item">"Indian/Mayotte"</li><li class="list-group-item enum-item">"Indian/Reunion"</li><li class="list-group-item enum-item">"Iran"</li><li class="list-group-item enum-item">"Israel"</li><li class="list-group-item enum-item">"Jamaica"</li><li class="list-group-item enum-item">"Japan"</li><li class="list-group-item enum-item">"Kwajalein"</li><li class="list-group-item enum-item">"Libya"</li><li class="list-group-item enum-item">"Mexico/BajaNorte"</li><li class="list-group-item enum-item">"Mexico/BajaSur"</li><li class="list-group-item enum-item">"Mexico/General"</li><li class="list-group-item enum-item">"Navajo"</li><li class="list-group-item enum-item">"NZ"</li><li class="list-group-item enum-item">"NZ-CHAT"</li><li class="list-group-item enum-item">"Pacific/Apia"</li><li class="list-group-item enum-item">"Pacific/Auckland"</li><li class="list-group-item enum-item">"Pacific/Bougainville"</li><li class="list-group-item enum-item">"Pacific/Chatham"</li><li class="list-group-item enum-item">"Pacific/Chuuk"</li><li class="list-group-item enum-item">"Pacific/Easter"</li><li class="list-group-item enum-item">"Pacific/Efate"</li><li class="list-group-item enum-item">"Pacific/Enderbury"</li><li class="list-group-item enum-item">"Pacific/Fakaofo"</li><li class="list-group-item enum-item">"Pacific/Fiji"</li><li class="list-group-item enum-item">"Pacific/Funafuti"</li><li class="list-group-item enum-item">"Pacific/Galapagos"</li><li class="list-group-item enum-item">"Pacific/Gambier"</li><li class="list-group-item enum-item">"Pacific/Guadalcanal"</li><li class="list-group-item enum-item">"Pacific/Guam"</li><li class="list-group-item enum-item">"Pacific/Honolulu"</li><li class="list-group-item enum-item">"Pacific/Johnston"</li><li class="list-group-item enum-item">"Pacific/Kanton"</li><li class="list-group-item enum-item">"Pacific/Kiritimati"</li><li class="list-group-item enum-item">"Pacific/Kosrae"</li><li class="list-group-item enum-item">"Pacific/Kwajalein"</li><li class="list-group-item enum-item">"Pacific/Majuro"</li><li class="list-group-item enum-item">"Pacific/Marquesas"</li><li class="list-group-item enum-item">"Pacific/Midway"</li><li class="list-group-item enum-item">"Pacific/Nauru"</li><li class="list-group-item enum-item">"Pacific/Niue"</li><li class="list-group-item enum-item">"Pacific/Norfolk"</li><li class="list-group-item enum-item">"Pacific/Noumea"</li><li class="list-group-item enum-item">"Pacific/Pago_Pago"</li><li class="list-group-item enum-item">"Pacific/Palau"</li><li class="list-group-item enum-item">"Pacific/Pitcairn"</li><li class="list-group-item enum-item">"Pacific/Pohnpei"</li><li class="list-group-item enum-item">"Pacific/Ponape"</li><li class="list-group-item enum-item">"Pacific/Port_Moresby"</li><li class="list-group-item enum-item">"Pacific/Rarotonga"</li><li class="list-group-item enum-item">"Pacific/Saipan"</li><li class="list-group-item enum-item">"Pacific/Samoa"</li><li class="list-group-item enum-item">"Pacific/Tahiti"</li><li class="list-group-item enum-item">"Pacific/Tarawa"</li><li class="list-group-item enum-item">"Pacific/Tongatapu"</li><li class="list-group-item enum-item">"Pacific/Truk"</li><li class="list-group-item enum-item">"Pacific/Wake"</li><li class="list-group-item enum-item">"Pacific/Wallis"</li><li class="list-group-item enum-item">"Pacific/Yap"</li><li class="list-group-item enum-item">"Poland"</li><li class="list-group-item enum-item">"Portugal"</li><li class="list-group-item enum-item">"PRC"</li><li class="list-group-item enum-item">"ROC"</li><li class="list-group-item enum-item">"Singapore"</li><li class="list-group-item enum-item">"US/Alaska"</li><li class="list-group-item enum-item">"US/Aleutian"</li><li class="list-group-item enum-item">"US/Arizona"</li><li class="list-group-item enum-item">"US/Central"</li><li class="list-group-item enum-item">"US/East-Indiana"</li><li class="list-group-item enum-item">"US/Eastern"</li><li class="list-group-item enum-item">"US/Hawaii"</li><li class="list-group-item enum-item">"US/Indiana-Starke"</li><li class="list-group-item enum-item">"US/Michigan"</li><li class="list-group-item enum-item">"US/Mountain"</li><li class="list-group-item enum-item">"US/Pacific"</li><li class="list-group-item enum-item">"US/Samoa"</li></ul>
             </div>
+        
 
+        
+        
 
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -1145,24 +1145,24 @@
 
     <span class="badge badge-dark value-type">Type: array of object</span><br/>
 <span class="description">List of tables to run partition maintenance for.</span>
+        
 
-
-
-
+        
+        
 
         <p><span class="badge badge-light restriction min-items-restriction" id="generates_tables_minItems">Must contain a minimum of <code>1</code> items</span></p> <span class="badge badge-info no-additional">No Additional Items</span><h4>Each item of this array must be:</h4>
     <div class="card">
         <div class="card-body items-definition" id="generates_tables_items">
-
+            
 
     <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">The table to run partition maintenance for.</span> <span class="badge badge-info no-additional">No Additional Properties</span>
+        
 
+        
+        
 
-
-
-
-
+        
 <div class="accordion" id="accordiongenerates_tables_items_table_schema">
     <div class="card">
         <div class="card-header" id="headinggenerates_tables_items_table_schema">
@@ -1180,17 +1180,17 @@
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">The schema of a table.</span>
 
+    
 
+    
 
+    
+        
 
-
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_tables_items_table_schema_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1212,15 +1212,15 @@
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">The name of a table.</span>
 
+    
 
+    
+        
 
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_tables_items_table_name_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1243,9 +1243,9 @@
 <span class="description">The template for the migration filename.</span>
 
     <span class="pattern-value" id="generates_tables_items_file_name_template_pattern">Must match regular expression: <code>\{description\}</code></span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_tables_items_file_name_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
@@ -1281,12 +1281,12 @@
 <span class="description">The description of the migration.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
+        
 
+        
+        
 
-
-
-
-
+        
 <div class="accordion" id="accordiongenerates_tables_items_description_make">
     <div class="card">
         <div class="card-header" id="headinggenerates_tables_items_description_make">
@@ -1303,12 +1303,12 @@
 
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">The description for making of partitions.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_tables_items_description_make_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1329,12 +1329,12 @@
 
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">The description for expiration of partitions.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_tables_items_description_expire_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1359,12 +1359,12 @@
 
     <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">The partition configuration for a table.</span> <span class="badge badge-info no-additional">No Additional Properties</span>
+        
 
+        
+        
 
-
-
-
-
+        
 <div class="accordion" id="accordiongenerates_tables_items_partition_partition_schema">
     <div class="card">
         <div class="card-header" id="headinggenerates_tables_items_partition_partition_schema">
@@ -1382,17 +1382,17 @@
     <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "parent's schema"</span><br/>
 <span class="description">The schema for partitions.</span>
 
+    
 
+    
 
+    
+        
 
-
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_tables_items_partition_partition_schema_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1414,17 +1414,17 @@
     <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "pg_default"</span><br/>
 <span class="description">The tablespace for the partitions.</span>
 
+    
 
+    
 
+    
+        
 
-
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_tables_items_partition_partition_tablespace_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1446,17 +1446,17 @@
     <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "partition's tablespace"</span><br/>
 <span class="description">The tablespace for the indexes.</span>
 
+    
 
+    
 
+    
+        
 
-
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_tables_items_partition_index_tablespace_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1479,12 +1479,12 @@
 <span class="description">The storage parameters for the partitions.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
+        
 
+        
+        
 
-
-
-
-
+        
 <div class="accordion" id="accordiongenerates_tables_items_partition_storage_parameters_fillfactor">
     <div class="card">
         <div class="card-header" id="headinggenerates_tables_items_partition_storage_parameters_fillfactor">
@@ -1501,12 +1501,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span><br/>
 <span class="description">The fillfactor for a table is a percentage between 10 and 100. 100 (complete packing) is the default.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_fillfactor_number">Value must be greater or equal to <code>10</code> and lesser or equal to <code>100</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1527,12 +1527,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span><br/>
 <span class="description">Specifies the minimum tuple length required before we try to compress and/or move long column values into TOAST tables, and is also the target length we try to reduce the length below once toasting begins.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_toast_tuple_target_number">Value must be greater or equal to <code>128</code> and lesser or equal to <code>8160</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1553,12 +1553,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span><br/>
 <span class="description">This sets the number of workers that should be used to assist a parallel scan of a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_parallel_workers_number">Value must be greater or equal to <code>0</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1579,12 +1579,12 @@
 
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: null</span><br/>
 <span class="description">Enables or disables the autovacuum daemon for a table.</span>
+        
 
+        
+        
 
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -1605,12 +1605,12 @@
 
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: true</span><br/>
 <span class="description">Enables or disables index cleanup when VACUUM is run on a table.</span>
+        
 
+        
+        
 
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -1631,12 +1631,12 @@
 
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: true</span><br/>
 <span class="description">Enables or disables vacuum to try to truncate off any empty pages at the end of a table.</span>
+        
 
+        
+        
 
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -1657,12 +1657,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 50</span><br/>
 <span class="description">Specifies the minimum number of updated or deleted tuples needed to trigger a VACUUM in a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_autovacuum_vacuum_threshold_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>2147483647</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1683,12 +1683,12 @@
 
     <span class="badge badge-dark value-type">Type: number</span> <span class="badge badge-success default-value">Default: 20</span><br/>
 <span class="description">Specifies a fraction of a table size to add to autovacuum_vacuum_threshold when deciding whether to trigger a VACUUM</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_autovacuum_vacuum_scale_factor_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>100</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1709,12 +1709,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 1000</span><br/>
 <span class="description">Specifies the number of inserted tuples needed to trigger a VACUUM in a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_autovacuum_vacuum_insert_threshold_number">Value must be greater or equal to <code>-1</code> and lesser or equal to <code>2147483647</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1735,12 +1735,12 @@
 
     <span class="badge badge-dark value-type">Type: number</span> <span class="badge badge-success default-value">Default: 20</span><br/>
 <span class="description">Specifies a fraction of a table size to add to autovacuum_vacuum_insert_threshold when deciding whether to trigger a VACUUM.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_autovacuum_vacuum_insert_scale_factor_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>100</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1761,12 +1761,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 50</span><br/>
 <span class="description">Specifies the minimum number of inserted, updated or deleted tuples needed to trigger an ANALYZE in a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_autovacuum_analyze_threshold_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>2147483647</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1787,12 +1787,12 @@
 
     <span class="badge badge-dark value-type">Type: number</span> <span class="badge badge-success default-value">Default: 10</span><br/>
 <span class="description">Specifies a fraction of a table size to add to autovacuum_analyze_threshold when deciding whether to trigger an ANALYZE.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_autovacuum_analyze_scale_factor_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>100</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1813,12 +1813,12 @@
 
     <span class="badge badge-dark value-type">Type: number</span> <span class="badge badge-success default-value">Default: 2</span><br/>
 <span class="description">Specifies the cost delay value that will be used in automatic VACUUM operations.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_autovacuum_vacuum_cost_delay_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>100</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1839,12 +1839,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: -1</span><br/>
 <span class="description">Specifies the cost limit value that will be used in automatic VACUUM operations.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_autovacuum_vacuum_cost_limit_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>10000</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1865,12 +1865,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 50000000</span><br/>
 <span class="description">Specifies the cutoff age (in transactions) that VACUUM should use to decide whether to freeze row versions while scanning a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_autovacuum_freeze_min_age_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>1000000000</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1891,12 +1891,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 200000000</span><br/>
 <span class="description">Specifies the maximum age (in transactions) that a table's pg_class.relfrozenxid field can attain before a VACUUM operation is forced to prevent transaction ID wraparound within a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_autovacuum_freeze_max_age_number">Value must be greater or equal to <code>100000</code> and lesser or equal to <code>2000000000</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1917,12 +1917,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 150000000</span><br/>
 <span class="description">VACUUM performs an aggressive scan if a table's pg_class.relfrozenxid field has reached the age specified by this setting.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_autovacuum_freeze_table_age_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>2000000000</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1943,12 +1943,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 5000000</span><br/>
 <span class="description">Specifies the cutoff age (in multixacts) that VACUUM should use to decide whether to replace multixact IDs with a newer transaction ID or multixact ID while scanning a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_autovacuum_multixact_freeze_min_age_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>1000000000</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1969,12 +1969,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 400000000</span><br/>
 <span class="description">Specifies the maximum age (in multixacts) that a table's pg_class.relminmxid field can attain before a VACUUM operation is forced to prevent multixact ID wraparound within a table.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_autovacuum_multixact_freeze_max_age_number">Value must be greater or equal to <code>10000</code> and lesser or equal to <code>2000000000</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -1995,12 +1995,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 150000000</span><br/>
 <span class="description">VACUUM performs an aggressive scan if a table's pg_class.relminmxid field has reached the age specified by this setting.</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_autovacuum_multixact_freeze_table_age_number">Value must be greater or equal to <code>0</code> and lesser or equal to <code>2000000000</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -2021,12 +2021,12 @@
 
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: -1</span><br/>
 <span class="description">Causes each action executed by autovacuum to be logged if it ran for at least the specified amount of time. Setting this to zero logs all autovacuum actions</span>
+        
 
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_storage_parameters_log_autovacuum_min_duration_number">Value must be greater or equal to <code>-1</code> and lesser or equal to <code>2147483647</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -2047,12 +2047,12 @@
 
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
 <span class="description">Declare a table as an additional catalog table for purposes of logical replication</span>
+        
 
+        
+        
 
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -2078,12 +2078,12 @@
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">The name template for the partitions.</span>
 
+    
 
+    
+        
 
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_tables_items_partition_name_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
@@ -2114,13 +2114,13 @@
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">The partition interval.</span>
 
+    
+        
 
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_tables_items_partition_interval_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -2142,13 +2142,13 @@
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 0</span><br/>
 <span class="description">The number of past partitions to make.</span>
 
+    
+        
 
-
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_past_number">Value must be greater or equal to <code>0</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -2170,13 +2170,13 @@
     <span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 0</span><br/>
 <span class="description">The number of future partitions to make.</span>
 
+    
+        
 
-
-
-
+        
         <p><span class="badge badge-light restriction numeric-restriction" id="generates_tables_items_partition_future_number">Value must be greater or equal to <code>0</code></span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -2198,13 +2198,13 @@
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
 <span class="description">Whether to create default partition.</span>
 
+    
+        
 
+        
+        
 
-
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -2226,12 +2226,12 @@
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">The name template for the default partition.</span>
 
+    
 
+    
+        
 
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_tables_items_partition_default_partition_name_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
@@ -2260,13 +2260,13 @@
     <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "null"</span><br/>
 <span class="description">The retention time interval to expire partitions containing data older than the given interval.</span>
 
+    
+        
 
+        
+        
 
-
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -2288,13 +2288,13 @@
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
 <span class="description">Whether to detach the expired partitions first before dropping them.</span>
 
+    
+        
 
+        
+        
 
-
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -2316,13 +2316,13 @@
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
 <span class="description">Whether to only detach the expired partitions.</span>
 
+    
+        
 
+        
+        
 
-
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -2344,13 +2344,13 @@
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
 <span class="description">Whether to detach the expired partitions concurrently.</span>
 
+    
+        
 
+        
+        
 
-
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -2372,13 +2372,13 @@
     <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
 <span class="description">Whether to skip overlapping partitions.</span>
 
+    
+        
 
+        
+        
 
-
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -2404,12 +2404,12 @@
                 <h4>Must be one of:</h4>
                 <ul class="list-group"><li class="list-group-item enum-item">"Africa/Abidjan"</li><li class="list-group-item enum-item">"Africa/Accra"</li><li class="list-group-item enum-item">"Africa/Addis_Ababa"</li><li class="list-group-item enum-item">"Africa/Algiers"</li><li class="list-group-item enum-item">"Africa/Asmara"</li><li class="list-group-item enum-item">"Africa/Asmera"</li><li class="list-group-item enum-item">"Africa/Bamako"</li><li class="list-group-item enum-item">"Africa/Bangui"</li><li class="list-group-item enum-item">"Africa/Banjul"</li><li class="list-group-item enum-item">"Africa/Bissau"</li><li class="list-group-item enum-item">"Africa/Blantyre"</li><li class="list-group-item enum-item">"Africa/Brazzaville"</li><li class="list-group-item enum-item">"Africa/Bujumbura"</li><li class="list-group-item enum-item">"Africa/Cairo"</li><li class="list-group-item enum-item">"Africa/Casablanca"</li><li class="list-group-item enum-item">"Africa/Ceuta"</li><li class="list-group-item enum-item">"Africa/Conakry"</li><li class="list-group-item enum-item">"Africa/Dakar"</li><li class="list-group-item enum-item">"Africa/Dar_es_Salaam"</li><li class="list-group-item enum-item">"Africa/Djibouti"</li><li class="list-group-item enum-item">"Africa/Douala"</li><li class="list-group-item enum-item">"Africa/El_Aaiun"</li><li class="list-group-item enum-item">"Africa/Freetown"</li><li class="list-group-item enum-item">"Africa/Gaborone"</li><li class="list-group-item enum-item">"Africa/Harare"</li><li class="list-group-item enum-item">"Africa/Johannesburg"</li><li class="list-group-item enum-item">"Africa/Juba"</li><li class="list-group-item enum-item">"Africa/Kampala"</li><li class="list-group-item enum-item">"Africa/Khartoum"</li><li class="list-group-item enum-item">"Africa/Kigali"</li><li class="list-group-item enum-item">"Africa/Kinshasa"</li><li class="list-group-item enum-item">"Africa/Lagos"</li><li class="list-group-item enum-item">"Africa/Libreville"</li><li class="list-group-item enum-item">"Africa/Lome"</li><li class="list-group-item enum-item">"Africa/Luanda"</li><li class="list-group-item enum-item">"Africa/Lubumbashi"</li><li class="list-group-item enum-item">"Africa/Lusaka"</li><li class="list-group-item enum-item">"Africa/Malabo"</li><li class="list-group-item enum-item">"Africa/Maputo"</li><li class="list-group-item enum-item">"Africa/Maseru"</li><li class="list-group-item enum-item">"Africa/Mbabane"</li><li class="list-group-item enum-item">"Africa/Mogadishu"</li><li class="list-group-item enum-item">"Africa/Monrovia"</li><li class="list-group-item enum-item">"Africa/Nairobi"</li><li class="list-group-item enum-item">"Africa/Ndjamena"</li><li class="list-group-item enum-item">"Africa/Niamey"</li><li class="list-group-item enum-item">"Africa/Nouakchott"</li><li class="list-group-item enum-item">"Africa/Ouagadougou"</li><li class="list-group-item enum-item">"Africa/Porto-Novo"</li><li class="list-group-item enum-item">"Africa/Sao_Tome"</li><li class="list-group-item enum-item">"Africa/Timbuktu"</li><li class="list-group-item enum-item">"Africa/Tripoli"</li><li class="list-group-item enum-item">"Africa/Tunis"</li><li class="list-group-item enum-item">"Africa/Windhoek"</li><li class="list-group-item enum-item">"America/Adak"</li><li class="list-group-item enum-item">"America/Anchorage"</li><li class="list-group-item enum-item">"America/Anguilla"</li><li class="list-group-item enum-item">"America/Antigua"</li><li class="list-group-item enum-item">"America/Araguaina"</li><li class="list-group-item enum-item">"America/Argentina/Buenos_Aires"</li><li class="list-group-item enum-item">"America/Argentina/Catamarca"</li><li class="list-group-item enum-item">"America/Argentina/ComodRivadavia"</li><li class="list-group-item enum-item">"America/Argentina/Cordoba"</li><li class="list-group-item enum-item">"America/Argentina/Jujuy"</li><li class="list-group-item enum-item">"America/Argentina/La_Rioja"</li><li class="list-group-item enum-item">"America/Argentina/Mendoza"</li><li class="list-group-item enum-item">"America/Argentina/Rio_Gallegos"</li><li class="list-group-item enum-item">"America/Argentina/Salta"</li><li class="list-group-item enum-item">"America/Argentina/San_Juan"</li><li class="list-group-item enum-item">"America/Argentina/San_Luis"</li><li class="list-group-item enum-item">"America/Argentina/Tucuman"</li><li class="list-group-item enum-item">"America/Argentina/Ushuaia"</li><li class="list-group-item enum-item">"America/Aruba"</li><li class="list-group-item enum-item">"America/Asuncion"</li><li class="list-group-item enum-item">"America/Atikokan"</li><li class="list-group-item enum-item">"America/Atka"</li><li class="list-group-item enum-item">"America/Bahia"</li><li class="list-group-item enum-item">"America/Bahia_Banderas"</li><li class="list-group-item enum-item">"America/Barbados"</li><li class="list-group-item enum-item">"America/Belem"</li><li class="list-group-item enum-item">"America/Belize"</li><li class="list-group-item enum-item">"America/Blanc-Sablon"</li><li class="list-group-item enum-item">"America/Boa_Vista"</li><li class="list-group-item enum-item">"America/Bogota"</li><li class="list-group-item enum-item">"America/Boise"</li><li class="list-group-item enum-item">"America/Buenos_Aires"</li><li class="list-group-item enum-item">"America/Cambridge_Bay"</li><li class="list-group-item enum-item">"America/Campo_Grande"</li><li class="list-group-item enum-item">"America/Cancun"</li><li class="list-group-item enum-item">"America/Caracas"</li><li class="list-group-item enum-item">"America/Catamarca"</li><li class="list-group-item enum-item">"America/Cayenne"</li><li class="list-group-item enum-item">"America/Cayman"</li><li class="list-group-item enum-item">"America/Chicago"</li><li class="list-group-item enum-item">"America/Chihuahua"</li><li class="list-group-item enum-item">"America/Coral_Harbour"</li><li class="list-group-item enum-item">"America/Cordoba"</li><li class="list-group-item enum-item">"America/Costa_Rica"</li><li class="list-group-item enum-item">"America/Creston"</li><li class="list-group-item enum-item">"America/Cuiaba"</li><li class="list-group-item enum-item">"America/Curacao"</li><li class="list-group-item enum-item">"America/Danmarkshavn"</li><li class="list-group-item enum-item">"America/Dawson"</li><li class="list-group-item enum-item">"America/Dawson_Creek"</li><li class="list-group-item enum-item">"America/Denver"</li><li class="list-group-item enum-item">"America/Detroit"</li><li class="list-group-item enum-item">"America/Dominica"</li><li class="list-group-item enum-item">"America/Edmonton"</li><li class="list-group-item enum-item">"America/Eirunepe"</li><li class="list-group-item enum-item">"America/El_Salvador"</li><li class="list-group-item enum-item">"America/Ensenada"</li><li class="list-group-item enum-item">"America/Fort_Nelson"</li><li class="list-group-item enum-item">"America/Fort_Wayne"</li><li class="list-group-item enum-item">"America/Fortaleza"</li><li class="list-group-item enum-item">"America/Glace_Bay"</li><li class="list-group-item enum-item">"America/Godthab"</li><li class="list-group-item enum-item">"America/Goose_Bay"</li><li class="list-group-item enum-item">"America/Grand_Turk"</li><li class="list-group-item enum-item">"America/Grenada"</li><li class="list-group-item enum-item">"America/Guadeloupe"</li><li class="list-group-item enum-item">"America/Guatemala"</li><li class="list-group-item enum-item">"America/Guayaquil"</li><li class="list-group-item enum-item">"America/Guyana"</li><li class="list-group-item enum-item">"America/Halifax"</li><li class="list-group-item enum-item">"America/Havana"</li><li class="list-group-item enum-item">"America/Hermosillo"</li><li class="list-group-item enum-item">"America/Indiana/Indianapolis"</li><li class="list-group-item enum-item">"America/Indiana/Knox"</li><li class="list-group-item enum-item">"America/Indiana/Marengo"</li><li class="list-group-item enum-item">"America/Indiana/Petersburg"</li><li class="list-group-item enum-item">"America/Indiana/Tell_City"</li><li class="list-group-item enum-item">"America/Indiana/Vevay"</li><li class="list-group-item enum-item">"America/Indiana/Vincennes"</li><li class="list-group-item enum-item">"America/Indiana/Winamac"</li><li class="list-group-item enum-item">"America/Indianapolis"</li><li class="list-group-item enum-item">"America/Inuvik"</li><li class="list-group-item enum-item">"America/Iqaluit"</li><li class="list-group-item enum-item">"America/Jamaica"</li><li class="list-group-item enum-item">"America/Jujuy"</li><li class="list-group-item enum-item">"America/Juneau"</li><li class="list-group-item enum-item">"America/Kentucky/Louisville"</li><li class="list-group-item enum-item">"America/Kentucky/Monticello"</li><li class="list-group-item enum-item">"America/Knox_IN"</li><li class="list-group-item enum-item">"America/Kralendijk"</li><li class="list-group-item enum-item">"America/La_Paz"</li><li class="list-group-item enum-item">"America/Lima"</li><li class="list-group-item enum-item">"America/Los_Angeles"</li><li class="list-group-item enum-item">"America/Louisville"</li><li class="list-group-item enum-item">"America/Lower_Princes"</li><li class="list-group-item enum-item">"America/Maceio"</li><li class="list-group-item enum-item">"America/Managua"</li><li class="list-group-item enum-item">"America/Manaus"</li><li class="list-group-item enum-item">"America/Marigot"</li><li class="list-group-item enum-item">"America/Martinique"</li><li class="list-group-item enum-item">"America/Matamoros"</li><li class="list-group-item enum-item">"America/Mazatlan"</li><li class="list-group-item enum-item">"America/Mendoza"</li><li class="list-group-item enum-item">"America/Menominee"</li><li class="list-group-item enum-item">"America/Merida"</li><li class="list-group-item enum-item">"America/Metlakatla"</li><li class="list-group-item enum-item">"America/Mexico_City"</li><li class="list-group-item enum-item">"America/Miquelon"</li><li class="list-group-item enum-item">"America/Moncton"</li><li class="list-group-item enum-item">"America/Monterrey"</li><li class="list-group-item enum-item">"America/Montevideo"</li><li class="list-group-item enum-item">"America/Montreal"</li><li class="list-group-item enum-item">"America/Montserrat"</li><li class="list-group-item enum-item">"America/Nassau"</li><li class="list-group-item enum-item">"America/New_York"</li><li class="list-group-item enum-item">"America/Nipigon"</li><li class="list-group-item enum-item">"America/Nome"</li><li class="list-group-item enum-item">"America/Noronha"</li><li class="list-group-item enum-item">"America/North_Dakota/Beulah"</li><li class="list-group-item enum-item">"America/North_Dakota/Center"</li><li class="list-group-item enum-item">"America/North_Dakota/New_Salem"</li><li class="list-group-item enum-item">"America/Nuuk"</li><li class="list-group-item enum-item">"America/Ojinaga"</li><li class="list-group-item enum-item">"America/Panama"</li><li class="list-group-item enum-item">"America/Pangnirtung"</li><li class="list-group-item enum-item">"America/Paramaribo"</li><li class="list-group-item enum-item">"America/Phoenix"</li><li class="list-group-item enum-item">"America/Port-au-Prince"</li><li class="list-group-item enum-item">"America/Port_of_Spain"</li><li class="list-group-item enum-item">"America/Porto_Acre"</li><li class="list-group-item enum-item">"America/Porto_Velho"</li><li class="list-group-item enum-item">"America/Puerto_Rico"</li><li class="list-group-item enum-item">"America/Punta_Arenas"</li><li class="list-group-item enum-item">"America/Rainy_River"</li><li class="list-group-item enum-item">"America/Rankin_Inlet"</li><li class="list-group-item enum-item">"America/Recife"</li><li class="list-group-item enum-item">"America/Regina"</li><li class="list-group-item enum-item">"America/Resolute"</li><li class="list-group-item enum-item">"America/Rio_Branco"</li><li class="list-group-item enum-item">"America/Rosario"</li><li class="list-group-item enum-item">"America/Santa_Isabel"</li><li class="list-group-item enum-item">"America/Santarem"</li><li class="list-group-item enum-item">"America/Santiago"</li><li class="list-group-item enum-item">"America/Santo_Domingo"</li><li class="list-group-item enum-item">"America/Sao_Paulo"</li><li class="list-group-item enum-item">"America/Scoresbysund"</li><li class="list-group-item enum-item">"America/Shiprock"</li><li class="list-group-item enum-item">"America/Sitka"</li><li class="list-group-item enum-item">"America/St_Barthelemy"</li><li class="list-group-item enum-item">"America/St_Johns"</li><li class="list-group-item enum-item">"America/St_Kitts"</li><li class="list-group-item enum-item">"America/St_Lucia"</li><li class="list-group-item enum-item">"America/St_Thomas"</li><li class="list-group-item enum-item">"America/St_Vincent"</li><li class="list-group-item enum-item">"America/Swift_Current"</li><li class="list-group-item enum-item">"America/Tegucigalpa"</li><li class="list-group-item enum-item">"America/Thule"</li><li class="list-group-item enum-item">"America/Thunder_Bay"</li><li class="list-group-item enum-item">"America/Tijuana"</li><li class="list-group-item enum-item">"America/Toronto"</li><li class="list-group-item enum-item">"America/Tortola"</li><li class="list-group-item enum-item">"America/Vancouver"</li><li class="list-group-item enum-item">"America/Virgin"</li><li class="list-group-item enum-item">"America/Whitehorse"</li><li class="list-group-item enum-item">"America/Winnipeg"</li><li class="list-group-item enum-item">"America/Yakutat"</li><li class="list-group-item enum-item">"America/Yellowknife"</li><li class="list-group-item enum-item">"Antarctica/Casey"</li><li class="list-group-item enum-item">"Antarctica/Davis"</li><li class="list-group-item enum-item">"Antarctica/DumontDUrville"</li><li class="list-group-item enum-item">"Antarctica/Macquarie"</li><li class="list-group-item enum-item">"Antarctica/Mawson"</li><li class="list-group-item enum-item">"Antarctica/McMurdo"</li><li class="list-group-item enum-item">"Antarctica/Palmer"</li><li class="list-group-item enum-item">"Antarctica/Rothera"</li><li class="list-group-item enum-item">"Antarctica/South_Pole"</li><li class="list-group-item enum-item">"Antarctica/Syowa"</li><li class="list-group-item enum-item">"Antarctica/Troll"</li><li class="list-group-item enum-item">"Antarctica/Vostok"</li><li class="list-group-item enum-item">"Arctic/Longyearbyen"</li><li class="list-group-item enum-item">"Asia/Aden"</li><li class="list-group-item enum-item">"Asia/Almaty"</li><li class="list-group-item enum-item">"Asia/Amman"</li><li class="list-group-item enum-item">"Asia/Anadyr"</li><li class="list-group-item enum-item">"Asia/Aqtau"</li><li class="list-group-item enum-item">"Asia/Aqtobe"</li><li class="list-group-item enum-item">"Asia/Ashgabat"</li><li class="list-group-item enum-item">"Asia/Ashkhabad"</li><li class="list-group-item enum-item">"Asia/Atyrau"</li><li class="list-group-item enum-item">"Asia/Baghdad"</li><li class="list-group-item enum-item">"Asia/Bahrain"</li><li class="list-group-item enum-item">"Asia/Baku"</li><li class="list-group-item enum-item">"Asia/Bangkok"</li><li class="list-group-item enum-item">"Asia/Barnaul"</li><li class="list-group-item enum-item">"Asia/Beirut"</li><li class="list-group-item enum-item">"Asia/Bishkek"</li><li class="list-group-item enum-item">"Asia/Brunei"</li><li class="list-group-item enum-item">"Asia/Calcutta"</li><li class="list-group-item enum-item">"Asia/Chita"</li><li class="list-group-item enum-item">"Asia/Choibalsan"</li><li class="list-group-item enum-item">"Asia/Chongqing"</li><li class="list-group-item enum-item">"Asia/Chungking"</li><li class="list-group-item enum-item">"Asia/Colombo"</li><li class="list-group-item enum-item">"Asia/Dacca"</li><li class="list-group-item enum-item">"Asia/Damascus"</li><li class="list-group-item enum-item">"Asia/Dhaka"</li><li class="list-group-item enum-item">"Asia/Dili"</li><li class="list-group-item enum-item">"Asia/Dubai"</li><li class="list-group-item enum-item">"Asia/Dushanbe"</li><li class="list-group-item enum-item">"Asia/Famagusta"</li><li class="list-group-item enum-item">"Asia/Gaza"</li><li class="list-group-item enum-item">"Asia/Harbin"</li><li class="list-group-item enum-item">"Asia/Hebron"</li><li class="list-group-item enum-item">"Asia/Ho_Chi_Minh"</li><li class="list-group-item enum-item">"Asia/Hong_Kong"</li><li class="list-group-item enum-item">"Asia/Hovd"</li><li class="list-group-item enum-item">"Asia/Irkutsk"</li><li class="list-group-item enum-item">"Asia/Istanbul"</li><li class="list-group-item enum-item">"Asia/Jakarta"</li><li class="list-group-item enum-item">"Asia/Jayapura"</li><li class="list-group-item enum-item">"Asia/Jerusalem"</li><li class="list-group-item enum-item">"Asia/Kabul"</li><li class="list-group-item enum-item">"Asia/Kamchatka"</li><li class="list-group-item enum-item">"Asia/Karachi"</li><li class="list-group-item enum-item">"Asia/Kashgar"</li><li class="list-group-item enum-item">"Asia/Kathmandu"</li><li class="list-group-item enum-item">"Asia/Katmandu"</li><li class="list-group-item enum-item">"Asia/Khandyga"</li><li class="list-group-item enum-item">"Asia/Kolkata"</li><li class="list-group-item enum-item">"Asia/Krasnoyarsk"</li><li class="list-group-item enum-item">"Asia/Kuala_Lumpur"</li><li class="list-group-item enum-item">"Asia/Kuching"</li><li class="list-group-item enum-item">"Asia/Kuwait"</li><li class="list-group-item enum-item">"Asia/Macao"</li><li class="list-group-item enum-item">"Asia/Macau"</li><li class="list-group-item enum-item">"Asia/Magadan"</li><li class="list-group-item enum-item">"Asia/Makassar"</li><li class="list-group-item enum-item">"Asia/Manila"</li><li class="list-group-item enum-item">"Asia/Muscat"</li><li class="list-group-item enum-item">"Asia/Nicosia"</li><li class="list-group-item enum-item">"Asia/Novokuznetsk"</li><li class="list-group-item enum-item">"Asia/Novosibirsk"</li><li class="list-group-item enum-item">"Asia/Omsk"</li><li class="list-group-item enum-item">"Asia/Oral"</li><li class="list-group-item enum-item">"Asia/Phnom_Penh"</li><li class="list-group-item enum-item">"Asia/Pontianak"</li><li class="list-group-item enum-item">"Asia/Pyongyang"</li><li class="list-group-item enum-item">"Asia/Qatar"</li><li class="list-group-item enum-item">"Asia/Qostanay"</li><li class="list-group-item enum-item">"Asia/Qyzylorda"</li><li class="list-group-item enum-item">"Asia/Rangoon"</li><li class="list-group-item enum-item">"Asia/Riyadh"</li><li class="list-group-item enum-item">"Asia/Saigon"</li><li class="list-group-item enum-item">"Asia/Sakhalin"</li><li class="list-group-item enum-item">"Asia/Samarkand"</li><li class="list-group-item enum-item">"Asia/Seoul"</li><li class="list-group-item enum-item">"Asia/Shanghai"</li><li class="list-group-item enum-item">"Asia/Singapore"</li><li class="list-group-item enum-item">"Asia/Srednekolymsk"</li><li class="list-group-item enum-item">"Asia/Taipei"</li><li class="list-group-item enum-item">"Asia/Tashkent"</li><li class="list-group-item enum-item">"Asia/Tbilisi"</li><li class="list-group-item enum-item">"Asia/Tehran"</li><li class="list-group-item enum-item">"Asia/Tel_Aviv"</li><li class="list-group-item enum-item">"Asia/Thimbu"</li><li class="list-group-item enum-item">"Asia/Thimphu"</li><li class="list-group-item enum-item">"Asia/Tokyo"</li><li class="list-group-item enum-item">"Asia/Tomsk"</li><li class="list-group-item enum-item">"Asia/Ujung_Pandang"</li><li class="list-group-item enum-item">"Asia/Ulaanbaatar"</li><li class="list-group-item enum-item">"Asia/Ulan_Bator"</li><li class="list-group-item enum-item">"Asia/Urumqi"</li><li class="list-group-item enum-item">"Asia/Ust-Nera"</li><li class="list-group-item enum-item">"Asia/Vientiane"</li><li class="list-group-item enum-item">"Asia/Vladivostok"</li><li class="list-group-item enum-item">"Asia/Yakutsk"</li><li class="list-group-item enum-item">"Asia/Yangon"</li><li class="list-group-item enum-item">"Asia/Yekaterinburg"</li><li class="list-group-item enum-item">"Asia/Yerevan"</li><li class="list-group-item enum-item">"Atlantic/Azores"</li><li class="list-group-item enum-item">"Atlantic/Bermuda"</li><li class="list-group-item enum-item">"Atlantic/Canary"</li><li class="list-group-item enum-item">"Atlantic/Cape_Verde"</li><li class="list-group-item enum-item">"Atlantic/Faeroe"</li><li class="list-group-item enum-item">"Atlantic/Faroe"</li><li class="list-group-item enum-item">"Atlantic/Jan_Mayen"</li><li class="list-group-item enum-item">"Atlantic/Madeira"</li><li class="list-group-item enum-item">"Atlantic/Reykjavik"</li><li class="list-group-item enum-item">"Atlantic/South_Georgia"</li><li class="list-group-item enum-item">"Atlantic/St_Helena"</li><li class="list-group-item enum-item">"Atlantic/Stanley"</li><li class="list-group-item enum-item">"Australia/ACT"</li><li class="list-group-item enum-item">"Australia/Adelaide"</li><li class="list-group-item enum-item">"Australia/Brisbane"</li><li class="list-group-item enum-item">"Australia/Broken_Hill"</li><li class="list-group-item enum-item">"Australia/Canberra"</li><li class="list-group-item enum-item">"Australia/Currie"</li><li class="list-group-item enum-item">"Australia/Darwin"</li><li class="list-group-item enum-item">"Australia/Eucla"</li><li class="list-group-item enum-item">"Australia/Hobart"</li><li class="list-group-item enum-item">"Australia/LHI"</li><li class="list-group-item enum-item">"Australia/Lindeman"</li><li class="list-group-item enum-item">"Australia/Lord_Howe"</li><li class="list-group-item enum-item">"Australia/Melbourne"</li><li class="list-group-item enum-item">"Australia/North"</li><li class="list-group-item enum-item">"Australia/NSW"</li><li class="list-group-item enum-item">"Australia/Perth"</li><li class="list-group-item enum-item">"Australia/Queensland"</li><li class="list-group-item enum-item">"Australia/South"</li><li class="list-group-item enum-item">"Australia/Sydney"</li><li class="list-group-item enum-item">"Australia/Tasmania"</li><li class="list-group-item enum-item">"Australia/Victoria"</li><li class="list-group-item enum-item">"Australia/West"</li><li class="list-group-item enum-item">"Australia/Yancowinna"</li><li class="list-group-item enum-item">"Brazil/Acre"</li><li class="list-group-item enum-item">"Brazil/DeNoronha"</li><li class="list-group-item enum-item">"Brazil/East"</li><li class="list-group-item enum-item">"Brazil/West"</li><li class="list-group-item enum-item">"Canada/Atlantic"</li><li class="list-group-item enum-item">"Canada/Central"</li><li class="list-group-item enum-item">"Canada/Eastern"</li><li class="list-group-item enum-item">"Canada/Mountain"</li><li class="list-group-item enum-item">"Canada/Newfoundland"</li><li class="list-group-item enum-item">"Canada/Pacific"</li><li class="list-group-item enum-item">"Canada/Saskatchewan"</li><li class="list-group-item enum-item">"Canada/Yukon"</li><li class="list-group-item enum-item">"Chile/Continental"</li><li class="list-group-item enum-item">"Chile/EasterIsland"</li><li class="list-group-item enum-item">"Cuba"</li><li class="list-group-item enum-item">"Egypt"</li><li class="list-group-item enum-item">"Eire"</li><li class="list-group-item enum-item">"Etc/GMT"</li><li class="list-group-item enum-item">"Etc/GMT+0"</li><li class="list-group-item enum-item">"Etc/GMT+1"</li><li class="list-group-item enum-item">"Etc/GMT+10"</li><li class="list-group-item enum-item">"Etc/GMT+11"</li><li class="list-group-item enum-item">"Etc/GMT+12"</li><li class="list-group-item enum-item">"Etc/GMT+2"</li><li class="list-group-item enum-item">"Etc/GMT+3"</li><li class="list-group-item enum-item">"Etc/GMT+4"</li><li class="list-group-item enum-item">"Etc/GMT+5"</li><li class="list-group-item enum-item">"Etc/GMT+6"</li><li class="list-group-item enum-item">"Etc/GMT+7"</li><li class="list-group-item enum-item">"Etc/GMT+8"</li><li class="list-group-item enum-item">"Etc/GMT+9"</li><li class="list-group-item enum-item">"Etc/GMT-0"</li><li class="list-group-item enum-item">"Etc/GMT-1"</li><li class="list-group-item enum-item">"Etc/GMT-10"</li><li class="list-group-item enum-item">"Etc/GMT-11"</li><li class="list-group-item enum-item">"Etc/GMT-12"</li><li class="list-group-item enum-item">"Etc/GMT-13"</li><li class="list-group-item enum-item">"Etc/GMT-14"</li><li class="list-group-item enum-item">"Etc/GMT-2"</li><li class="list-group-item enum-item">"Etc/GMT-3"</li><li class="list-group-item enum-item">"Etc/GMT-4"</li><li class="list-group-item enum-item">"Etc/GMT-5"</li><li class="list-group-item enum-item">"Etc/GMT-6"</li><li class="list-group-item enum-item">"Etc/GMT-7"</li><li class="list-group-item enum-item">"Etc/GMT-8"</li><li class="list-group-item enum-item">"Etc/GMT-9"</li><li class="list-group-item enum-item">"Etc/GMT0"</li><li class="list-group-item enum-item">"Etc/Greenwich"</li><li class="list-group-item enum-item">"Etc/UCT"</li><li class="list-group-item enum-item">"Etc/Universal"</li><li class="list-group-item enum-item">"Etc/UTC"</li><li class="list-group-item enum-item">"Etc/Zulu"</li><li class="list-group-item enum-item">"Europe/Amsterdam"</li><li class="list-group-item enum-item">"Europe/Andorra"</li><li class="list-group-item enum-item">"Europe/Astrakhan"</li><li class="list-group-item enum-item">"Europe/Athens"</li><li class="list-group-item enum-item">"Europe/Belfast"</li><li class="list-group-item enum-item">"Europe/Belgrade"</li><li class="list-group-item enum-item">"Europe/Berlin"</li><li class="list-group-item enum-item">"Europe/Bratislava"</li><li class="list-group-item enum-item">"Europe/Brussels"</li><li class="list-group-item enum-item">"Europe/Bucharest"</li><li class="list-group-item enum-item">"Europe/Budapest"</li><li class="list-group-item enum-item">"Europe/Busingen"</li><li class="list-group-item enum-item">"Europe/Chisinau"</li><li class="list-group-item enum-item">"Europe/Copenhagen"</li><li class="list-group-item enum-item">"Europe/Dublin"</li><li class="list-group-item enum-item">"Europe/Gibraltar"</li><li class="list-group-item enum-item">"Europe/Guernsey"</li><li class="list-group-item enum-item">"Europe/Helsinki"</li><li class="list-group-item enum-item">"Europe/Isle_of_Man"</li><li class="list-group-item enum-item">"Europe/Istanbul"</li><li class="list-group-item enum-item">"Europe/Jersey"</li><li class="list-group-item enum-item">"Europe/Kaliningrad"</li><li class="list-group-item enum-item">"Europe/Kiev"</li><li class="list-group-item enum-item">"Europe/Kirov"</li><li class="list-group-item enum-item">"Europe/Kyiv"</li><li class="list-group-item enum-item">"Europe/Lisbon"</li><li class="list-group-item enum-item">"Europe/Ljubljana"</li><li class="list-group-item enum-item">"Europe/London"</li><li class="list-group-item enum-item">"Europe/Luxembourg"</li><li class="list-group-item enum-item">"Europe/Madrid"</li><li class="list-group-item enum-item">"Europe/Malta"</li><li class="list-group-item enum-item">"Europe/Mariehamn"</li><li class="list-group-item enum-item">"Europe/Minsk"</li><li class="list-group-item enum-item">"Europe/Monaco"</li><li class="list-group-item enum-item">"Europe/Moscow"</li><li class="list-group-item enum-item">"Europe/Nicosia"</li><li class="list-group-item enum-item">"Europe/Oslo"</li><li class="list-group-item enum-item">"Europe/Paris"</li><li class="list-group-item enum-item">"Europe/Podgorica"</li><li class="list-group-item enum-item">"Europe/Prague"</li><li class="list-group-item enum-item">"Europe/Riga"</li><li class="list-group-item enum-item">"Europe/Rome"</li><li class="list-group-item enum-item">"Europe/Samara"</li><li class="list-group-item enum-item">"Europe/San_Marino"</li><li class="list-group-item enum-item">"Europe/Sarajevo"</li><li class="list-group-item enum-item">"Europe/Saratov"</li><li class="list-group-item enum-item">"Europe/Simferopol"</li><li class="list-group-item enum-item">"Europe/Skopje"</li><li class="list-group-item enum-item">"Europe/Sofia"</li><li class="list-group-item enum-item">"Europe/Stockholm"</li><li class="list-group-item enum-item">"Europe/Tallinn"</li><li class="list-group-item enum-item">"Europe/Tirane"</li><li class="list-group-item enum-item">"Europe/Tiraspol"</li><li class="list-group-item enum-item">"Europe/Ulyanovsk"</li><li class="list-group-item enum-item">"Europe/Uzhgorod"</li><li class="list-group-item enum-item">"Europe/Vaduz"</li><li class="list-group-item enum-item">"Europe/Vatican"</li><li class="list-group-item enum-item">"Europe/Vienna"</li><li class="list-group-item enum-item">"Europe/Vilnius"</li><li class="list-group-item enum-item">"Europe/Volgograd"</li><li class="list-group-item enum-item">"Europe/Warsaw"</li><li class="list-group-item enum-item">"Europe/Zagreb"</li><li class="list-group-item enum-item">"Europe/Zaporozhye"</li><li class="list-group-item enum-item">"Europe/Zurich"</li><li class="list-group-item enum-item">"GB"</li><li class="list-group-item enum-item">"GB-Eire"</li><li class="list-group-item enum-item">"Hongkong"</li><li class="list-group-item enum-item">"Iceland"</li><li class="list-group-item enum-item">"Indian/Antananarivo"</li><li class="list-group-item enum-item">"Indian/Chagos"</li><li class="list-group-item enum-item">"Indian/Christmas"</li><li class="list-group-item enum-item">"Indian/Cocos"</li><li class="list-group-item enum-item">"Indian/Comoro"</li><li class="list-group-item enum-item">"Indian/Kerguelen"</li><li class="list-group-item enum-item">"Indian/Mahe"</li><li class="list-group-item enum-item">"Indian/Maldives"</li><li class="list-group-item enum-item">"Indian/Mauritius"</li><li class="list-group-item enum-item">"Indian/Mayotte"</li><li class="list-group-item enum-item">"Indian/Reunion"</li><li class="list-group-item enum-item">"Iran"</li><li class="list-group-item enum-item">"Israel"</li><li class="list-group-item enum-item">"Jamaica"</li><li class="list-group-item enum-item">"Japan"</li><li class="list-group-item enum-item">"Kwajalein"</li><li class="list-group-item enum-item">"Libya"</li><li class="list-group-item enum-item">"Mexico/BajaNorte"</li><li class="list-group-item enum-item">"Mexico/BajaSur"</li><li class="list-group-item enum-item">"Mexico/General"</li><li class="list-group-item enum-item">"Navajo"</li><li class="list-group-item enum-item">"NZ"</li><li class="list-group-item enum-item">"NZ-CHAT"</li><li class="list-group-item enum-item">"Pacific/Apia"</li><li class="list-group-item enum-item">"Pacific/Auckland"</li><li class="list-group-item enum-item">"Pacific/Bougainville"</li><li class="list-group-item enum-item">"Pacific/Chatham"</li><li class="list-group-item enum-item">"Pacific/Chuuk"</li><li class="list-group-item enum-item">"Pacific/Easter"</li><li class="list-group-item enum-item">"Pacific/Efate"</li><li class="list-group-item enum-item">"Pacific/Enderbury"</li><li class="list-group-item enum-item">"Pacific/Fakaofo"</li><li class="list-group-item enum-item">"Pacific/Fiji"</li><li class="list-group-item enum-item">"Pacific/Funafuti"</li><li class="list-group-item enum-item">"Pacific/Galapagos"</li><li class="list-group-item enum-item">"Pacific/Gambier"</li><li class="list-group-item enum-item">"Pacific/Guadalcanal"</li><li class="list-group-item enum-item">"Pacific/Guam"</li><li class="list-group-item enum-item">"Pacific/Honolulu"</li><li class="list-group-item enum-item">"Pacific/Johnston"</li><li class="list-group-item enum-item">"Pacific/Kanton"</li><li class="list-group-item enum-item">"Pacific/Kiritimati"</li><li class="list-group-item enum-item">"Pacific/Kosrae"</li><li class="list-group-item enum-item">"Pacific/Kwajalein"</li><li class="list-group-item enum-item">"Pacific/Majuro"</li><li class="list-group-item enum-item">"Pacific/Marquesas"</li><li class="list-group-item enum-item">"Pacific/Midway"</li><li class="list-group-item enum-item">"Pacific/Nauru"</li><li class="list-group-item enum-item">"Pacific/Niue"</li><li class="list-group-item enum-item">"Pacific/Norfolk"</li><li class="list-group-item enum-item">"Pacific/Noumea"</li><li class="list-group-item enum-item">"Pacific/Pago_Pago"</li><li class="list-group-item enum-item">"Pacific/Palau"</li><li class="list-group-item enum-item">"Pacific/Pitcairn"</li><li class="list-group-item enum-item">"Pacific/Pohnpei"</li><li class="list-group-item enum-item">"Pacific/Ponape"</li><li class="list-group-item enum-item">"Pacific/Port_Moresby"</li><li class="list-group-item enum-item">"Pacific/Rarotonga"</li><li class="list-group-item enum-item">"Pacific/Saipan"</li><li class="list-group-item enum-item">"Pacific/Samoa"</li><li class="list-group-item enum-item">"Pacific/Tahiti"</li><li class="list-group-item enum-item">"Pacific/Tarawa"</li><li class="list-group-item enum-item">"Pacific/Tongatapu"</li><li class="list-group-item enum-item">"Pacific/Truk"</li><li class="list-group-item enum-item">"Pacific/Wake"</li><li class="list-group-item enum-item">"Pacific/Wallis"</li><li class="list-group-item enum-item">"Pacific/Yap"</li><li class="list-group-item enum-item">"Poland"</li><li class="list-group-item enum-item">"Portugal"</li><li class="list-group-item enum-item">"PRC"</li><li class="list-group-item enum-item">"ROC"</li><li class="list-group-item enum-item">"Singapore"</li><li class="list-group-item enum-item">"US/Alaska"</li><li class="list-group-item enum-item">"US/Aleutian"</li><li class="list-group-item enum-item">"US/Arizona"</li><li class="list-group-item enum-item">"US/Central"</li><li class="list-group-item enum-item">"US/East-Indiana"</li><li class="list-group-item enum-item">"US/Eastern"</li><li class="list-group-item enum-item">"US/Hawaii"</li><li class="list-group-item enum-item">"US/Indiana-Starke"</li><li class="list-group-item enum-item">"US/Michigan"</li><li class="list-group-item enum-item">"US/Mountain"</li><li class="list-group-item enum-item">"US/Pacific"</li><li class="list-group-item enum-item">"US/Samoa"</li></ul>
             </div>
+        
 
+        
+        
 
-
-
-
-
+        
             </div>
         </div>
     </div>
@@ -2434,12 +2434,12 @@
 
     <span class="badge badge-dark value-type">Type: object or string</span><br/>
 <span class="description">The template table to replicate objects such as constraints, indexes, triggers from.</span> <span class="badge badge-info no-additional">No Additional Properties</span>
+        
 
+        
+        
 
-
-
-
-
+        
 <div class="accordion" id="accordiongenerates_tables_items_template_table_table_schema">
     <div class="card">
         <div class="card-header" id="headinggenerates_tables_items_template_table_table_schema">
@@ -2457,17 +2457,17 @@
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">The schema of a table.</span>
 
+    
 
+    
 
+    
+        
 
-
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_tables_items_template_table_table_schema_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>
@@ -2489,15 +2489,15 @@
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">The name of a table.</span>
 
+    
 
+    
+        
 
-
-
-
-
+        
         <p><span class="badge badge-light restriction min-length-restriction" id="generates_tables_items_template_table_table_name_minLength">Must be at least <code>1</code> characters long</span></p>
 
-
+        
             </div>
         </div>
     </div>

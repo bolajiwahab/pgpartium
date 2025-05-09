@@ -21,6 +21,7 @@ repos:
         stages: [pre-commit]
         name: Trim Trailing Whitespace
         entry: trailing-whitespace-fixer
+        exclude: docs/docs
         language: python
         types: [text]
 
@@ -28,6 +29,7 @@ repos:
         stages: [pre-commit]
         name: Add a blank line at end of a file
         entry: end-of-file-fixer
+        exclude: docs/docs
         language: python
         types: [text]
 
