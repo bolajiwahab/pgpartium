@@ -923,10 +923,10 @@
                     "$ref": "#/definitions/timezone"
                 },
                 "tables": {
-                    "description": "List of tables to make or expire partitions for.",
+                    "description": "List of tables to run partition maintenance for.",
                     "type": "array",
                     "items": {
-                        "description": "The table to make or expire partitions for.",
+                        "description": "The table to run partition maintenance for.",
                         "type": "object",
                         "properties": {
                             "table_schema": {
