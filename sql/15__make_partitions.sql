@@ -210,7 +210,7 @@ BEGIN
     SELECT INTO v_start_timestamp
                 COALESCE(
                     (
-                        SELECT lower_bound
+                        SELECT upper_bound
                           FROM pgpartium.get_latest_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
                     )
                   , now()
@@ -219,7 +219,7 @@ BEGIN
     FOR v_partitions IN
         WITH dateset AS (
             SELECT "date"
-              FROM generate_series((date_trunc(substring(p_interval::text FROM '\d+\s*(\w+)'), v_start_timestamp) - (p_interval * p_past)), (now() + (p_interval * p_future)), p_interval) AS "date"
+              FROM generate_series((date_trunc(substring(p_interval::text FROM '\d+\s*(\w+)'), v_start_timestamp) - (p_interval * p_past)), (v_start_timestamp + (p_interval * p_future)), p_interval) AS "date"
         )
         SELECT replace(
                     replace(

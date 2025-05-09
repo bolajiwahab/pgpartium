@@ -182,7 +182,7 @@ EOF
         echo "INFO: Expired partitions for ${table_schema}.${table_name}"
         printf "\n\nExpires partitions for  \`%s\`\n\n" "${table_schema}.${table_name}" >> /src/partition_maintenance.log
     else
-        echo "INFO: No expired partitions for ${table_schema}.${table_name}"
+        echo "INFO: No partitions expired for ${table_schema}.${table_name}"
         rm "${temp_migration_directory}/${output_filename}"
     fi
 
