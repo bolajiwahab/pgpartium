@@ -257,11 +257,18 @@ BEGIN
         ) THEN
 
             -- Get constraint definition.
+                --             '        CONSTRAINT '
+                -- || format('%1$I', replace(constraint_name, p_template_table_name, v_partitions.partition_name))
+                -- || ' '
+                -- || constraint_definition,
+                -- E',\n'
+                -- CONSTRAINT public__transactions__2025_03_user_id_key UNIQUE (user_id)
             SELECT string_agg(
-                '        CONSTRAINT '
-                || format('%1$I', replace(constraint_name, p_template_table_name, v_partitions.partition_name))
-                || ' '
-                || constraint_definition,
+                format(
+                '        CONSTRAINT %1$I %2$s'
+                , replace(constraint_name, p_template_table_name, v_partitions.partition_name)
+                , constraint_definition
+            ),
                 E',\n'
                 ORDER BY CASE constraint_type
                     WHEN 'p'
