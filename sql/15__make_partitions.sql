@@ -307,16 +307,16 @@ BEGIN
                   , CASE
                       WHEN p_index_tablespace != 'pg_default'
                         THEN format(E'\nTABLESPACE %1$I\n %2$s', p_index_tablespace, index_predicate)
-                      ELSE format(E'\n %1$s', index_predicate)
+                      ELSE format(E'\n %1$s', COALESCE(index_predicate, ''))
                     END
                     -- || E'\n ' || COALESCE(index_predicate, '')
                     )
-                    || CASE
-                         WHEN index_predicate IS NULL AND p_index_tablespace != 'pg_default'
-                           THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
-                         ELSE ''
-                       END
-                    || E';\n'
+                    -- || CASE
+                    --      WHEN index_predicate IS NULL AND p_index_tablespace != 'pg_default'
+                    --        THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
+                    --      ELSE ''
+                    --    END
+                    -- || E';\n'
                     , E'\n'
                     ORDER BY CASE is_unique_index
                         WHEN true
