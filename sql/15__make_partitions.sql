@@ -289,11 +289,12 @@ BEGIN
                 replace(
                     format(
                         E'CREATE %1$s %2$I\n    ON %3$I.%4$I\n %5$s'
-                      , CASE                               --<1>
-                          WHEN is_unique_index
-                            THEN 'UNIQUE INDEX'
-                          ELSE 'INDEX'
-                        END
+                      , CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END
+                    --   , CASE                               --<1>
+                    --       WHEN is_unique_index
+                    --         THEN 'UNIQUE INDEX'
+                    --       ELSE 'INDEX'
+                    --     END
                       , replace(                           --<2>
                             index_name
                           , p_template_table_name
