@@ -58,19 +58,19 @@ BEGIN
     IF v_partitioning_details.strategy != 'RANGE' THEN
         RAISE '"%" partitioning is not supported', v_partitioning_details.strategy
         USING ERRCODE = 'feature_not_supported',
-                 HINT = 'table ' || '"' || p_table_schema || '"' || '.' || '"' || p_table_name || '"' || ' must be partitioned by range';
+                 HINT = format('table "%1$I"."%2$I" must be partitioned by range', p_table_schema, p_table_name);
     END IF;
 
     IF v_partitioning_details.number_of_keys > 1 THEN
         RAISE 'multi column partitioned tables are not supported'
         USING ERRCODE = 'feature_not_supported',
-                 HINT = 'table ' || '"' || p_table_schema || '"' || '.' || '"' || p_table_name || '"' || ' is partitioned on more than one column';
+                 HINT = format('table "%1$I"."%2$I" is partitioned on more than one column', p_table_schema, p_table_name)
     END IF;
 
     IF v_partitioning_details.keys_data_types NOT IN ('date', 'timestamptz', 'timestamp', 'int4', 'int8', 'uuid') THEN
         RAISE 'partitioning on data type "%" is not supported', v_partitioning_details.keys_data_types
         USING ERRCODE = 'feature_not_supported',
-               DETAIL = 'table ' || '"' || p_table_schema || '"' || '.' || '"' || p_table_name || '"' || ' is partitioned on a data type that is not supported',
+               DETAIL = format('table "%1$I"."%2$I" is partitioned on a data type that is not supported', p_table_schema, p_table_name),
                  HINT = 'supported data types are: date, timestamp with time zone, timestamp without time zone, integer, bigint, and uuid';
     END IF;
 
