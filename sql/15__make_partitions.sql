@@ -303,13 +303,13 @@ BEGIN
                       , v_partitions.partition_name        --<4>
                       , index_definition                   --<5>
                     )
-                        , COALESCE(' ' || index_predicate, '')
-                        , CASE
-                            WHEN p_index_tablespace != 'pg_default'
-                              THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
-                            ELSE ''
-                          END
-                          || E'\n ' || COALESCE(index_predicate, '')
+                  , COALESCE(' ' || index_predicate, '')
+                  , CASE
+                      WHEN p_index_tablespace != 'pg_default'
+                        THEN format(E'\nTABLESPACE %1$I\n %2$s', p_index_tablespace, COALESCE(index_predicate, ''))
+                      ELSE ''
+                    END
+                    -- || E'\n ' || COALESCE(index_predicate, '')
                     )
                     || CASE
                          WHEN index_predicate IS NULL AND p_index_tablespace != 'pg_default'
