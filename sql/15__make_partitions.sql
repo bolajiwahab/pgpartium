@@ -64,7 +64,7 @@ BEGIN
     IF v_partitioning_details.number_of_keys > 1 THEN
         RAISE 'multi column partitioned tables are not supported'
         USING ERRCODE = 'feature_not_supported',
-                 HINT = format('table "%1$I"."%2$I" is partitioned on more than one column', p_table_schema, p_table_name)
+                 HINT = format('table "%1$I"."%2$I" is partitioned on more than one column', p_table_schema, p_table_name);
     END IF;
 
     IF v_partitioning_details.keys_data_types NOT IN ('date', 'timestamptz', 'timestamp', 'int4', 'int8', 'uuid') THEN
