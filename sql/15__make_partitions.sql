@@ -258,29 +258,29 @@ BEGIN
 
             -- Get constraint definition.
             SELECT string_agg(
-                format(
-                    '        CONSTRAINT %1$I %2$s'
-                  , replace(                           --<1>
-                        constraint_name
-                      , p_template_table_name
-                      , v_partitions.partition_name
-                    )
-                  , constraint_definition              --<2>
-                )
-              , E',\n'
-                ORDER BY CASE constraint_type
-                           WHEN 'p'
-                             THEN 0
-                           WHEN 'u'
-                             THEN 1
-                           ELSE 2
-                         END
-                       , replace(
-                             constraint_name
-                           , p_template_table_name
-                           , v_partitions.partition_name
-                         )
-              )
+                        format(
+                            '        CONSTRAINT %1$I %2$s'
+                          , replace(                           --<1>
+                                constraint_name
+                              , p_template_table_name
+                              , v_partitions.partition_name
+                            )
+                          , constraint_definition              --<2>
+                        )
+                      , E',\n'
+                        ORDER BY CASE constraint_type
+                                   WHEN 'p'
+                                     THEN 0
+                                   WHEN 'u'
+                                     THEN 1
+                                   ELSE 2
+                                 END
+                               , replace(
+                                     constraint_name
+                                   , p_template_table_name
+                                   , v_partitions.partition_name
+                                 )
+                   )
               INTO v_constraints
               FROM partition_constraints;
 
@@ -306,8 +306,8 @@ BEGIN
                   , COALESCE(' ' || index_predicate, '')
                   , CASE
                       WHEN p_index_tablespace != 'pg_default'
-                        THEN format(E'\nTABLESPACE %1$I\n %2$s', p_index_tablespace, COALESCE(index_predicate, ''))
-                      ELSE format(E'\n %1$s', COALESCE(index_predicate, ''))
+                        THEN format(E'\nTABLESPACE %1$I\n %2$s', p_index_tablespace, index_predicate)
+                      ELSE format(E'\n %1$s', index_predicate)
                     END
                     -- || E'\n ' || COALESCE(index_predicate, '')
                     )
