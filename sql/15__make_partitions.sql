@@ -289,12 +289,11 @@ BEGIN
                 replace(
                     format(
                         E'CREATE %1$s %2$I\n    ON %3$I.%4$I\n %5$s'
-                      , CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END
-                    --   , CASE                               --<1>
-                    --       WHEN is_unique_index
-                    --         THEN 'UNIQUE INDEX'
-                    --       ELSE 'INDEX'
-                    --     END
+                      , CASE                               --<1>
+                          WHEN is_unique_index
+                            THEN 'UNIQUE INDEX'
+                          ELSE 'INDEX'
+                        END
                       , replace(                           --<2>
                             index_name
                           , p_template_table_name
@@ -305,11 +304,12 @@ BEGIN
                       , index_definition                   --<5>
                     )
                   , COALESCE(' ' || index_predicate, '')
-                  , CASE
-                      WHEN p_index_tablespace != 'pg_default' -- AND index_predicate IS NOT NULL
-                        THEN format(E'\nTABLESPACE %1$I\n %2$s', p_index_tablespace, COALESCE(index_predicate, ''))
-                      ELSE format(E'\n %1$s', COALESCE(index_predicate, ''))
-                    END
+                  , ''
+                --   , CASE
+                --       WHEN p_index_tablespace != 'pg_default' -- AND index_predicate IS NOT NULL
+                --         THEN format(E'\nTABLESPACE %1$I\n %2$s', p_index_tablespace, COALESCE(index_predicate, ''))
+                --       ELSE format(E'\n %1$s', COALESCE(index_predicate, ''))
+                --     END
                     -- || E'\n ' || COALESCE(index_predicate, '')
                 )
                     || CASE
