@@ -310,12 +310,12 @@ BEGIN
                       ELSE format(E'\n %1$s', COALESCE(index_predicate, ''))
                     END
                     -- || E'\n ' || COALESCE(index_predicate, '')
-                    )
-                    -- || CASE
-                    --      WHEN index_predicate IS NULL AND p_index_tablespace != 'pg_default'
-                    --        THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
-                    --      ELSE ''
-                    --    END
+                )
+                    || CASE
+                         WHEN index_predicate IS NULL AND p_index_tablespace != 'pg_default'
+                           THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
+                         ELSE ''
+                       END
                     || E';\n'
                     , E'\n'
                     ORDER BY CASE is_unique_index
