@@ -316,7 +316,7 @@ BEGIN
                     --        THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
                     --      ELSE ''
                     --    END
-                    -- || E';\n'
+                    || E';\n'
                     , E'\n'
                     ORDER BY CASE is_unique_index
                         WHEN true
