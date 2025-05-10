@@ -259,32 +259,50 @@ BEGIN
             -- Get constraint definition.
             SELECT string_agg(
                 format(
-                '        CONSTRAINT %1$I %2$s'
-                , replace(constraint_name, p_template_table_name, v_partitions.partition_name)
-                , constraint_definition
-            ),
-                E',\n'
+                    '        CONSTRAINT %1$I %2$s'
+                  , replace(                           --<1>
+                        constraint_name
+                      , p_template_table_name
+                      , v_partitions.partition_name
+                    )
+                  , constraint_definition              --<2>
+                )
+              , E',\n'
                 ORDER BY CASE constraint_type
-                    WHEN 'p'
-                      THEN 0
-                    WHEN 'u'
-                      THEN 1
-                    ELSE 2
-                END, replace(constraint_name, p_template_table_name, v_partitions.partition_name)
-            ) INTO v_constraints
-            FROM partition_constraints;
+                           WHEN 'p'
+                             THEN 0
+                           WHEN 'u'
+                             THEN 1
+                           ELSE 2
+                         END
+                       , replace(
+                             constraint_name
+                           , p_template_table_name
+                           , v_partitions.partition_name
+                         )
+              )
+              INTO v_constraints
+              FROM partition_constraints;
 
             -- Get index create statement.
             SELECT string_agg(
-                    replace(
-                        format(
-                            E'CREATE %1$s %2$I\n    ON ',
-                            CASE WHEN is_unique_index THEN 'UNIQUE INDEX' ELSE 'INDEX' END,
-                            replace(index_name, p_template_table_name, v_partitions.partition_name)
+                replace(
+                    format(
+                        E'CREATE %1$s %2$I\n    ON %3$I.%4$I\n %5$s'
+                      , CASE                               --<1>
+                          WHEN is_unique_index
+                            THEN 'UNIQUE INDEX'
+                          ELSE 'INDEX'
+                        END
+                      , replace(                           --<2>
+                            index_name
+                          , p_template_table_name
+                          , v_partitions.partition_name
                         )
-                        || format('%1$I.%2$I', v_partition_schema, v_partitions.partition_name)
-                        || E'\n '
-                        || index_definition
+                      , v_partition_schema                 --<3>
+                      , v_partitions.partition_name        --<4>
+                      , index_definition                   --<5>
+                    )
                         , COALESCE(' ' || index_predicate, '')
                         , CASE
                             WHEN p_index_tablespace != 'pg_default'
