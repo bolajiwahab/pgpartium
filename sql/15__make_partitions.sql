@@ -307,7 +307,7 @@ BEGIN
                   , CASE
                       WHEN p_index_tablespace != 'pg_default'
                         THEN format(E'\nTABLESPACE %1$I\n %2$s', p_index_tablespace, COALESCE(index_predicate, ''))
-                      ELSE COALESCE(index_predicate, '')
+                      ELSE format(E'\n %1$s', COALESCE(index_predicate, ''))
                     END
                     -- || E'\n ' || COALESCE(index_predicate, '')
                     )
