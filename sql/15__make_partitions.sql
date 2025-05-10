@@ -257,12 +257,6 @@ BEGIN
         ) THEN
 
             -- Get constraint definition.
-                --             '        CONSTRAINT '
-                -- || format('%1$I', replace(constraint_name, p_template_table_name, v_partitions.partition_name))
-                -- || ' '
-                -- || constraint_definition,
-                -- E',\n'
-                -- CONSTRAINT public__transactions__2025_03_user_id_key UNIQUE (user_id)
             SELECT string_agg(
                 format(
                 '        CONSTRAINT %1$I %2$s'
@@ -283,10 +277,11 @@ BEGIN
             -- Get index create statement.
             SELECT string_agg(
                     replace(
-                        'CREATE '
-                        || CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END
-                        || format('%1$I', replace(index_name, p_template_table_name, v_partitions.partition_name))
-                        || E'\n    ON '
+                        format(
+                            E'CREATE %1$s %2$I \n    ON ',
+                            CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END,
+                            replace(index_name, p_template_table_name, v_partitions.partition_name)
+                        )
                         || format('%1$I.%2$I', v_partition_schema, v_partitions.partition_name)
                         || E'\n '
                         || index_definition
