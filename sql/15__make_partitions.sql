@@ -279,7 +279,7 @@ BEGIN
                     replace(
                         format(
                             E'CREATE %1$s %2$I \n    ON ',
-                            CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END,
+                            CASE WHEN is_unique_index THEN 'UNIQUE INDEX' ELSE 'INDEX' END,
                             replace(index_name, p_template_table_name, v_partitions.partition_name)
                         )
                         || format('%1$I.%2$I', v_partition_schema, v_partitions.partition_name)
