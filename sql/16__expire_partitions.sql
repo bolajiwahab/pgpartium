@@ -35,7 +35,7 @@ BEGIN
     IF p_detach_only THEN
         RETURN QUERY SELECT string_agg(
             format(
-                E'ALTER TABLE %1$I.%2$I\n    DETACH PARTITION %3$I.%4$I%5$s;\n'
+                E'ALTER TABLE %1$I.%2$I\n    DETACH PARTITION %3$I.%4$I%5$s;\n',
 /*
 This alignment is needed to have the right indentation in the generated migration scripts.
 We could use new lines characters instead for the alignment, but that would require escaping with `E`
