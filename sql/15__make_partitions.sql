@@ -461,16 +461,13 @@ $SQL$,          v_partition_schema                                              
                 END
             );
 
-            -- IF v_indexes IS NOT NULL THEN
-            -- v_ddl := format(E'%1$s\n%2$s', v_ddl, v_indexes);
+            -- We cannot use format here because NULL is treated as an empty string for `s` formats.
             v_ddl := COALESCE(v_ddl || E'\n' || v_indexes, v_ddl);
-                -- v_ddl := COALESCE(v_ddl || E' (\n' || v_constraints || E'\n    )', '')
-                -- v_ddl := v_ddl || E'\n' || v_indexes;
-            -- END IF;
+            v_ddl := COALESCE(v_ddl || E'\n' || v_triggers, v_ddl);
 
-            IF v_triggers IS NOT NULL THEN
-                v_ddl := v_ddl || E'\n' || v_triggers;
-            END IF;
+            -- IF v_triggers IS NOT NULL THEN
+            --     v_ddl := v_ddl || E'\n' || v_triggers;
+            -- END IF;
 
         END IF;
 
