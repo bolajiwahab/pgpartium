@@ -395,7 +395,7 @@ BEGIN
 
             -- Partition definition.
             v_ddl := v_ddl || format(
-                E'CREATE TABLE %1$I.%2$I\n    PARTITION OF %3$I.%4$I%5$s\n    FOR VALUES FROM (%6$L) TO (%7$L)%8$s%9$s;'
+                E'CREATE TABLE %1$I.%2$I\n    PARTITION OF %3$I.%4$I%5$s\n    FOR VALUES FROM (%6$L) TO (%7$L)%8$s%9$s'
               , v_partition_schema                                                             -- <1>
               , v_partitions.partition_name                                                    -- <2>
               , p_table_schema                                                                 -- <3>
