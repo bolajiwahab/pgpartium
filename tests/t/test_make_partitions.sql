@@ -6,7 +6,7 @@ DEALLOCATE ALL;
 SET search_path TO mock, public, pg_catalog;
 
 -- Plan the tests.
-SELECT plan(46);
+SELECT plan(47);
 
 -- Run the tests.
 -- Group: Exceptions
@@ -846,6 +846,24 @@ SELECT results_eq(
     'result_with_uuid_v7'
   , 'expected_with_uuid_v7'
   , 'generate partitions with uuid v7'
+);
+
+-- Performance tests.
+PREPARE perf_1000_partitions AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'public'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_future=>1000
+  , p_interval=>'1 month'
+  , p_create_default=>true
+  , p_default_partition_name_template=>'{table_schema}__{table_name}__default'
+);
+
+SELECT performs_ok(
+    'perf_1000_partitions',
+    250,
+    'Making 1000 partitions should take less than 250ms'
 );
 
 -- Finish the tests and clean up.
