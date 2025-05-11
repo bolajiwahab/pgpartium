@@ -336,26 +336,46 @@ BEGIN
 
             -- Get create trigger statement.
             SELECT string_agg(
-                    format(E'CREATE %1$s %2$I %3$s %4$s\n    ON %5$I.%6$I\n   %7$s;\n%8$s'
-                    , CASE WHEN is_constraint_trigger THEN 'CONSTRAINT TRIGGER' ELSE 'TRIGGER' END
-                    , replace(trigger_name, p_template_table_name, v_partitions.partition_name)
-                    , event_timing
-                    , trigger_event
-                    , v_partition_schema
-                    , v_partitions.partition_name
-                    , trigger_body
-                    , CASE
-                         WHEN NOT is_trigger_enabled
-                           THEN format(E'\nALTER TABLE %1$I.%2$I\n    DISABLE TRIGGER %3$I;\n'
-                                ,v_partition_schema, v_partitions.partition_name,
-                                replace(trigger_name, p_template_table_name, v_partitions.partition_name)
+                       format(
+                           E'CREATE %1$s %2$I %3$s %4$s\n    ON %5$I.%6$I\n   %7$s;\n%8$s'
+                         , CASE                                         --<1>
+                             WHEN is_constraint_trigger
+                               THEN 'CONSTRAINT TRIGGER'
+                             ELSE 'TRIGGER'
+                           END
+                         , replace(                                     --<2>
+                               trigger_name
+                             , p_template_table_name
+                             , v_partitions.partition_name
                            )
-                          ELSE ''
-                       END
-                    )
-                    , E'\n'
-                    ORDER BY replace(trigger_name, p_template_table_name, v_partitions.partition_name)
-                   ) INTO v_triggers
+                         , event_timing                                 --<3>
+                         , trigger_event                                --<4>
+                         , v_partition_schema                           --<5>
+                         , v_partitions.partition_name                  --<6>
+                         , trigger_body                                 --<7>
+                         , CASE                                         --<8>
+                             WHEN NOT is_trigger_enabled
+                               THEN format(
+                                        E'\nALTER TABLE %1$I.%2$I\n    DISABLE TRIGGER %3$I;\n'
+                                      , v_partition_schema                                         --<1>
+                                      , v_partitions.partition_name,                               --<2>
+                                     replace(                                                      --<3>
+                                         trigger_name
+                                       , p_template_table_name
+                                       , v_partitions.partition_name
+                                     )
+                                )
+                               ELSE ''
+                            END
+                       )
+                       , E'\n'
+                       ORDER BY replace(
+                                    trigger_name
+                                  , p_template_table_name
+                                  , v_partitions.partition_name
+                                )
+                   )
+              INTO v_triggers
               FROM partition_triggers;
 
             -- Get storage parameters.
