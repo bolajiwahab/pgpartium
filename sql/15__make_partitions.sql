@@ -407,12 +407,8 @@ $SQL$,          v_partition_schema                                              
               , v_partitions.partition_name                                                    -- <2>
               , p_table_schema                                                                 -- <3>
               , p_table_name                                                                   -- <4>
-              , COALESCE(E' (\n' || v_constraints || E'\n    )', '')                                                    -- <5>
-            --   , CASE                                                                           -- <5>
-            --       WHEN v_constraints IS NULL
-            --         THEN E''
-            --       ELSE E' (\n' || v_constraints || E'\n    )'
-            --     END
+              -- We cannot use format here because NULL is treated as an empty string for `s` formats.
+              , COALESCE(E' (\n' || v_constraints || E'\n    )', '')                           -- <5>
               , CASE v_partitioning_details.keys_data_types                                    -- <6>
                   WHEN 'timestamptz'
                     THEN v_partitions.lower_bound::timestamptz::text
@@ -640,12 +636,9 @@ $SQL$,      v_partition_schema                                              -- <
           , v_default_partition_name                                        -- <2>
           , p_table_schema                                                  -- <3>
           , p_table_name                                                    -- <4>
-          , CASE                                                            -- <5>
-              WHEN v_constraints IS NULL
-                THEN E''
-              ELSE  E' (\n' || v_constraints || E'\n    )'
-            END,
-            v_storage_clause                                                -- <6>
+          -- We cannot use format here because NULL is treated as an empty string for `s` formats.
+          , COALESCE(E' (\n' || v_constraints || E'\n    )', '')            -- <5>
+          , v_storage_clause                                                -- <6>
           , CASE                                                            -- <7>
               WHEN p_partition_tablespace != 'pg_default'
                 THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
