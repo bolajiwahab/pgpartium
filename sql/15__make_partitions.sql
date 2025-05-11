@@ -336,19 +336,15 @@ BEGIN
 
             -- Get create trigger statement.
             SELECT string_agg(
-                    'CREATE '
-                    || CASE WHEN is_constraint_trigger THEN 'CONSTRAINT TRIGGER ' ELSE 'TRIGGER ' END
-                    || format('%1$I', replace(trigger_name, p_template_table_name, v_partitions.partition_name))
-                    || ' '
-                    || event_timing
-                    || ' '
-                    || trigger_event
-                    || E'\n    ON '
-                    || format('%1$I.%2$I', v_partition_schema, v_partitions.partition_name)
-                    || E'\n   '
-                    || trigger_body
-                    || E';\n'
-                    || CASE
+                    format(E'CREATE %1$s %2$I %3$s %4$s\n    ON %5$I.%6$I\n   %7$s;\n%8$s'
+                    , CASE WHEN is_constraint_trigger THEN 'CONSTRAINT TRIGGER ' ELSE 'TRIGGER ' END
+                    , replace(trigger_name, p_template_table_name, v_partitions.partition_name)
+                    , event_timing
+                    , trigger_event
+                    , v_partition_schema
+                    , v_partitions.partition_name
+                    , trigger_body
+                    , CASE
                          WHEN NOT is_trigger_enabled
                            THEN E'\nALTER TABLE '
                                 || format('%1$I.%2$I', v_partition_schema, v_partitions.partition_name)
@@ -357,6 +353,7 @@ BEGIN
                                 || E';\n'
                           ELSE ''
                        END
+                    )
                     , E'\n'
                     ORDER BY replace(trigger_name, p_template_table_name, v_partitions.partition_name)
                    ) INTO v_triggers
