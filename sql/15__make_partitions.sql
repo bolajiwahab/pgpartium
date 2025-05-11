@@ -286,45 +286,52 @@ BEGIN
 
             -- Get index create statement.
             SELECT string_agg(
-            format('%1$s%2$s',
-                replace(
-                    format(
-                        E'CREATE %1$s %2$I\n    ON %3$I.%4$I\n %5$s'
-                      , CASE                               --<1>
-                          WHEN is_unique_index
-                            THEN 'UNIQUE INDEX'
-                          ELSE 'INDEX'
-                        END
-                      , replace(                           --<2>
-                            index_name
-                          , p_template_table_name
-                          , v_partitions.partition_name
-                        )
-                      , v_partition_schema                 --<3>
-                      , v_partitions.partition_name        --<4>
-                      , index_definition                   --<5>
-                    )
-                  , COALESCE(' ' || index_predicate, '')
-                  , CASE
-                      WHEN p_index_tablespace != 'pg_default'
-                        THEN format(E'\nTABLESPACE %1$I\n %2$s', p_index_tablespace, index_predicate)
-                      ELSE format(E'\n %1$s', index_predicate)
-                    END
-                ),
-                    CASE
-                         WHEN index_predicate IS NULL AND p_index_tablespace != 'pg_default'
-                           THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
-                         ELSE ''
-                       END
-                    || E';\n')
-                    , E'\n'
-                    ORDER BY CASE is_unique_index
-                        WHEN true
-                          THEN 0
-                        WHEN false
-                          THEN 1
-                    END, replace(index_name, p_template_table_name, v_partitions.partition_name)
-                   ) INTO v_indexes
+                       format(
+                           E'%1$s%2$s;\n'
+                         , replace(
+                               format(
+                                   E'CREATE %1$s %2$I\n    ON %3$I.%4$I\n %5$s'
+                                 , CASE                               --<1>
+                                     WHEN is_unique_index
+                                       THEN 'UNIQUE INDEX'
+                                     ELSE 'INDEX'
+                                   END
+                                 , replace(                           --<2>
+                                       index_name
+                                     , p_template_table_name
+                                     , v_partitions.partition_name
+                                   )
+                                 , v_partition_schema                 --<3>
+                                 , v_partitions.partition_name        --<4>
+                                 , index_definition                   --<5>
+                               )
+                             , COALESCE(' ' || index_predicate, '')
+                             , CASE
+                                 WHEN p_index_tablespace != 'pg_default'
+                                   THEN format(E'\nTABLESPACE %1$I\n %2$s', p_index_tablespace, index_predicate)
+                                 ELSE format(E'\n %1$s', index_predicate)
+                               END
+                           )
+                         , CASE
+                             WHEN index_predicate IS NULL AND p_index_tablespace != 'pg_default'
+                               THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
+                             ELSE ''
+                           END
+                       )
+                     , E'\n'
+                       ORDER BY CASE is_unique_index
+                                  WHEN true
+                                    THEN 0
+                                  WHEN false
+                                    THEN 1
+                                END
+                              , replace(
+                                    index_name
+                                  , p_template_table_name
+                                  , v_partitions.partition_name
+                                )
+                   )
+              INTO v_indexes
               FROM partition_indexes;
 
             -- Get create trigger statement.
