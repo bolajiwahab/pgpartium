@@ -465,10 +465,6 @@ $SQL$,          v_partition_schema                                              
             v_ddl := COALESCE(v_ddl || E'\n' || v_indexes, v_ddl);
             v_ddl := COALESCE(v_ddl || E'\n' || v_triggers, v_ddl);
 
-            -- IF v_triggers IS NOT NULL THEN
-            --     v_ddl := v_ddl || E'\n' || v_triggers;
-            -- END IF;
-
         END IF;
 
     END LOOP;
@@ -646,13 +642,9 @@ $SQL$,      v_partition_schema                                              -- <
             END
         );
 
-        IF v_indexes IS NOT NULL THEN
-            v_ddl := v_ddl || E'\n' || v_indexes;
-        END IF;
-
-        IF v_triggers IS NOT NULL THEN
-            v_ddl := v_ddl || E'\n' || v_triggers;
-        END IF;
+        -- We cannot use format here because NULL is treated as an empty string for `s` formats.
+        v_ddl := COALESCE(v_ddl || E'\n' || v_indexes, v_ddl);
+        v_ddl := COALESCE(v_ddl || E'\n' || v_triggers, v_ddl);
 
     END IF;
     -- Create default partition: END
