@@ -461,11 +461,11 @@ $SQL$,          v_partition_schema                                              
                 END
             );
 
-            IF v_indexes IS NOT NULL THEN
-                v_ddl := format(E'%1$s\n%2$s', v_ddl, v_indexes);
+            -- IF v_indexes IS NOT NULL THEN
+            v_ddl := format(E'%1$s\n%2$s', v_ddl, v_indexes);
                 -- v_ddl := COALESCE(v_ddl || E' (\n' || v_constraints || E'\n    )', '')
                 -- v_ddl := v_ddl || E'\n' || v_indexes;
-            END IF;
+            -- END IF;
 
             IF v_triggers IS NOT NULL THEN
                 v_ddl := v_ddl || E'\n' || v_triggers;
