@@ -388,7 +388,7 @@ BEGIN
               FROM jsonb_each_text(p_storage_parameters);
 
             IF v_ddl != '' THEN
-                v_ddl := v_ddl || E'\n';
+                v_ddl := format(E'%1$s\n', v_ddl);
             END IF;
 
             -- Partition definition.
