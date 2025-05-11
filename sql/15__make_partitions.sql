@@ -305,6 +305,7 @@ BEGIN
                                  , v_partitions.partition_name        --<4>
                                  , index_definition                   --<5>
                                )
+                               -- We cannot use format here because NULL is treated as an empty string for `s` formats.
                              , COALESCE(' ' || index_predicate, '')
                              , CASE
                                  WHEN p_index_tablespace != 'pg_default'
@@ -383,6 +384,7 @@ BEGIN
               FROM partition_triggers;
 
             -- Get storage parameters.
+            -- We cannot use format here because NULL is treated as an empty string for `s` formats.
             SELECT COALESCE(E'\nWITH (' || string_agg(format('%1$I = %2$L', key, value), ', ') || ')', '')
               INTO v_storage_clause
               FROM jsonb_each_text(p_storage_parameters);
@@ -405,11 +407,12 @@ $SQL$,          v_partition_schema                                              
               , v_partitions.partition_name                                                    -- <2>
               , p_table_schema                                                                 -- <3>
               , p_table_name                                                                   -- <4>
-              , CASE                                                                           -- <5>
-                  WHEN v_constraints IS NULL
-                    THEN E''
-                  ELSE E' (\n' || v_constraints || E'\n    )'
-                END
+              , COALESCE(E' (\n' || v_constraints || E'\n    )', '')                                                    -- <5>
+            --   , CASE                                                                           -- <5>
+            --       WHEN v_constraints IS NULL
+            --         THEN E''
+            --       ELSE E' (\n' || v_constraints || E'\n    )'
+            --     END
               , CASE v_partitioning_details.keys_data_types                                    -- <6>
                   WHEN 'timestamptz'
                     THEN v_partitions.lower_bound::timestamptz::text
