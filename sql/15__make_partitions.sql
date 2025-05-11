@@ -308,7 +308,11 @@ BEGIN
                              , COALESCE(' ' || index_predicate, '')
                              , CASE
                                  WHEN p_index_tablespace != 'pg_default'
-                                   THEN format(E'\nTABLESPACE %1$I\n %2$s', p_index_tablespace, index_predicate)
+                                   THEN format(
+                                            E'\nTABLESPACE %1$I\n %2$s'
+                                          , p_index_tablespace          --<1>
+                                          , index_predicate             --<2>
+                                        )
                                  ELSE format(E'\n %1$s', index_predicate)
                                END
                            )
@@ -358,8 +362,8 @@ BEGIN
                                THEN format(
                                         E'\nALTER TABLE %1$I.%2$I\n    DISABLE TRIGGER %3$I;\n'
                                       , v_partition_schema                                         --<1>
-                                      , v_partitions.partition_name,                               --<2>
-                                     replace(                                                      --<3>
+                                      , v_partitions.partition_name                                --<2>
+                                      , replace(                                                   --<3>
                                          trigger_name
                                        , p_template_table_name
                                        , v_partitions.partition_name
@@ -470,7 +474,7 @@ $SQL$,          v_partition_schema                                              
 
     END LOOP;
 
-   -- Create default partition: START
+    -- Create default partition: START
     IF p_create_default
     AND NOT EXISTS (
         SELECT pgpartium.get_default_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
@@ -485,80 +489,211 @@ $SQL$,          v_partition_schema                                              
                )
           INTO v_default_partition_name;
 
-        -- Get constraint definition.
-        SELECT string_agg(
-            '        CONSTRAINT '
-            || format('%1$I', replace(constraint_name, p_template_table_name, v_default_partition_name))
-            || ' '
-            || constraint_definition,
-            E',\n'
-            ORDER BY CASE constraint_type
-                WHEN 'p'
-                  THEN 0
-                WHEN 'u'
-                  THEN 1
-                ELSE 2
-            END, replace(constraint_name, p_template_table_name, v_default_partition_name)
-        ) INTO v_constraints
-        FROM partition_constraints;
+            -- Get constraint definition.
+            SELECT string_agg(
+                        format(
+                            '        CONSTRAINT %1$I %2$s'
+                          , replace(                           --<1>
+                                constraint_name
+                              , p_template_table_name
+                              , v_default_partition_name
+                            )
+                          , constraint_definition              --<2>
+                        )
+                      , E',\n'
+                        ORDER BY CASE constraint_type
+                                   WHEN 'p'
+                                     THEN 0
+                                   WHEN 'u'
+                                     THEN 1
+                                   ELSE 2
+                                 END
+                               , replace(
+                                     constraint_name
+                                   , p_template_table_name
+                                   , v_default_partition_name
+                                 )
+                   )
+              INTO v_constraints
+              FROM partition_constraints;
 
-        -- Get index create statement.
-        SELECT string_agg(
-                replace(
-                    'CREATE '
-                    || CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END
-                    || format('%1$I', replace(index_name, p_template_table_name, v_default_partition_name))
-                    || E'\n    ON '
-                    || format('%1$I.%2$I', v_partition_schema, v_default_partition_name)
-                    || E'\n '
-                    || index_definition
-                    , COALESCE(index_predicate, '')
-                    , CASE
-                        WHEN p_index_tablespace != 'pg_default'
-                          THEN format(E'\nTABLESPACE %I', p_index_tablespace)
-                        ELSE ''
-                      END
-                        || E'\n ' || COALESCE(index_predicate, '')
-                )
-                || CASE
-                     WHEN index_predicate IS NULL AND p_index_tablespace != 'pg_default'
-                       THEN format(E'\nTABLESPACE %I', p_index_tablespace)
-                     ELSE ''
-                   END
-                || E';\n'
-                , E'\n'
-                ORDER BY CASE is_unique_index
-                    WHEN true
-                      THEN 0
-                    WHEN false
-                      THEN 1
-                END, replace(index_name, p_template_table_name, v_default_partition_name)
-                ) INTO v_indexes
-            FROM partition_indexes;
+            -- Get index create statement.
+            SELECT string_agg(
+                       format(
+                           E'%1$s%2$s;\n'
+                         , replace(
+                               format(
+                                   E'CREATE %1$s %2$I\n    ON %3$I.%4$I\n %5$s'
+                                 , CASE                               --<1>
+                                     WHEN is_unique_index
+                                       THEN 'UNIQUE INDEX'
+                                     ELSE 'INDEX'
+                                   END
+                                 , replace(                           --<2>
+                                       index_name
+                                     , p_template_table_name
+                                     , v_default_partition_name
+                                   )
+                                 , v_partition_schema                 --<3>
+                                 , v_default_partition_name           --<4>
+                                 , index_definition                   --<5>
+                               )
+                             , COALESCE(' ' || index_predicate, '')
+                             , CASE
+                                 WHEN p_index_tablespace != 'pg_default'
+                                   THEN format(
+                                            E'\nTABLESPACE %1$I\n %2$s'
+                                          , p_index_tablespace              --<1>
+                                          , index_predicate                 --<2>
+                                        )
+                                 ELSE format(E'\n %1$s', index_predicate)
+                               END
+                           )
+                         , CASE
+                             WHEN index_predicate IS NULL AND p_index_tablespace != 'pg_default'
+                               THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
+                             ELSE ''
+                           END
+                       )
+                     , E'\n'
+                       ORDER BY CASE is_unique_index
+                                  WHEN true
+                                    THEN 0
+                                  WHEN false
+                                    THEN 1
+                                END
+                              , replace(
+                                    index_name
+                                  , p_template_table_name
+                                  , v_partitions.partition_name
+                                )
+                   )
+              INTO v_indexes
+              FROM partition_indexes;
 
-        -- Get create trigger statement.
-        SELECT string_agg(
-                'CREATE '
-                || CASE WHEN is_constraint_trigger THEN 'CONSTRAINT TRIGGER ' ELSE 'TRIGGER ' END
-                || format('%1$I', replace(trigger_name, p_template_table_name, v_default_partition_name))
-                || ' '
-                || event_timing
-                || ' '
-                || trigger_event
-                || E'\n    ON '
-                || format('%1$I.%2$I', v_partition_schema, v_default_partition_name)
-                || E'\n   '
-                || trigger_body
-                || E';\n'
-                , E'\n'
-                ORDER BY replace(trigger_name, p_template_table_name, v_default_partition_name)
-                ) INTO v_triggers
-            FROM partition_triggers;
+            -- Get create trigger statement.
+            SELECT string_agg(
+                       format(
+                           E'CREATE %1$s %2$I %3$s %4$s\n    ON %5$I.%6$I\n   %7$s;\n%8$s'
+                         , CASE                                         --<1>
+                             WHEN is_constraint_trigger
+                               THEN 'CONSTRAINT TRIGGER'
+                             ELSE 'TRIGGER'
+                           END
+                         , replace(                                     --<2>
+                               trigger_name
+                             , p_template_table_name
+                             , v_default_partition_name
+                           )
+                         , event_timing                                 --<3>
+                         , trigger_event                                --<4>
+                         , v_partition_schema                           --<5>
+                         , v_default_partition_name                     --<6>
+                         , trigger_body                                 --<7>
+                         , CASE                                         --<8>
+                             WHEN NOT is_trigger_enabled
+                               THEN format(
+                                        E'\nALTER TABLE %1$I.%2$I\n    DISABLE TRIGGER %3$I;\n'
+                                      , v_partition_schema                                         --<1>
+                                      , v_default_partition_name                                   --<2>
+                                      , replace(                                                   --<3>
+                                         trigger_name
+                                       , p_template_table_name
+                                       , v_default_partition_name
+                                     )
+                                )
+                               ELSE ''
+                            END
+                       )
+                       , E'\n'
+                       ORDER BY replace(
+                                    trigger_name
+                                  , p_template_table_name
+                                  , v_default_partition_name
+                                )
+                   )
+              INTO v_triggers
+              FROM partition_triggers;
 
-        -- Get storage parameters.
-        SELECT COALESCE(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
-          INTO v_storage_clause
-          FROM jsonb_each_text(p_storage_parameters);
+            -- Get storage parameters.
+            SELECT COALESCE(E'\nWITH (' || string_agg(format('%1$I = %2$L', key, value), ', ') || ')', '')
+              INTO v_storage_clause
+              FROM jsonb_each_text(p_storage_parameters);
+
+        -- -- Get constraint definition.
+        -- SELECT string_agg(
+        --     '        CONSTRAINT '
+        --     || format('%1$I', replace(constraint_name, p_template_table_name, v_default_partition_name))
+        --     || ' '
+        --     || constraint_definition,
+        --     E',\n'
+        --     ORDER BY CASE constraint_type
+        --         WHEN 'p'
+        --           THEN 0
+        --         WHEN 'u'
+        --           THEN 1
+        --         ELSE 2
+        --     END, replace(constraint_name, p_template_table_name, v_default_partition_name)
+        -- ) INTO v_constraints
+        -- FROM partition_constraints;
+
+        -- -- Get index create statement.
+        -- SELECT string_agg(
+        --         replace(
+        --             'CREATE '
+        --             || CASE WHEN is_unique_index THEN 'UNIQUE INDEX ' ELSE 'INDEX ' END
+        --             || format('%1$I', replace(index_name, p_template_table_name, v_default_partition_name))
+        --             || E'\n    ON '
+        --             || format('%1$I.%2$I', v_partition_schema, v_default_partition_name)
+        --             || E'\n '
+        --             || index_definition
+        --             , COALESCE(index_predicate, '')
+        --             , CASE
+        --                 WHEN p_index_tablespace != 'pg_default'
+        --                   THEN format(E'\nTABLESPACE %I', p_index_tablespace)
+        --                 ELSE ''
+        --               END
+        --                 || E'\n ' || COALESCE(index_predicate, '')
+        --         )
+        --         || CASE
+        --              WHEN index_predicate IS NULL AND p_index_tablespace != 'pg_default'
+        --                THEN format(E'\nTABLESPACE %I', p_index_tablespace)
+        --              ELSE ''
+        --            END
+        --         || E';\n'
+        --         , E'\n'
+        --         ORDER BY CASE is_unique_index
+        --             WHEN true
+        --               THEN 0
+        --             WHEN false
+        --               THEN 1
+        --         END, replace(index_name, p_template_table_name, v_default_partition_name)
+        --         ) INTO v_indexes
+        --     FROM partition_indexes;
+
+        -- -- Get create trigger statement.
+        -- SELECT string_agg(
+        --         'CREATE '
+        --         || CASE WHEN is_constraint_trigger THEN 'CONSTRAINT TRIGGER ' ELSE 'TRIGGER ' END
+        --         || format('%1$I', replace(trigger_name, p_template_table_name, v_default_partition_name))
+        --         || ' '
+        --         || event_timing
+        --         || ' '
+        --         || trigger_event
+        --         || E'\n    ON '
+        --         || format('%1$I.%2$I', v_partition_schema, v_default_partition_name)
+        --         || E'\n   '
+        --         || trigger_body
+        --         || E';\n'
+        --         , E'\n'
+        --         ORDER BY replace(trigger_name, p_template_table_name, v_default_partition_name)
+        --         ) INTO v_triggers
+        --     FROM partition_triggers;
+
+        -- -- Get storage parameters.
+        -- SELECT COALESCE(E'\nWITH (' || string_agg(format('%I = %L', key, value), ', ') || ')', '')
+        --   INTO v_storage_clause
+        --   FROM jsonb_each_text(p_storage_parameters);
 
         IF v_ddl != '' THEN
             v_ddl := v_ddl || E'\n';
