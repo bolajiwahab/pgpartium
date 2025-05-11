@@ -6,7 +6,7 @@ DEALLOCATE ALL;
 SET search_path TO mock, public, pg_catalog;
 
 -- Plan the tests.
-SELECT plan(45);
+SELECT plan(46);
 
 -- Run the tests.
 -- Group: Exceptions
@@ -443,6 +443,45 @@ $$CREATE TABLE public.public__transactions__2025_03
 CREATE TABLE public.public__transactions__default
     PARTITION OF public.transactions
     DEFAULT;
+$$);
+
+SELECT results_eq(
+    'result_with_create_default'
+  , 'expected_with_create_default'
+  , 'generate partitions with create default'
+);
+
+PREPARE result_with_create_default_with_template AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'public'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+  , p_create_default=>true
+  , p_default_partition_name_template=>'{table_schema}__{table_name}__default'
+  , p_template_table_schema=>'public'
+  , p_template_table_name=>'transactions_template'
+);
+
+PREPARE expected_with_create_default_with_template AS VALUES (
+$$CREATE TABLE public.public__transactions__2025_03
+    PARTITION OF public.transactions
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+
+CREATE TABLE public.public__transactions__default
+    PARTITION OF public.transactions
+    DEFAULT;
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON public.public__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON public.public__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE public.public__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
 $$);
 
 SELECT results_eq(
