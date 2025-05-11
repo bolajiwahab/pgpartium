@@ -362,9 +362,9 @@ BEGIN
                              WHEN NOT is_trigger_enabled
                                THEN format(
                                         E'\nALTER TABLE %1$I.%2$I\n    DISABLE TRIGGER %3$I;\n'
-                                      , v_partition_schema                                         --<1>
-                                      , v_partitions.partition_name                                --<2>
-                                      , replace(                                                   --<3>
+                                      , v_partition_schema              --<1>
+                                      , v_partitions.partition_name     --<2>
+                                      , replace(                        --<3>
                                          trigger_name
                                        , p_template_table_name
                                        , v_partitions.partition_name
@@ -616,17 +616,8 @@ BEGIN
 
         -- Partition definition.
         v_ddl := v_ddl || format(
-/*
-This alignment is needed to have the right indentation in the generated migration scripts.
-We could use new lines characters instead for the alignment, but that would require escaping with `E`
-which does not work with dollar quoting.
-*/
             E'CREATE TABLE %1$I.%2$I\n    PARTITION OF %3$I.%4$I%5$s\n    DEFAULT%6$s%7$s;\n'
--- $SQL$CREATE TABLE %1$I.%2$I
---     PARTITION OF %3$I.%4$I%5$s
---     DEFAULT%6$s%7$s;
--- $SQL$,
-, v_partition_schema                                              -- <1>
+          , v_partition_schema                                              -- <1>
           , v_default_partition_name                                        -- <2>
           , p_table_schema                                                  -- <3>
           , p_table_name                                                    -- <4>
