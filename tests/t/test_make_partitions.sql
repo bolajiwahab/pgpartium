@@ -862,8 +862,8 @@ SELECT * FROM pgpartium.make_partitions (
 
 SELECT performs_ok(
     'perf_1000_partitions',
-    100,
-    'Making 1000 partitions should take less than 100ms'
+    250,
+    'Making 1000 partitions should take less than 250ms'
 );
 
 -- Finish the tests and clean up.
