@@ -346,11 +346,10 @@ BEGIN
                     , trigger_body
                     , CASE
                          WHEN NOT is_trigger_enabled
-                           THEN E'\nALTER TABLE '
-                                || format('%1$I.%2$I', v_partition_schema, v_partitions.partition_name)
-                                || E'\n    DISABLE TRIGGER '
-                                || format('%1$I', replace(trigger_name, p_template_table_name, v_partitions.partition_name))
-                                || E';\n'
+                           THEN format(E'\nALTER TABLE %1$I.%2$I\n    DISABLE TRIGGER %3$I;\n'
+                                ,v_partition_schema, v_partitions.partition_name,
+                                replace(trigger_name, p_template_table_name, v_partitions.partition_name)
+                           )
                           ELSE ''
                        END
                     )
