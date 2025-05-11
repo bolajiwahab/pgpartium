@@ -55,7 +55,7 @@ BEGIN
     IF p_detach_first THEN
         RETURN QUERY SELECT string_agg(
             format(
-                E'ALTER TABLE %1$I.%2$I\n    DETACH PARTITION %3$I.%4$I%5$s;\nDROP TABLE %3$I.%4$I;\n'
+                E'ALTER TABLE %1$I.%2$I\n    DETACH PARTITION %3$I.%4$I%5$s;\n\nDROP TABLE %3$I.%4$I;\n'
               , p_table_schema                                                   -- <1>
               , p_table_name                                                     -- <2>
               , partition_schema                                                 -- <3>
