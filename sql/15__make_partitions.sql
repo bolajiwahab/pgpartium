@@ -337,7 +337,7 @@ BEGIN
             -- Get create trigger statement.
             SELECT string_agg(
                     format(E'CREATE %1$s %2$I %3$s %4$s\n    ON %5$I.%6$I\n   %7$s;\n%8$s'
-                    , CASE WHEN is_constraint_trigger THEN 'CONSTRAINT TRIGGER ' ELSE 'TRIGGER ' END
+                    , CASE WHEN is_constraint_trigger THEN 'CONSTRAINT TRIGGER' ELSE 'TRIGGER' END
                     , replace(trigger_name, p_template_table_name, v_partitions.partition_name)
                     , event_timing
                     , trigger_event
