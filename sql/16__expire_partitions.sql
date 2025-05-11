@@ -35,14 +35,15 @@ BEGIN
     IF p_detach_only THEN
         RETURN QUERY SELECT string_agg(
             format(
+                E'ALTER TABLE %1$I.%2$I\n    DETACH PARTITION %3$I.%4$I%5$s;\n'
 /*
 This alignment is needed to have the right indentation in the generated migration scripts.
 We could use new lines characters instead for the alignment, but that would require escaping with `E`
 which does not work with dollar quoting.
 */
-$SQL$ALTER TABLE %1$I.%2$I
-    DETACH PARTITION %3$I.%4$I%5$s;
-$SQL$,
+-- $SQL$ALTER TABLE %1$I.%2$I
+--     DETACH PARTITION %3$I.%4$I%5$s;
+-- $SQL$,
                 p_table_schema                                                   -- <1>
               , p_table_name                                                     -- <2>
               , partition_schema                                                 -- <3>
