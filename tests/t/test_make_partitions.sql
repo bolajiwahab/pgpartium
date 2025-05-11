@@ -6,7 +6,7 @@ DEALLOCATE ALL;
 SET search_path TO mock, public, pg_catalog;
 
 -- Plan the tests.
-SELECT plan(45);
+SELECT plan(46);
 
 -- Run the tests.
 -- Group: Exceptions
