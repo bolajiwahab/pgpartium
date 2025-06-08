@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION pgpartium.get_triggers (
   , p_table_name text
 )
 RETURNS TABLE (
-    trigger_name text
+    trigger_name name
   , is_trigger_enabled boolean
   , is_constraint_trigger boolean
   , event_timing text
