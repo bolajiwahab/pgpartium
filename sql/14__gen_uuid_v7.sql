@@ -1,6 +1,6 @@
 /*
-    Generate a uuidv7 value with a 48 bits timestamp (milliseconds precision)
-    and 74 bits of randomness.
+    Generate a uuidv7 value with a 48-bits timestamp (milliseconds precision)
+    and 74-bits of randomness.
 */
 CREATE OR REPLACE FUNCTION pgpartium.gen_uuid_v7 (
     p_timestamptz timestamptz = pg_catalog.clock_timestamp()
