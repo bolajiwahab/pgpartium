@@ -3,8 +3,8 @@ CREATE OR REPLACE FUNCTION pgpartium.get_constraints (
   , p_table_name text
 )
 RETURNS TABLE (
-    constraint_name text
-  , constraint_type text
+    constraint_name name
+  , constraint_type "char"
   , constraint_definition text
 )
 LANGUAGE SQL

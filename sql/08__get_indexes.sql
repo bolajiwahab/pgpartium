@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION pgpartium.get_indexes (
   , p_table_name text
 )
 RETURNS TABLE (
-    index_name text
+    index_name name
   , is_unique_index boolean
   , index_definition text
   , index_predicate text

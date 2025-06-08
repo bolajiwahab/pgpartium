@@ -4,10 +4,10 @@ CREATE OR REPLACE FUNCTION pgpartium.get_expired_partitions (
   , p_retention interval
 )
 RETURNS TABLE (
-    partition_schema text
-  , partition_name text
-  , lower_bound text
-  , upper_bound text
+    partition_schema name
+  , partition_name name
+  , lower_bound timestamptz
+  , upper_bound timestamptz
   , age interval
 )
 LANGUAGE SQL

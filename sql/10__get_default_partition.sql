@@ -3,8 +3,8 @@ CREATE OR REPLACE FUNCTION pgpartium.get_default_partition (
   , p_table_name text
 )
 RETURNS TABLE (
-    partition_schema text
-  , partition_name text
+    partition_schema name
+  , partition_name name
 )
 LANGUAGE SQL
 AS $BODY$

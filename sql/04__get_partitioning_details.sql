@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION pgpartium.get_partitioning_details (
   , p_table_name text
 )
 RETURNS TABLE (
-    number_of_keys integer
+    number_of_keys smallint
   , strategy text
   , keys text
   , keys_data_types text
