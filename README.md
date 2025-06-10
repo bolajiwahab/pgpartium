@@ -47,7 +47,7 @@ docker run -it --user root --rm --volume "$PWD:/repository" ghcr.io/bolajiwahab/
     pgp-expire-partitions -c /repository/partition_config.yaml'
 ```
 
-The above command mounts the current directory into the container. Inside the container, it starts Postgres 17, applies the current migrations using Flyway 11.8.0, and then generates migration files to create and expire partitions based on the settings in `partition_config.yaml`. Please ensure that the migration directory specified in the partition configuration file matches the mounted directory, in this case `/repository/migrations`.
+The above command mounts the current directory into the container. Inside the container, it starts Postgres 17, applies the current migrations using Flyway 11.8.0, and then generates migration files to create and expire partitions based on the settings in `partition_config.yaml`. Ensure that the migration directory specified in the partition configuration file matches the mounted directory, in this case `/repository/migrations`. Migration files are then generated in the `/repository/migrations` directory in the container which is mapped to the current directory on the host.
 
 You can substitute flyway and its version in the command above with any of the other supported migration tools.
 
