@@ -40,20 +40,22 @@ While you can run **pgp-make-partitions** and **pgp-expire-partitions** separate
 For simple usage, run the following command:
 
 ```bash
-docker run -it --user root --rm --volume "$PWD:/repository" ghcr.io/bolajiwahab/pgpartium \
+docker run -it --user root --rm --volume "$PWD:/repository" ghcr.io/bolajiwahab/pgpartium:0.5.0 \
     sh -c 'pg-start -v 17 && \
     pgp-migrate -m /repository/migrations -t flyway -v 11.8.0 && \
     pgp-make-partitions -c /repository/partition_config.yaml && \
     pgp-expire-partitions -c /repository/partition_config.yaml'
 ```
 
-The above command mounts the current directory into the container. Inside the container, it starts Postgres 17, applies the current migrations using Flyway 11.8.0, and then generates migration files to create and expire partitions based on the settings in `partition_config.yaml`.
+The above command mounts the current directory into the container. Inside the container, it starts Postgres 17, applies the current migrations using Flyway 11.8.0, and then generates migration files to create and expire partitions based on the settings in `partition_config.yaml`. Please ensure that the migration directory specified in the partition configuration file matches the mounted directory, in this case `/repository/migrations`.
 
 You can substitute flyway and its version in the command above with any of the other supported migration tools.
 
 ## Configuration
 
-**pgpartium** expects configuration in form of yaml. For the complete list of configuration options, see <<placeholder for the link>>. For a quick start, see [configuration](config.sample.yaml). Table-level configuration supersedes the global configuration but one of them must be specified for non-default configuration options.
+**pgpartium** expects configuration in form of yaml. For the complete list of configuration options, see [configuration](https://bolajiwahab.github.io/pgpartium/docs/schema.html). For a quick start, see [sample](config.sample.yaml).
+
+Table-level configuration supersedes the global configuration but one of them must be specified for non-default configuration options.
 
 ## Contributing
 
