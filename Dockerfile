@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim AS base
+FROM debian:bookworm-slim@sha256:f957d7d19c4171aded89330899c1501c03707d879f200001aa47af87d98b3c70 AS base
 
 ADD https://salsa.debian.org/postgresql/postgresql-common/-/raw/master/pgdg/apt.postgresql.org.sh /usr/local/bin/
 
