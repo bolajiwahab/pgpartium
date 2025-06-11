@@ -109,7 +109,7 @@ jobs:
 
 ## Configuration
 
-**pgpartium** expects configuration in form of yaml. For the complete list of configuration options, see [configuration](https://bolajiwahab.github.io/pgpartium/docs/schema.html). For a quick start, see [sample](config.sample.yaml).
+**pgpartium** expects configuration in form of yaml. For the complete list of configuration options, see [configuration](https://bolajiwahab.github.io/pgpartium/schema.html). For a quick start, see [sample](config.sample.yaml).
 
 Table-level configuration supersedes the global configuration but one of them must be specified for non-default configuration options.
 
