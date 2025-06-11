@@ -2,12 +2,6 @@
 chore:
   - "/(chore)/i"
 
-rule:
-  - "/(rule)/i"
-
-formatter:
-  - "/(formatter|printer)/i"
-
 documentation:
   - "/(documentation|doc)/i"
 
