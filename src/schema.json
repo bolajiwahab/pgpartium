@@ -861,7 +861,7 @@
             "default": false
         },
         "skip_overlapping": {
-            "description": "Whether to skip overlapping partitions.",
+            "description": "Whether to skip overlapping partitions. Useful when switching partition intervals. It allows resolving such overlaps manually",
             "type": "boolean",
             "default": false
         }
@@ -1003,19 +1003,33 @@
                                     "object",
                                     "string"
                                 ],
-                                "properties": {
-                                    "table_schema": {
-                                        "$ref": "#/definitions/table_schema"
+                                "oneOf": [
+                                    {
+                                        "description": "Must be one of the predefined options.",
+                                        "type": "string",
+                                        "enum": [
+                                            "DEFAULT_PARTITION",
+                                            "LATEST_PARTITION",
+                                            "CURRENT_PARTITION"
+                                        ]
                                     },
-                                    "table_name": {
-                                        "$ref": "#/definitions/table_name"
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "table_schema": {
+                                                "$ref": "#/definitions/table_schema"
+                                            },
+                                            "table_name": {
+                                                "$ref": "#/definitions/table_name"
+                                            }
+                                        },
+                                        "required": [
+                                            "table_schema",
+                                            "table_name"
+                                        ],
+                                        "additionalProperties": false
                                     }
-                                },
-                                "required": [
-                                    "table_schema",
-                                    "table_name"
-                                ],
-                                "additionalProperties": false
+                                ]
                             }
                         },
                         "required": [

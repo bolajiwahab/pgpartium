@@ -5,7 +5,7 @@ usage()
     echo "
     ${0##*/}
 
-    Creates a postgres cluster for a postgres version and start it.
+    Installs major PostgreSQL version and psql client, optionally creates a cluster and starts the cluster.
 
     OPTIONS:
       -v  the postgres version to use (Required)

@@ -44,7 +44,7 @@ jobs:
 
       - name: Run tests
         run: |
-          PGVERSION=${{ matrix.postgresql }} ./run_tests.sh
+          PGVERSION=${{ matrix.postgresql }} ./tests/run_tests.sh
 
   test-migration-tool:
     runs-on: ubuntu-latest
@@ -63,7 +63,7 @@ jobs:
 
       - name: Run tests
         run: |
-          MIGRATION_TOOL=${{ matrix.migration_tool }} ./run_tests.sh
+          MIGRATION_TOOL=${{ matrix.migration_tool }} ./tests/run_tests.sh
 
   ensure-up-to-date-schema-doc:
     runs-on: ubuntu-latest
