@@ -4,15 +4,15 @@ ADD https://salsa.debian.org/postgresql/postgresql-common/-/raw/master/pgdg/apt.
 
 RUN chmod +x /usr/local/bin/apt.postgresql.org.sh
 
-COPY createcluster.conf /etc/postgresql-common/createcluster.conf
+COPY src/createcluster.conf /etc/postgresql-common/createcluster.conf
 
-COPY bin/* /usr/local/bin/
+COPY src/bin/* /usr/local/bin/
 
 WORKDIR /src
 
-COPY sql sql
+COPY /src/sql sql
 
-COPY schema.json schema.json
+COPY src/schema.json schema.json
 
 # Enable amd64 architecture in case we are running on arm64
 RUN dpkg --add-architecture amd64

@@ -4,7 +4,7 @@ usage() {
     echo "
     ${0##*/}
 
-    Apply database migrations.
+    Apply schema migrations.
 
     OPTIONS:
       -m  the directory to the migration files (Required)

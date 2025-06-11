@@ -861,7 +861,7 @@
             "default": false
         },
         "skip_overlapping": {
-            "description": "Whether to skip overlapping partitions.",
+            "description": "Whether to skip overlapping partitions. Useful when switching partition intervals. It allows resolving such overlaps manually",
             "type": "boolean",
             "default": false
         }

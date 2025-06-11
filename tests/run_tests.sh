@@ -33,7 +33,7 @@ export MIGRATION_DIRECTORY="${MIGRATION_DIRECTORY}"
 export MIGRATION_TOOL="${MIGRATION_TOOL}"
 export MIGRATION_TOOL_VERSION="${MIGRATION_TOOL_VERSION}"
 
-compose_file="docker-compose-test.yaml"
+compose_file="tests/docker-compose-test.yaml"
 
 docker compose -f ${compose_file} build --no-cache
 docker compose -f ${compose_file} down -v --remove-orphans

@@ -4,7 +4,7 @@ usage() {
     echo "
     ${0##*/}
 
-    Generates partitions for partitioned tables.
+    Creates migration files to expire partitions for partitioned tables.
 
     OPTIONS:
       -c  the config file in yaml (Required)
