@@ -1,5 +1,8 @@
 # pgpartium
 
+[![CI](https://github.com/bolajiwahab/pgpartium/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/bolajiwahab/pgpartium/actions/workflows/ci.yaml)
+[![release](https://github.com/bolajiwahab/pgpartium/actions/workflows/release.yaml/badge.svg)](https://github.com/bolajiwahab/pgpartium/actions/workflows/release.yaml)
+
 **pgpartium** is a tool that helps in managing the creation and expiration of partitions of a PostgreSQL partitioned table. It does this through the generation of migration files for partitions that would be created or dropped.
 
 ## Features
