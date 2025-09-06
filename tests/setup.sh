@@ -62,5 +62,5 @@ pgp-setup-infrastructure
 
 # We need to include mock in our search_path
 echo "INFO: Adding mock to search_path"
-psql -v "ON_ERROR_STOP=1" --quiet --username=postgres --dbname=postgres -c "ALTER SYSTEM SET search_path = mock, public, pg_catalog;"
+psql -v "ON_ERROR_STOP=1" --quiet --username=postgres --dbname=postgres -c "ALTER SYSTEM SET search_path = mock, pg_catalog, public;"
 pg_ctlcluster "${pgversion}" pgpartium reload

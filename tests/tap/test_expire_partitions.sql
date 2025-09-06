@@ -3,7 +3,7 @@ BEGIN;
 -- Deallocate all previous prepared statements.
 DEALLOCATE ALL;
 
-SET search_path TO mock, public, pg_catalog;
+SET search_path TO mock, pg_catalog, public;
 
 -- Plan the tests.
 SELECT plan(15);
