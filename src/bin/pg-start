@@ -5,22 +5,27 @@ usage()
     echo "
     ${0##*/}
 
-    Installs major PostgreSQL version and psql client, optionally creates a cluster and starts the cluster.
+    Installs major PostgreSQL version, psql client, optionally creates a cluster, starts the cluster and applies init script if provided.
 
     OPTIONS:
       -v  the postgres version to use (Required)
+      -i  the init script to apply (Optional)
       -h  show this help message.
 
     SAMPLE USAGE:
-        ${0##*/} -v 17
+        ${0##*/} -v 17 -i init.sql
+        PGP_PG_MAJOR_VERSION=17 INIT_SCRIPT=init.sql ${0##*/}
 "
 }
 
-while getopts "v:h" option
+while getopts "v:i:h" option
 do
     case "${option}" in
         v)
-            pgversion="${OPTARG}"
+            pg_major_version="${OPTARG}"
+            ;;
+        i)
+            init_script="${OPTARG}"
             ;;
         h | *)
             usage
@@ -31,19 +36,28 @@ done
 
 set -euo pipefail
 
-pgversion=${pgversion:-}
+pg_major_version=${pg_major_version:-${PGP_PG_MAJOR_VERSION:-}}
+init_script=${init_script:-${PGP_INIT_SCRIPT:-}}
 
-# Ensure version is provided
-if [[ -z "${pgversion}" ]]; then
-  usage
+# Ensure postgres version is provided.
+if [[ -z "${pg_major_version}" ]]; then
+    usage
+    exit 1
+fi
+
+
+if (( pg_major_version < 13 )); then
+  echo "Error: PostgreSQL major version must be at least 13"
   exit 1
 fi
 
-# Append .0 if pgversion is a single-digit version e.g 9
-[[ "${pgversion}" =~ ^[0-9]$ ]] && pgversion+=.0
-
-apt.postgresql.org.sh -i -v "${pgversion}"
+# Install PostgreSQL
+apt.postgresql.org.sh -i -v "${pg_major_version}"
 
 if [[ -z ${NO_CLUSTER+yes} ]]; then
-    pg_createcluster --start "${pgversion}" pgpartium -- -A trust
+    pg_createcluster --start "${pg_major_version}" pgpartium -- -A trust
+    # Apply init script if provided
+    if [[ -n "${init_script}" ]]; then
+        psql -v "ON_ERROR_STOP=1" --username=postgres --dbname=postgres -f "${init_script}"
+    fi
 fi

@@ -44,7 +44,7 @@ jobs:
 
       - name: Run tests
         run: |
-          PGVERSION=${{ matrix.postgresql }} ./tests/run_tests.sh
+          PGP_PG_MAJOR_VERSION=${{ matrix.postgresql }} PGP_INIT_SCRIPT=tests/fixtures/init_script.sql ./tests/run_tests.sh
 
   test-migration-tool:
     runs-on: ubuntu-latest

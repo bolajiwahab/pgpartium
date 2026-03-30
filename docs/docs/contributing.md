@@ -56,6 +56,18 @@ Test files are located in `tests` directory. There are two different tests: **sh
 1. **shellspec**: shellspec is used to test the Bash binaries. The tests are located in `tests/spec/`.
 2. **pgTap**: pgTap is used to test the database functions. The tests are located in `tests/tap/`.
 
+To run tests, use:
+
+```bash
+./tests/run_tests.sh
+```
+
+To run tests for a specific postgres version, use:
+
+```bash
+PGP_PG_MAJOR_VERSION=<POSTGRES_MAJOR_VERSION> ./tests/run_tests.sh
+```
+
 ## Documentation
 
 Schema definition is presented as `html` through [json-schema-for-human](https://pypi.org/project/json-schema-for-humans/). To update the generated html after changes to the underlying schema definition, use:

@@ -9,11 +9,14 @@ services:
     container_name: test
     user: root
     tty: true
+    environment:
+      PGP_PG_MAJOR_VERSION: ${PGP_PG_MAJOR_VERSION:-17}
+      PGP_INIT_SCRIPT: ${PGP_INIT_SCRIPT:-}
     command: >
       sh -c "
-        pg-start -v ${PGVERSION} &&
+        pg-start &&
         pgp-migrate -m ${MIGRATION_DIRECTORY} -t ${MIGRATION_TOOL} -v ${MIGRATION_TOOL_VERSION} && \
-        tests/setup.sh -v ${PGVERSION} && \
+        tests/setup.sh && \
         pg_prove --username=postgres --dbname=postgres --verbose --failures tests/tap/*.sql && \
         bash shellspec tests/spec
       "
