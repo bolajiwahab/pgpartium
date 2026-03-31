@@ -6,7 +6,7 @@ generates:
   default_partition_name_template: "{table_schema}__{table_name}__default"
   create_default: true
   tables:
-    - table_schema: "public"
+    - table_schema: "test"
       table_name: "transactions"
       file_name_template: "{description}.result"
       description:

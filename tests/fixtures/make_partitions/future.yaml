@@ -5,7 +5,7 @@ generates:
   interval: "1 mon"
   future: 1
   tables:
-    - table_schema: "public"
+    - table_schema: "test"
       table_name: "transactions"
       file_name_template: "{description}.result"
       description:

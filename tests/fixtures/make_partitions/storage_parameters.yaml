@@ -6,7 +6,7 @@ generates:
   storage_parameters:
     fillfactor: 90
   tables:
-    - table_schema: "public"
+    - table_schema: "test"
       table_name: "transactions"
       file_name_template: "{description}.result"
       description:

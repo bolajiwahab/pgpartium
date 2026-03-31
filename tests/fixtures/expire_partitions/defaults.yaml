@@ -3,7 +3,7 @@ generates:
   directory: "tests/migrations"
   retention: "1 day"
   tables:
-    - table_schema: "public"
+    - table_schema: "test"
       table_name: "notifications"
       file_name_template: "{description}.result"
       description:
