@@ -46,25 +46,6 @@ jobs:
         run: |
           PGP_PG_MAJOR_VERSION=${{ matrix.postgresql }} ./tests/run_tests.sh
 
-  test-migration-tool:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        migration_tool:
-          - flyway
-          - go-migrate
-          - dbmate
-          - goose
-    name: Run tests with migration tool ${{ matrix.migration_tool }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Run tests
-        run: |
-          MIGRATION_TOOL=${{ matrix.migration_tool }} ./tests/run_tests.sh
-
   ensure-up-to-date-schema-doc:
     runs-on: ubuntu-latest
     steps:

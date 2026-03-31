@@ -26,7 +26,6 @@
 **pgpartium** is packaged as a docker [image](https://github.com/bolajiwahab/pgpartium/pkgs/container/pgpartium). The image contains the following utilities:
 
 - **pg-start**: Installs a major PostgreSQL version, optionally initializes a cluster and starts the cluster
-- **pgp-migrate**: Applies current schema migrations
 - **pgp-make-partitions**: Generates partition migration files according to the configuration
 - **pgp-expire-partitions**: Expire partitions according to the configuration
 - **gh-create-pr**: Creates a pull request on github with generated migration files
