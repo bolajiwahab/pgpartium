@@ -25,7 +25,7 @@ do
             pg_major_version="${OPTARG}"
             ;;
         i)
-            init_script="${OPTARG}"
+            init_dir="${OPTARG}"
             ;;
         h | *)
             usage
@@ -37,14 +37,13 @@ done
 set -euo pipefail
 
 pg_major_version=${pg_major_version:-${PGP_PG_MAJOR_VERSION:-}}
-init_script=${init_script:-${PGP_INIT_SCRIPT:-}}
+init_dir=${init_dir:-${PGP_INIT_DIR:-}}
 
 # Ensure postgres version is provided.
 if [[ -z "${pg_major_version}" ]]; then
     usage
     exit 1
 fi
-
 
 if (( pg_major_version < 13 )); then
   echo "Error: PostgreSQL major version must be at least 13"
@@ -55,9 +54,40 @@ fi
 apt.postgresql.org.sh -i -v "${pg_major_version}"
 
 if [[ -z ${NO_CLUSTER+yes} ]]; then
+    echo "INFO: Creating PostgreSQL cluster"
     pg_createcluster --start "${pg_major_version}" pgpartium -- -A trust
-    # Apply init script if provided
-    if [[ -n "${init_script}" ]]; then
-        psql -v "ON_ERROR_STOP=1" --username=postgres --dbname=postgres -f "${init_script}"
+    # Apply init directory if provided and exists
+    if [[ -d "${init_dir}" ]]; then
+        echo "INFO: Applying init scripts from ${init_dir}"
+
+        find "${init_dir}" -type f \( -iname "*.sh" -o -iname "*.sql" -o -iname "*.sql.gz" \) \
+        | sort \
+        | while IFS= read -r file; do
+            case "${file}" in
+                *.sh)
+                    if [[ -x "${file}" ]]; then
+                        "${file}"
+                    else
+                        # shellcheck source=/dev/null
+                        . "${file}"
+                    fi
+                    ;;
+                *.sql)
+                    psql --username=postgres \
+                        --dbname=postgres \
+                        -v "ON_ERROR_STOP=1" \
+                        --no-psqlrc -f "${file}"
+                    ;;
+                *.sql.gz)
+                    gunzip -c "${file}" |
+                    psql --username=postgres \
+                        --dbname=postgres \
+                        -v "ON_ERROR_STOP=1" \
+                        --no-psqlrc
+                    ;;
+            esac
+        done
+
+        echo "INFO: Applied init scripts from ""${init_dir}"""
     fi
 fi
