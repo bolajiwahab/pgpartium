@@ -189,9 +189,9 @@ EOF
 done < <(yq '.generates.tables[] | @json' "${config}")
 
 if [ ${#failed_tables[@]} -gt 0 ]; then
-    echo "ERROR: failed for ${#failed_tables[@]} table(s):" 2>&1
+    echo "ERROR: failed for ${#failed_tables[@]} table(s):" >&2
     for table in "${!failed_tables[@]}"; do
-        echo "  '${table}': ${failed_tables[${table}]}" 2>&1
+        echo "  '${table}': ${failed_tables[${table}]}" >&2
     done
     exit 1
 else

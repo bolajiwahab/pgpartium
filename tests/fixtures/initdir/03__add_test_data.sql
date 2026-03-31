@@ -1,12 +1,14 @@
 -- Seed data for testing.
-CREATE SCHEMA partitions;
+CREATE SCHEMA IF NOT EXISTS test;
+
+CREATE SCHEMA IF NOT EXISTS partitions;
 
 /*
     template table: yes
     initial partitions: 0
     data type: timestamptz
 */
-CREATE TABLE public.transactions (
+CREATE TABLE IF NOT EXISTS test.transactions (
     transaction_id uuid NOT NULL
   , user_id uuid NOT NULL
   , account_id uuid NOT NULL
@@ -18,10 +20,10 @@ CREATE TABLE public.transactions (
 )
 PARTITION BY RANGE (created_at);
 
-CREATE INDEX transactions_updated_at_idx
-    ON public.transactions (updated_at);
+CREATE INDEX IF NOT EXISTS transactions_updated_at_idx
+    ON test.transactions (updated_at);
 
-CREATE TABLE public.transactions_template (
+CREATE TABLE IF NOT EXISTS test.transactions_template (
     transaction_id uuid NOT NULL
   , user_id uuid NOT NULL
   , account_id uuid NOT NULL
@@ -33,33 +35,33 @@ CREATE TABLE public.transactions_template (
   , CONSTRAINT transactions_template_account_id_created_at_key UNIQUE (account_id, created_at)
 );
 
-CREATE TRIGGER suppress_redundant_updates_trig
-    BEFORE UPDATE ON public.transactions_template
+CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig
+    BEFORE UPDATE ON test.transactions_template
     FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
 
-CREATE TRIGGER suppress_redundant_updates_trig_2
-    BEFORE UPDATE ON public.transactions_template
+CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig_2
+    BEFORE UPDATE ON test.transactions_template
     FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
 
-ALTER TABLE public.transactions_template
+ALTER TABLE IF EXISTS test.transactions_template
     DISABLE TRIGGER suppress_redundant_updates_trig_2;
 
-CREATE INDEX transactions_template_account_id_idx
-    ON public.transactions_template (account_id);
+CREATE INDEX IF NOT EXISTS transactions_template_account_id_idx
+    ON test.transactions_template (account_id);
 
-CREATE UNIQUE INDEX transactions_template_status_active_key
-    ON public.transactions_template (status)
+CREATE UNIQUE INDEX IF NOT EXISTS transactions_template_status_active_key
+    ON test.transactions_template (status)
  WHERE status = 'active';
 
-CREATE INDEX transactions_template_updated_at_idx
-    ON public.transactions_template (updated_at);
+CREATE INDEX IF NOT EXISTS transactions_template_updated_at_idx
+    ON test.transactions_template (updated_at);
 
 /*
     template table: no
     initial partitions: 1
     data type: date
 */
-CREATE TABLE public.notifications (
+CREATE TABLE IF NOT EXISTS test.notifications (
     notification_id uuid NOT NULL
   , user_id uuid NOT NULL
   , account_id uuid NOT NULL
@@ -71,8 +73,8 @@ CREATE TABLE public.notifications (
 )
 PARTITION BY RANGE (created_at);
 
-CREATE TABLE public.notifications_2025_01
-    PARTITION OF public.notifications
+CREATE TABLE IF NOT EXISTS test.notifications_2025_01
+    PARTITION OF test.notifications
     FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
 
 /*
@@ -80,7 +82,7 @@ CREATE TABLE public.notifications_2025_01
     initial partitions: 0
     data type: timestamp
 */
-CREATE TABLE public.charges (
+CREATE TABLE IF NOT EXISTS test.charges (
     charge_id uuid NOT NULL
   , user_id uuid NOT NULL
   , account_id uuid NOT NULL
@@ -93,7 +95,7 @@ CREATE TABLE public.charges (
 PARTITION BY RANGE (created_at);
 
 -- Partitioned by epoch (integer).
-CREATE TABLE public.sales (
+CREATE TABLE IF NOT EXISTS test.sales (
     sale_id uuid NOT NULL
   , email text NOT NULL
   , created_at integer NOT NULL
@@ -103,7 +105,7 @@ CREATE TABLE public.sales (
 PARTITION BY RANGE (created_at);
 
 -- Partitioned by epoch (bigint).
-CREATE TABLE public.trips (
+CREATE TABLE IF NOT EXISTS test.trips (
     trip_id uuid NOT NULL
   , email text NOT NULL
   , created_at bigint NOT NULL
@@ -113,7 +115,7 @@ CREATE TABLE public.trips (
 PARTITION BY RANGE (created_at);
 
 -- Partitioned by List.
-CREATE TABLE public.users (
+CREATE TABLE IF NOT EXISTS test.users (
     user_id uuid NOT NULL
   , email text NOT NULL
   , created_at timestamptz NOT NULL
@@ -123,7 +125,7 @@ CREATE TABLE public.users (
 PARTITION BY LIST (user_id);
 
 -- Multi-column partitioned table.
-CREATE TABLE public.scheduled_entries (
+CREATE TABLE IF NOT EXISTS test.scheduled_entries (
     scheduled_entry_id uuid NOT NULL
   , user_id uuid NOT NULL
   , account_id uuid NOT NULL
@@ -133,7 +135,7 @@ CREATE TABLE public.scheduled_entries (
 PARTITION BY RANGE (created_at, updated_at);
 
 -- Partitioned by uuid.
-CREATE TABLE public.orders (
+CREATE TABLE IF NOT EXISTS test.orders (
     order_id uuid NOT NULL
   , user_id uuid NOT NULL
   , created_at timestamptz NOT NULL
@@ -142,7 +144,7 @@ CREATE TABLE public.orders (
 PARTITION BY RANGE (order_id);
 
 -- Partitioned by text.
-CREATE TABLE public.books (
+CREATE TABLE IF NOT EXISTS test.books (
     book_id text NOT NULL
   , user_id uuid NOT NULL
   , created_at timestamptz NOT NULL
@@ -151,7 +153,7 @@ CREATE TABLE public.books (
 PARTITION BY RANGE (book_id);
 
 -- Non partitioned table.
-CREATE TABLE public.accounts (
+CREATE TABLE IF NOT EXISTS test.accounts (
     user_id uuid NOT NULL
   , charge_id uuid NOT NULL
   , account_id uuid NOT NULL

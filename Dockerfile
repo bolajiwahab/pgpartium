@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim@sha256:df52e55e3361a81ac1bead266f3373ee55d29aa50cf0975d440c2be3483d8ed3 AS base
+FROM debian:bookworm-slim@sha256:b1a741487078b369e78119849663d7f1a5341ef2768798f7b7406c4240f86aef AS build
 
 ADD https://salsa.debian.org/postgresql/postgresql-common/-/raw/master/pgdg/apt.postgresql.org.sh /usr/local/bin/
 
@@ -41,15 +41,17 @@ ENV LC_ALL=C.UTF-8 LANG=C.UTF-8 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/u
 RUN wget --quiet https://github.com/mikefarah/yq/releases/download/v4.45.1/yq_linux_amd64 --output-document=/usr/bin/yq && \
     chmod +x /usr/bin/yq
 
-# Switch to non-root user.
-USER 5000
-
-CMD ["/bin/bash"]
-
-FROM base AS test
+FROM build AS test
 
 COPY tests tests
 
 COPY .shellspec .shellspec
+
+CMD ["/bin/bash"]
+
+FROM build AS final
+
+# Switch to non-root user.
+USER 5000
 
 CMD ["/bin/bash"]

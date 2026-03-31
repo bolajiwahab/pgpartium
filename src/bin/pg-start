@@ -46,7 +46,7 @@ if [[ -z "${pg_major_version}" ]]; then
 fi
 
 if (( pg_major_version < 13 )); then
-  echo "Error: PostgreSQL major version must be at least 13"
+  echo "Error: PostgreSQL major version must be at least 13" >&2
   exit 1
 fi
 
@@ -57,6 +57,10 @@ if [[ -z ${NO_CLUSTER+yes} ]]; then
     echo "INFO: Creating PostgreSQL cluster"
     pg_createcluster --start "${pg_major_version}" pgpartium -- -A trust
     # Apply init directory if provided and exists
+    # if [[ -d "${init_dir}" ]]; then
+    #     echo "INFO: Applying init scripts from ${init_dir}"
+    # fi
+
     if [[ -d "${init_dir}" ]]; then
         echo "INFO: Applying init scripts from ${init_dir}"
 
@@ -76,6 +80,7 @@ if [[ -z ${NO_CLUSTER+yes} ]]; then
                     psql --username=postgres \
                         --dbname=postgres \
                         -v "ON_ERROR_STOP=1" \
+                        --quiet \
                         --no-psqlrc -f "${file}"
                     ;;
                 *.sql.gz)
@@ -83,6 +88,7 @@ if [[ -z ${NO_CLUSTER+yes} ]]; then
                     psql --username=postgres \
                         --dbname=postgres \
                         -v "ON_ERROR_STOP=1" \
+                        --quiet \
                         --no-psqlrc
                     ;;
             esac

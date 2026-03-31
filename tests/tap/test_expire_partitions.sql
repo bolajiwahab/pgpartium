@@ -22,11 +22,11 @@ SELECT throws_ok($$
 
 SELECT throws_ok($$
     SELECT * FROM pgpartium.expire_partitions (
-        p_table_schema=>'public'
+        p_table_schema=>'test'
       , p_table_name=>''
     )$$
   , '42P01'
-  , 'table "public"."" does not exist'
+  , 'table "test"."" does not exist'
   , 'fail on empty parent table name'
 );
 
@@ -52,11 +52,11 @@ SELECT throws_ok($$
 
 SELECT throws_ok($$
     SELECT * FROM pgpartium.expire_partitions (
-        p_table_schema=>'public'
+        p_table_schema=>'test'
       , p_table_name=>NULL
     )$$
   , '42P01'
-  , 'table "public"."<NULL>" does not exist'
+  , 'table "test"."<NULL>" does not exist'
   , 'fail on null parent table name'
 );
 
@@ -72,18 +72,18 @@ SELECT throws_ok($$
 
 SELECT throws_ok($$
     SELECT * FROM pgpartium.expire_partitions (
-        p_table_schema=>'public'
+        p_table_schema=>'test'
       , p_table_name=>'accounts'
     )$$
   , '42P01'
-  , 'table "public"."accounts" is not partitioned'
+  , 'table "test"."accounts" is not partitioned'
   , 'fail on non partitioned table'
 );
 
 -- Group: Outputs
 PREPARE empty_result_with_defaults AS
 SELECT * FROM pgpartium.expire_partitions (
-    p_table_schema=>'public'
+    p_table_schema=>'test'
   , p_table_name=>'notifications'
 );
 
@@ -94,7 +94,7 @@ SELECT is_empty(
 
 PREPARE empty_result_with_disable_retention AS
 SELECT * FROM pgpartium.expire_partitions (
-    p_table_schema=>'public'
+    p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'-1'
 );
@@ -106,27 +106,27 @@ SELECT is_empty(
 
 -- Add more partitions for retention.
 -- We are using mocked now() from tests/resources/mock.sql.
-CREATE TABLE public.public__notifications__2024_12
-    PARTITION OF public.notifications
+CREATE TABLE test.test__notifications__2024_12
+    PARTITION OF test.notifications
     FOR VALUES FROM ('2024-12-01') TO ('2025-01-01');
 
-CREATE TABLE public.public__notifications__2025_02
-    PARTITION OF public.notifications
+CREATE TABLE test.test__notifications__2025_02
+    PARTITION OF test.notifications
     FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
 
-CREATE TABLE public.public__notifications__2025_03
-    PARTITION OF public.notifications
+CREATE TABLE test.test__notifications__2025_03
+    PARTITION OF test.notifications
     FOR VALUES FROM ('2025-03-01') TO ('2025-04-01');
 
 PREPARE result_with_retention AS
 SELECT * FROM pgpartium.expire_partitions (
-    p_table_schema=>'public'
+    p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'1 month'
 );
 
 PREPARE expected_with_retention AS VALUES (
-$$DROP TABLE public.public__notifications__2024_12;
+$$DROP TABLE test.test__notifications__2024_12;
 $$);
 
 SELECT results_eq(
@@ -137,17 +137,17 @@ SELECT results_eq(
 
 PREPARE result_with_retention_detach AS
 SELECT * FROM pgpartium.expire_partitions (
-    p_table_schema=>'public'
+    p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'1 month'
   , p_detach_first=>true
 );
 
 PREPARE expected_with_retention_detach AS VALUES (
-$$ALTER TABLE public.notifications
-    DETACH PARTITION public.public__notifications__2024_12;
+$$ALTER TABLE test.notifications
+    DETACH PARTITION test.test__notifications__2024_12;
 
-DROP TABLE public.public__notifications__2024_12;
+DROP TABLE test.test__notifications__2024_12;
 $$);
 
 SELECT results_eq(
@@ -158,7 +158,7 @@ SELECT results_eq(
 
 PREPARE result_with_retention_detach_concurrent AS
 SELECT * FROM pgpartium.expire_partitions (
-    p_table_schema=>'public'
+    p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'1 month'
   , p_detach_first=>true
@@ -166,10 +166,10 @@ SELECT * FROM pgpartium.expire_partitions (
 );
 
 PREPARE expected_with_retention_detach_concurrent AS VALUES (
-$$ALTER TABLE public.notifications
-    DETACH PARTITION public.public__notifications__2024_12 CONCURRENTLY;
+$$ALTER TABLE test.notifications
+    DETACH PARTITION test.test__notifications__2024_12 CONCURRENTLY;
 
-DROP TABLE public.public__notifications__2024_12;
+DROP TABLE test.test__notifications__2024_12;
 $$);
 
 SELECT results_eq(
@@ -180,7 +180,7 @@ SELECT results_eq(
 
 PREPARE result_with_retention_detach_only AS
 SELECT * FROM pgpartium.expire_partitions (
-    p_table_schema=>'public'
+    p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'1 month'
   , p_detach_first=>true
@@ -188,8 +188,8 @@ SELECT * FROM pgpartium.expire_partitions (
 );
 
 PREPARE expected_with_retention_detach_only AS VALUES (
-$$ALTER TABLE public.notifications
-    DETACH PARTITION public.public__notifications__2024_12;
+$$ALTER TABLE test.notifications
+    DETACH PARTITION test.test__notifications__2024_12;
 $$);
 
 SELECT results_eq(
@@ -200,7 +200,7 @@ SELECT results_eq(
 
 PREPARE result_with_retention_detach_only_concurrently AS
 SELECT * FROM pgpartium.expire_partitions (
-    p_table_schema=>'public'
+    p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'1 month'
   , p_detach_first=>true
@@ -209,8 +209,8 @@ SELECT * FROM pgpartium.expire_partitions (
 );
 
 PREPARE expected_with_retention_detach_only_concurrently AS VALUES (
-$$ALTER TABLE public.notifications
-    DETACH PARTITION public.public__notifications__2024_12 CONCURRENTLY;
+$$ALTER TABLE test.notifications
+    DETACH PARTITION test.test__notifications__2024_12 CONCURRENTLY;
 $$);
 
 SELECT results_eq(
@@ -221,14 +221,14 @@ SELECT results_eq(
 
 PREPARE result_with_timezone AS
 SELECT * FROM pgpartium.expire_partitions (
-    p_table_schema=>'public'
+    p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'1 month'
   , p_timezone=>'Europe/Berlin'
 );
 
 PREPARE expected_with_timezone AS VALUES (
-$$DROP TABLE public.public__notifications__2024_12;
+$$DROP TABLE test.test__notifications__2024_12;
 $$);
 
 SELECT results_eq(
