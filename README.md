@@ -15,7 +15,7 @@
 - Index tablespace
 - Constraints, indexes, and triggers definitions replication from a template table
 - Highly configurable
-- PostgreSQL 13+ supported
+- PostgreSQL 14+ supported
 - Migration files generation
 - Migration file name templating
 - Support flyway, go-migrate, dbmate, and goose migration tools

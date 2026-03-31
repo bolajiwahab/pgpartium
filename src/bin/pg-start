@@ -45,8 +45,8 @@ if [[ -z "${pg_major_version}" ]]; then
     exit 1
 fi
 
-if (( pg_major_version < 13 )); then
-  echo "Error: PostgreSQL major version must be at least 13" >&2
+if (( pg_major_version < 14 )); then
+  echo "Error: PostgreSQL major version must be at least 14" >&2
   exit 1
 fi
 
