@@ -20,9 +20,9 @@ LANGUAGE SQL
 IMMUTABLE
 PARALLEL SAFE
 AS $BODY$
-    SELECT CAST('2025-03-01 00:00:00' AS timestamptz);
+    SELECT CAST('2025-03-01 00:00:00' AS timestamp);
 $BODY$;
 
 ALTER SYSTEM SET search_path = mock, pg_catalog, public;
 
--- SELECT pg_reload_conf();
+SELECT pg_reload_conf();
