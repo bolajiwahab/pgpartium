@@ -24,7 +24,7 @@
 
 **pgpartium** is packaged as a docker [image](https://github.com/bolajiwahab/pgpartium/pkgs/container/pgpartium). The image contains the following utilities:
 
-- **pg-start**: Installs a major PostgreSQL version, optionally initializes a cluster and starts the cluster
+- **pgp-start**: Installs a major PostgreSQL version, optionally initializes a cluster and starts the cluster
 - **pgp-make-partitions**: Generates partition migration files according to the configuration
 - **pgp-expire-partitions**: Expire partitions according to the configuration
 - **gh-create-pr**: Creates a pull request on github with generated migration files
@@ -43,19 +43,19 @@ docker pull ghcr.io/bolajiwahab/pgpartium:0.5.0
 
 Schema management is outside the scope of this tool and can be handled using any approach that fits your environment.
 
-In all cases, **pg-start** must be executed first, whether you are using cluster mode or an external database. It is responsible for preparing the runtime environment required for all subsequent operations.
+In all cases, **pgp-start** must be executed first, whether you are using cluster mode or an external database. It is responsible for preparing the runtime environment required for all subsequent operations.
 
 When using cluster mode, schema initialization can be provided via the initdir, where you may run shell scripts, SQL files, or any migration tooling of your choice. When using an external database, schema setup is handled outside the tool.
 
 When using an external database, you must then provide your database connection details (host, database, username, password) to run either pgp-make-partitions or pgp-expire-partitions.
 
-In all cases, the requirement is the same: **pg-start must run first, and the schema must already exist before partition operations are executed**.
+In all cases, the requirement is the same: **pgp-start must run first, and the schema must already exist before partition operations are executed**.
 
 For simple usage, run the following command:
 
 ```bash
 docker run -it --user root --rm --volume "$PWD:/repository" ghcr.io/bolajiwahab/pgpartium:0.5.0 \
-    sh -c 'pg-start -v 17 -i /repository/migrations/initdir && \
+    sh -c 'pgp-start -v 17 -i /repository/migrations/initdir && \
     pgp-make-partitions -c /repository/partition_config.yaml && \
     pgp-expire-partitions -c /repository/partition_config.yaml'
 ```
@@ -89,7 +89,7 @@ jobs:
       options: --user root
     steps:
       - name: Start PostgreSQL and apply init directory
-        run: pg-start -v 16 -i /repository/migrations/initdir
+        run: pgp-start -v 16 -i /repository/migrations/initdir
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -117,14 +117,14 @@ Table-level configuration supersedes the global configuration but one of them mu
 
 ## Binaries
 
-### pg-start
+### pgp-start
 
 Installs a major PostgreSQL version along with psql client, optionally initializes a cluster and starts the cluster.
 
 By default, it creates a cluster with `pg_createcluster` and starts the cluster.
 
 ```bash
-pg-start
+pgp-start
 
 Installs major PostgreSQL version and psql client, optionally creates a cluster and starts the cluster.
 
@@ -133,18 +133,18 @@ OPTIONS:
   -h  show this help message.
 
 SAMPLE USAGE:
-    pg-start -v 17
+    pgp-start -v 17
 ```
 
 To skip initialising a cluster, use
 
 ```bash
-NO_CLUSTER=1 pg-start -v 17
+NO_CLUSTER=1 pgp-start -v 17
 ```
 
 ### pgp-make-partitions
 
-Creates migration files to create partitions for partitioned tables. It requires the config file in yaml. It also supports passing the connection details to the database to use if you are not using the default database created by **pg-start**.
+Creates migration files to create partitions for partitioned tables. It requires the config file in yaml. It also supports passing the connection details to the database to use if you are not using the default database created by **pgp-start**.
 
 ```bash
 pgp-make-partitions
@@ -167,7 +167,7 @@ SAMPLE USAGE:
 
 ### pgp-expire-partitions
 
-Creates migration files to expire partitions for partitioned tables. It requires the config file in yaml. It also supports passing the connection details to the database to use if you are not using the default database created by **pg-start**.
+Creates migration files to expire partitions for partitioned tables. It requires the config file in yaml. It also supports passing the connection details to the database to use if you are not using the default database created by **pgp-start**.
 
 ```bash
 pgp-expire-partitions
