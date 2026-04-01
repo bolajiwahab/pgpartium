@@ -7,7 +7,7 @@ Describe "pgp-expire-partitions"
             # Get the file name
             file_name="${input%.yaml}"
             file_name="${file_name##*/}"
-            %data "$input" "${input%.yaml}.expected" "tests/migrations/${file_name}.result"
+            %data "$input" "${input%.yaml}.expected" "tests/fixtures/expire_partitions/${file_name}.result"
         done
     End
     Data < "$1" # NOTE: Treat a file as stdin data

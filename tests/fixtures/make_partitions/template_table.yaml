@@ -1,6 +1,6 @@
 ---
 generates:
-  directory: "tests/fixtures"
+  directory: "tests/fixtures/make_partitions"
   name_template: "{table_schema}__{table_name}__YYYY_MM"
   interval: "1 mon"
   tables:
