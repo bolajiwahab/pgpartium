@@ -1,6 +1,6 @@
 ---
 generates:
-  directory: "tests/migrations"
+  directory: "tests/fixtures"
   name_template: "{table_schema}__{table_name}__YYYY_MM"
   interval: "1 mon"
   default_partition_name_template: "{table_schema}__{table_name}__default"
