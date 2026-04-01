@@ -105,7 +105,7 @@ SELECT is_empty(
 );
 
 -- Add more partitions for retention.
--- We are using mocked now() from tests/resources/mock.sql.
+-- We are using mocked now().
 CREATE TABLE test.test__notifications__2024_12
     PARTITION OF test.notifications
     FOR VALUES FROM ('2024-12-01') TO ('2025-01-01');

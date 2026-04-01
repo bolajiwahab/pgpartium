@@ -31,11 +31,6 @@ Contributions are welcome, whether they are bug reports, feature requests, code 
     │── fixtures                  # Test fixtures
         │── expire_partitions     # Expire partitions fixtures
         │── make_partitions       # Make partitions fixtures
-    │── migrations                # Schema migrations for tests
-        │── dbmate                # Schema migrations for dbmate
-        │── flyway                # Schema migrations for flyway
-        │── goose                 # Schema migrations for goose
-        │── go-migrate            # Schema migrations for go-migrate
     │── spec                      # Shellspec tests
     │── tap                       # pgTap tests
     |── setup.sh                  # Test setup script

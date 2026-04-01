@@ -354,7 +354,7 @@ SELECT throws_ok($$
 );
 
 -- Group: Outputs
--- We are using mocked now() from tests/resources/mock.sql.
+-- We are using mocked now().
 PREPARE result_with_defaults AS
 SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'test'

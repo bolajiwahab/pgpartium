@@ -56,10 +56,12 @@ apt.postgresql.org.sh -i -v "${pg_major_version}"
 if [[ -z ${NO_CLUSTER+yes} ]]; then
     echo "INFO: Creating PostgreSQL cluster"
     pg_createcluster --start "${pg_major_version}" pgpartium -- -A trust
-    # Apply init directory if provided and exists
-    # if [[ -d "${init_dir}" ]]; then
-    #     echo "INFO: Applying init scripts from ${init_dir}"
-    # fi
+
+    # Ensure the provided init directory exists and is a directory
+    if [[ -n "${init_dir}" && ! -d "${init_dir}" ]]; then
+        echo "The provided init directory ${init_dir} does not exist or is not a directory" >&2
+        exit 1
+    fi
 
     if [[ -d "${init_dir}" ]]; then
         echo "INFO: Applying init scripts from ${init_dir}"
