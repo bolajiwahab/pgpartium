@@ -16,7 +16,7 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_retention interval = '-1'
   , p_timezone text = 'Etc/UTC'
   , p_skip_overlapping boolean = false
-  , p_use_if_not_exists boolean = false
+  , p_idempotent_ddl boolean = false
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
@@ -315,7 +315,7 @@ BEGIN
                                        THEN 'UNIQUE INDEX'
                                      ELSE 'INDEX'
                                    END
-                                 , CASE p_use_if_not_exists           --<2>
+                                 , CASE p_idempotent_ddl              --<2>
                                      WHEN true
                                        THEN 'IF NOT EXISTS' || ' '
                                      ELSE ''
@@ -367,7 +367,7 @@ BEGIN
             SELECT string_agg(
                        format(
                            E'CREATE %1$s%2$s %3$I %4$s %5$s\n    ON %6$I.%7$I\n   %8$s;\n%9$s'
-                         , CASE p_use_if_not_exists                     --<1>
+                         , CASE p_idempotent_ddl                        --<1>
                              WHEN true
                                THEN 'OR REPLACE' || ' '
                              ELSE ''
@@ -425,7 +425,7 @@ BEGIN
             -- Partition definition.
             v_ddl := v_ddl || format(
                 E'CREATE TABLE %1$s%2$I.%3$I\n    PARTITION OF %4$I.%5$I%6$s\n    FOR VALUES FROM (%7$L) TO (%8$L)%9$s%10$s;\n'
-              , CASE p_use_if_not_exists                                                       -- <1>
+              , CASE p_idempotent_ddl                                                          -- <1>
                   WHEN true
                     THEN 'IF NOT EXISTS' || ' '
                   ELSE ''
@@ -551,7 +551,7 @@ BEGIN
                                    THEN 'UNIQUE INDEX'
                                  ELSE 'INDEX'
                                END
-                             , CASE p_use_if_not_exists           --<2>
+                             , CASE p_idempotent_ddl              --<2>
                                  WHEN true
                                    THEN 'IF NOT EXISTS' || ' '
                                  ELSE ''
@@ -603,7 +603,7 @@ BEGIN
         SELECT string_agg(
                    format(
                        E'CREATE %1$s%2$s %3$I %4$s %5$s\n    ON %6$I.%7$I\n   %8$s;\n%9$s'
-                     , CASE p_use_if_not_exists                     --<1>
+                     , CASE p_idempotent_ddl                        --<1>
                          WHEN true
                            THEN 'OR REPLACE' || ' '
                          ELSE ''
@@ -661,7 +661,7 @@ BEGIN
         -- Partition definition.
         v_ddl := v_ddl || format(
             E'CREATE TABLE %1$s%2$I.%3$I\n    PARTITION OF %4$I.%5$I%6$s\n    DEFAULT%7$s%8$s;\n'
-          , CASE p_use_if_not_exists                                        -- <1>
+          , CASE p_idempotent_ddl                                           -- <1>
               WHEN true
                 THEN 'IF NOT EXISTS' || ' '
               ELSE ''

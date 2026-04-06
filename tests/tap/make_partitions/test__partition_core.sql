@@ -439,7 +439,7 @@ SELECT * FROM pgpartium.make_partitions (
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
-  , p_use_if_not_exists=>true
+  , p_idempotent_ddl=>true
 );
 
 PREPARE expected_with_if_not_exists AS VALUES (
@@ -462,7 +462,7 @@ SELECT * FROM pgpartium.make_partitions (
   , p_default_partition_name_template=>'{table_schema}__{table_name}__default'
   , p_create_default=>true
   , p_interval=>'1 month'
-  , p_use_if_not_exists=>true
+  , p_idempotent_ddl=>true
 );
 
 PREPARE expected_with_default_partition_if_not_exists AS VALUES (
@@ -490,7 +490,7 @@ SELECT * FROM pgpartium.make_partitions (
   , p_interval=>'1 month'
   , p_template_table_schema=>'test'
   , p_template_table_name=>'transactions_template'
-  , p_use_if_not_exists=>true
+  , p_idempotent_ddl=>true
 );
 
 PREPARE expected_with_template_with_if_not_exists AS VALUES (
@@ -538,7 +538,7 @@ SELECT * FROM pgpartium.make_partitions (
   , p_default_partition_name_template=>'{table_schema}__{table_name}__default'
   , p_template_table_schema=>'test'
   , p_template_table_name=>'transactions_template'
-  , p_use_if_not_exists=>true
+  , p_idempotent_ddl=>true
 );
 
 PREPARE expected_with_create_default_with_template_with_if_not_exists AS VALUES (
