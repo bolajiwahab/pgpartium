@@ -5,7 +5,7 @@ DEALLOCATE ALL;
 
 SET search_path TO mock, pg_catalog, public;
 
-SELECT plan(21);
+SELECT plan(23);
 
 -- We are using mocked now() - '2025-03-01 00:00:00'
 
@@ -172,12 +172,20 @@ SELECT * FROM pgpartium.make_partitions (
 
 PREPARE expected_with_create_default_with_template AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
-    PARTITION OF test.transactions
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
-CREATE TABLE test.test__transactions__default
-    PARTITION OF test.transactions
-    DEFAULT;
+CREATE UNIQUE INDEX test__transactions__2025_03_status_active_key
+    ON test.test__transactions__2025_03
+ USING btree (status)
+ WHERE status = 'active'::text;
+
+CREATE INDEX test__transactions__2025_03_account_id_idx
+    ON test.test__transactions__2025_03
+ USING btree (account_id);
 
 CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
     ON test.test__transactions__2025_03
@@ -189,12 +197,39 @@ CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
 
 ALTER TABLE test.test__transactions__2025_03
     DISABLE TRIGGER suppress_redundant_updates_trig_2;
+
+CREATE TABLE test.test__transactions__default
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__default_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__default_user_id_key UNIQUE (user_id)
+    )
+    DEFAULT;
+
+CREATE UNIQUE INDEX test__transactions__default_status_active_key
+    ON test.test__transactions__default
+ USING btree (status)
+ WHERE status = 'active'::text;
+
+CREATE INDEX test__transactions__default_account_id_idx
+    ON test.test__transactions__default
+ USING btree (account_id);
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__default
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__default
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__default
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
 $$);
 
 SELECT results_eq(
-    'result_with_create_default'
-  , 'expected_with_create_default'
-  , 'make partitions with create default'
+    'result_with_create_default_with_template'
+  , 'expected_with_create_default_with_template'
+  , 'make partitions with create default with template'
 );
 
 PREPARE result_with_partition_schema AS
@@ -434,14 +469,140 @@ PREPARE expected_with_default_partition_if_not_exists AS VALUES (
 $$CREATE TABLE IF NOT EXISTS test.test__transactions__2025_03
     PARTITION OF test.transactions
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+
+CREATE TABLE IF NOT EXISTS test.test__transactions__default
+    PARTITION OF test.transactions
+    DEFAULT;
 $$);
 
 SELECT results_eq(
-    'result_with_if_not_exists'
-  , 'expected_with_if_not_exists'
-  , 'make partitions if not exists'
+    'result_with_default_partition_if_not_exists'
+  , 'expected_with_default_partition_if_not_exists'
+  , 'make partitions with default partition if not exists'
 );
 
+
+PREPARE result_with_template_with_if_not_exists AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+  , p_template_table_schema=>'test'
+  , p_template_table_name=>'transactions_template'
+  , p_use_if_not_exists=>true
+);
+
+PREPARE expected_with_template_with_if_not_exists AS VALUES (
+$$CREATE TABLE IF NOT EXISTS test.test__transactions__2025_03
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+
+CREATE UNIQUE INDEX IF NOT EXISTS test__transactions__2025_03_status_active_key
+    ON test.test__transactions__2025_03
+ USING btree (status)
+ WHERE status = 'active'::text;
+
+CREATE INDEX IF NOT EXISTS test__transactions__2025_03_account_id_idx
+    ON test.test__transactions__2025_03
+ USING btree (account_id);
+
+CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
+$$);
+
+SELECT results_eq(
+    'result_with_template_with_if_not_exists'
+  , 'expected_with_template_with_if_not_exists'
+  , 'make partitions with template with if not exists'
+);
+
+PREPARE result_with_create_default_with_template_with_if_not_exists AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+  , p_create_default=>true
+  , p_default_partition_name_template=>'{table_schema}__{table_name}__default'
+  , p_template_table_schema=>'test'
+  , p_template_table_name=>'transactions_template'
+  , p_use_if_not_exists=>true
+);
+
+PREPARE expected_with_create_default_with_template_with_if_not_exists AS VALUES (
+$$CREATE TABLE IF NOT EXISTS test.test__transactions__2025_03
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+
+CREATE UNIQUE INDEX IF NOT EXISTS test__transactions__2025_03_status_active_key
+    ON test.test__transactions__2025_03
+ USING btree (status)
+ WHERE status = 'active'::text;
+
+CREATE INDEX IF NOT EXISTS test__transactions__2025_03_account_id_idx
+    ON test.test__transactions__2025_03
+ USING btree (account_id);
+
+CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
+
+CREATE TABLE IF NOT EXISTS test.test__transactions__default
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__default_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__default_user_id_key UNIQUE (user_id)
+    )
+    DEFAULT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS test__transactions__default_status_active_key
+    ON test.test__transactions__default
+ USING btree (status)
+ WHERE status = 'active'::text;
+
+CREATE INDEX IF NOT EXISTS test__transactions__default_account_id_idx
+    ON test.test__transactions__default
+ USING btree (account_id);
+
+CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__default
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__default
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__default
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
+$$);
+
+SELECT results_eq(
+    'result_with_create_default_with_template_with_if_not_exists'
+  , 'expected_with_create_default_with_template_with_if_not_exists'
+  , 'make partitions with create default with template with if not exists'
+);
+----#####
 -- Overlapping partitions: START
 CREATE TABLE test.test__transactions__2025_03_01
     PARTITION OF test.transactions

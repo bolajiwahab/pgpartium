@@ -309,20 +309,25 @@ BEGIN
                            E'%1$s%2$s;\n'
                          , replace(
                                format(
-                                   E'CREATE %1$s %2$I\n    ON %3$I.%4$I\n %5$s'
+                                   E'CREATE %1$s %2$s%3$I\n    ON %4$I.%5$I\n %6$s'
                                  , CASE                               --<1>
                                      WHEN is_unique_index
                                        THEN 'UNIQUE INDEX'
                                      ELSE 'INDEX'
                                    END
-                                 , replace(                           --<2>
+                                 , CASE p_use_if_not_exists           --<2>
+                                     WHEN true
+                                       THEN 'IF NOT EXISTS' || ' '
+                                     ELSE ''
+                                   END
+                                 , replace(                           --<3>
                                        index_name
                                      , p_template_table_name
                                      , v_partitions.partition_name
                                    )
-                                 , v_partition_schema                 --<3>
-                                 , v_partitions.partition_name        --<4>
-                                 , index_definition                   --<5>
+                                 , v_partition_schema                 --<4>
+                                 , v_partitions.partition_name        --<5>
+                                 , index_definition                   --<6>
                                )
                                -- We cannot use format here because NULL is treated as an empty string for `s` formats.
                              , COALESCE(' ' || index_predicate, '')
@@ -361,23 +366,28 @@ BEGIN
             -- Get create trigger statement.
             SELECT string_agg(
                        format(
-                           E'CREATE %1$s %2$I %3$s %4$s\n    ON %5$I.%6$I\n   %7$s;\n%8$s'
-                         , CASE                                         --<1>
+                           E'CREATE %1$s%2$s %3$I %4$s %5$s\n    ON %6$I.%7$I\n   %8$s;\n%9$s'
+                         , CASE p_use_if_not_exists                     --<1>
+                             WHEN true
+                               THEN 'OR REPLACE' || ' '
+                             ELSE ''
+                           END
+                         , CASE                                         --<2>
                              WHEN is_constraint_trigger
                                THEN 'CONSTRAINT TRIGGER'
                              ELSE 'TRIGGER'
                            END
-                         , replace(                                     --<2>
+                         , replace(                                     --<3>
                                trigger_name
                              , p_template_table_name
                              , v_partitions.partition_name
                            )
-                         , event_timing                                 --<3>
-                         , trigger_event                                --<4>
-                         , v_partition_schema                           --<5>
-                         , v_partitions.partition_name                  --<6>
-                         , trigger_body                                 --<7>
-                         , CASE                                         --<8>
+                         , event_timing                                 --<4>
+                         , trigger_event                                --<5>
+                         , v_partition_schema                           --<6>
+                         , v_partitions.partition_name                  --<7>
+                         , trigger_body                                 --<8>
+                         , CASE                                         --<9>
                              WHEN NOT is_trigger_enabled
                                THEN format(
                                         E'\nALTER TABLE %1$I.%2$I\n    DISABLE TRIGGER %3$I;\n'
@@ -415,18 +425,18 @@ BEGIN
             -- Partition definition.
             v_ddl := v_ddl || format(
                 E'CREATE TABLE %1$s%2$I.%3$I\n    PARTITION OF %4$I.%5$I%6$s\n    FOR VALUES FROM (%7$L) TO (%8$L)%9$s%10$s;\n'
-              , CASE p_use_if_not_exists
+              , CASE p_use_if_not_exists                                                       -- <1>
                   WHEN true
-                    THEN 'IF NOT EXISTS '
+                    THEN 'IF NOT EXISTS' || ' '
                   ELSE ''
                 END
-              , v_partition_schema                                                             -- <1>
-              , v_partitions.partition_name                                                    -- <2>
-              , p_table_schema                                                                 -- <3>
-              , p_table_name                                                                   -- <4>
+              , v_partition_schema                                                             -- <2>
+              , v_partitions.partition_name                                                    -- <3>
+              , p_table_schema                                                                 -- <4>
+              , p_table_name                                                                   -- <5>
               -- We cannot use format here because NULL is treated as an empty string for `s` formats.
-              , COALESCE(E' (\n' || v_constraints || E'\n    )', '')                           -- <5>
-              , CASE v_partitioning_details.keys_data_types                                    -- <6>
+              , COALESCE(E' (\n' || v_constraints || E'\n    )', '')                           -- <6>
+              , CASE v_partitioning_details.keys_data_types                                    -- <7>
                   WHEN 'timestamptz'
                     THEN v_partitions.lower_bound::timestamptz::text
                   WHEN 'timestamp'
@@ -448,7 +458,7 @@ BEGIN
                         )
                     )::text
                 END
-              , CASE v_partitioning_details.keys_data_types                                    -- <7>
+              , CASE v_partitioning_details.keys_data_types                                    -- <8>
                   WHEN 'timestamptz'
                     THEN v_partitions.upper_bound::timestamptz::text
                   WHEN 'timestamp'
@@ -470,8 +480,8 @@ BEGIN
                         )
                     )::text
                 END
-              , v_storage_clause                                                               -- <8>
-              , CASE                                                                           -- <9>
+              , v_storage_clause                                                               -- <9>
+              , CASE                                                                           -- <10>
                   WHEN p_partition_tablespace != 'pg_default'
                     THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
                   ELSE ''
@@ -535,20 +545,25 @@ BEGIN
                        E'%1$s%2$s;\n'
                      , replace(
                            format(
-                               E'CREATE %1$s %2$I\n    ON %3$I.%4$I\n %5$s'
+                               E'CREATE %1$s %2$s%3$I\n    ON %4$I.%5$I\n %6$s'
                              , CASE                               --<1>
                                  WHEN is_unique_index
                                    THEN 'UNIQUE INDEX'
                                  ELSE 'INDEX'
                                END
-                             , replace(                           --<2>
+                             , CASE p_use_if_not_exists           --<2>
+                                 WHEN true
+                                   THEN 'IF NOT EXISTS' || ' '
+                                 ELSE ''
+                               END
+                             , replace(                           --<3>
                                    index_name
                                  , p_template_table_name
                                  , v_default_partition_name
                                )
-                             , v_partition_schema                 --<3>
-                             , v_default_partition_name           --<4>
-                             , index_definition                   --<5>
+                             , v_partition_schema                 --<4>
+                             , v_default_partition_name           --<5>
+                             , index_definition                   --<6>
                            )
                            -- We cannot use format here because NULL is treated as an empty string for `s` formats.
                          , COALESCE(' ' || index_predicate, '')
@@ -587,23 +602,28 @@ BEGIN
         -- Get create trigger statement.
         SELECT string_agg(
                    format(
-                       E'CREATE %1$s %2$I %3$s %4$s\n    ON %5$I.%6$I\n   %7$s;\n%8$s'
-                     , CASE                                         --<1>
+                       E'CREATE %1$s%2$s %3$I %4$s %5$s\n    ON %6$I.%7$I\n   %8$s;\n%9$s'
+                     , CASE p_use_if_not_exists                     --<1>
+                         WHEN true
+                           THEN 'OR REPLACE' || ' '
+                         ELSE ''
+                       END
+                     , CASE                                         --<2>
                          WHEN is_constraint_trigger
                            THEN 'CONSTRAINT TRIGGER'
                          ELSE 'TRIGGER'
                        END
-                     , replace(                                     --<2>
+                     , replace(                                     --<3>
                            trigger_name
                          , p_template_table_name
                          , v_default_partition_name
                        )
-                     , event_timing                                 --<3>
-                     , trigger_event                                --<4>
-                     , v_partition_schema                           --<5>
-                     , v_default_partition_name                     --<6>
-                     , trigger_body                                 --<7>
-                     , CASE                                         --<8>
+                     , event_timing                                 --<4>
+                     , trigger_event                                --<5>
+                     , v_partition_schema                           --<6>
+                     , v_default_partition_name                     --<7>
+                     , trigger_body                                 --<8>
+                     , CASE                                         --<9>
                          WHEN NOT is_trigger_enabled
                            THEN format(
                                     E'\nALTER TABLE %1$I.%2$I\n    DISABLE TRIGGER %3$I;\n'
@@ -641,19 +661,19 @@ BEGIN
         -- Partition definition.
         v_ddl := v_ddl || format(
             E'CREATE TABLE %1$s%2$I.%3$I\n    PARTITION OF %4$I.%5$I%6$s\n    DEFAULT%7$s%8$s;\n'
-          , CASE p_use_if_not_exists
+          , CASE p_use_if_not_exists                                        -- <1>
               WHEN true
-                THEN 'IF NOT EXISTS '
+                THEN 'IF NOT EXISTS' || ' '
               ELSE ''
             END
-          , v_partition_schema                                              -- <1>
-          , v_default_partition_name                                        -- <2>
-          , p_table_schema                                                  -- <3>
-          , p_table_name                                                    -- <4>
+          , v_partition_schema                                              -- <2>
+          , v_default_partition_name                                        -- <3>
+          , p_table_schema                                                  -- <4>
+          , p_table_name                                                    -- <5>
           -- We cannot use format here because NULL is treated as an empty string for `s` formats.
-          , COALESCE(E' (\n' || v_constraints || E'\n    )', '')            -- <5>
-          , v_storage_clause                                                -- <6>
-          , CASE                                                            -- <7>
+          , COALESCE(E' (\n' || v_constraints || E'\n    )', '')            -- <6>
+          , v_storage_clause                                                -- <7>
+          , CASE                                                            -- <8>
               WHEN p_partition_tablespace != 'pg_default'
                 THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
               ELSE ''
