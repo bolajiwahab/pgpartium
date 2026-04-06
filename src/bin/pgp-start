@@ -5,16 +5,16 @@ usage()
     echo "
     ${0##*/}
 
-    Installs major PostgreSQL version, psql client, optionally creates a cluster, starts the cluster and applies init script if provided.
+    Installs major PostgreSQL version, psql client, optionally creates a cluster, starts the cluster and applies init directory if provided.
 
     OPTIONS:
       -v  the postgres version to use (Required)
-      -i  the init script to apply (Optional)
+      -i  the init directory to apply (Optional) (supports .sh, .sql and .sql.gz)
       -h  show this help message.
 
     SAMPLE USAGE:
-        ${0##*/} -v 17 -i init.sql
-        PGP_PG_MAJOR_VERSION=17 INIT_SCRIPT=init.sql ${0##*/}
+        ${0##*/} -v 17 -i initdir
+        PGP_PG_MAJOR_VERSION=17 INIT_DIR=initdir ${0##*/}
 "
 }
 

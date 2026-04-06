@@ -35,7 +35,7 @@
 docker pull ghcr.io/bolajiwahab/pgpartium:0.5.0
 ```
 
-**<span style="color:red">pgpartium is only supported on PostgreSQL 13 or higher</span>**.
+**<span style="color:red">pgpartium is only supported on PostgreSQL 14 or higher</span>**.
 
 ## Usage
 
@@ -89,7 +89,7 @@ jobs:
       options: --user root
     steps:
       - name: Start PostgreSQL and apply init directory
-        run: pgp-start -v 16 -i /repository/migrations/initdir
+        run: pgp-start -v 17 -i /repository/migrations/initdir
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -126,21 +126,25 @@ By default, it creates a cluster with `pg_createcluster` and starts the cluster.
 ```bash
 pgp-start
 
-Installs major PostgreSQL version and psql client, optionally creates a cluster and starts the cluster.
+Installs major PostgreSQL version, psql client, optionally creates a cluster, starts the cluster and applies init directory if provided.
 
 OPTIONS:
   -v  the postgres version to use (Required)
+  -i  the init directory to apply (Optional) (supports .sh, .sql and .sql.gz)
   -h  show this help message.
 
 SAMPLE USAGE:
-    pgp-start -v 17
+    pgp-start -v 17 -i initdir
+    PGP_PG_MAJOR_VERSION=17 PGP_INIT_DIR=initdir pgp-start
 ```
 
-To skip initialising a cluster, use
+To skip initializing a cluster, use
 
 ```bash
 NO_CLUSTER=1 pgp-start -v 17
 ```
+
+Note that when skipping the cluster initialization, you must provide the database connection details to run either pgp-make-partitions or pgp-expire-partitions, with the database schema already in place.
 
 ### pgp-make-partitions
 
