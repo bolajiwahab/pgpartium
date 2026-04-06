@@ -1,4 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS pgtap;
+CREATE EXTENSION pgtap;
 
 SELECT format($SQL$
     CREATE TABLESPACE %1$I
@@ -9,18 +9,17 @@ $SQL$, 'pgpartium')
       FROM pg_catalog.pg_tablespace
      WHERE spcname = 'pgpartium')\gexec
 
-CREATE SCHEMA IF NOT EXISTS mock;
+CREATE SCHEMA mock;
 
 -- We are mocking now() to return a fixed timestamptz value
--- as the core function pgpartium.make_partitions uses now()
--- to calculate the partitioning range.
+-- for deterministic tests
 CREATE OR REPLACE FUNCTION mock.now ()
 RETURNS timestamptz
 LANGUAGE SQL
-IMMUTABLE
+STABLE
 PARALLEL SAFE
 AS $BODY$
-    SELECT CAST('2025-03-01 00:00:00' AS timestamp);
+    SELECT CAST('2025-03-01 00:00:00' AS timestamptz);
 $BODY$;
 
 ALTER SYSTEM SET search_path = mock, pg_catalog, public;

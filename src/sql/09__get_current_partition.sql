@@ -16,7 +16,7 @@ AS $BODY$
              WHEN 'timestamptz'
                THEN CAST((matches)[1] AS timestamptz)
              WHEN 'timestamp'
-               THEN CAST((matches)[1] AS timestamptz)
+               THEN CAST((matches)[1] AS timestamp)
              WHEN 'date'
                THEN CAST((matches)[1] AS date)
              WHEN 'int4'
@@ -30,7 +30,7 @@ AS $BODY$
              WHEN 'timestamptz'
                THEN CAST((matches)[2] AS timestamptz)
              WHEN 'timestamp'
-               THEN CAST((matches)[2] AS timestamptz)
+               THEN CAST((matches)[2] AS timestamp)
              WHEN 'date'
                THEN CAST((matches)[2] AS date)
              WHEN 'int4'
@@ -58,7 +58,7 @@ AS $BODY$
                       WHEN 'timestamptz'
                         THEN CAST((matches)[1] AS timestamptz)
                       WHEN 'timestamp'
-                        THEN CAST((matches)[1] AS timestamptz)
+                        THEN CAST((matches)[1] AS timestamp)
                       WHEN 'date'
                         THEN CAST((matches)[1] AS date)
                       WHEN 'int4'
@@ -72,7 +72,7 @@ AS $BODY$
                      WHEN 'timestamptz'
                        THEN CAST((matches)[2] AS timestamptz)
                      WHEN 'timestamp'
-                       THEN CAST((matches)[2] AS timestamptz)
+                       THEN CAST((matches)[2] AS timestamp)
                      WHEN 'date'
                        THEN CAST((matches)[2] AS date)
                      WHEN 'int4'

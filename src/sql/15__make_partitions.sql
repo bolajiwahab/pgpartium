@@ -16,6 +16,7 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_retention interval = '-1'
   , p_timezone text = 'Etc/UTC'
   , p_skip_overlapping boolean = false
+  , p_use_if_not_exists boolean = false
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
@@ -34,11 +35,22 @@ DECLARE
     v_default_partition_name   text;
     v_partition_schema         text := COALESCE(p_partition_schema, p_table_schema);
     v_start_timestamp          timestamptz;
+    v_interval_unit            text;
 
 BEGIN
 
     PERFORM set_config('timezone', p_timezone, true);
     PERFORM set_config('client_min_messages', 'warning', true);
+
+    IF p_interval = interval '0' THEN
+        RAISE 'interval must not be zero'
+        USING ERRCODE = 'invalid_parameter_value';
+    END IF;
+
+    IF COALESCE(p_partition_name_template, '') = '' THEN
+        RAISE 'partition name template is required'
+        USING ERRCODE = 'invalid_parameter_value';
+    END IF;
 
     v_parent_exists := pgpartium.table_exists(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
     v_template_exists := pgpartium.table_exists(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name);
@@ -72,11 +84,6 @@ BEGIN
         USING ERRCODE = 'feature_not_supported',
                DETAIL = format('table "%1$I"."%2$I" is partitioned on a data type that is not supported', p_table_schema, p_table_name),
                  HINT = 'supported data types are: date, timestamp with time zone, timestamp without time zone, integer, bigint, and uuid';
-    END IF;
-
-    IF COALESCE(p_partition_name_template, '') = '' THEN
-        RAISE 'name template is required'
-        USING ERRCODE = 'invalid_parameter_value';
     END IF;
 
     IF p_create_default AND COALESCE(p_default_partition_name_template, '') = '' THEN
@@ -207,6 +214,18 @@ BEGIN
        AND template_triggers.trigger_body = parent_triggers.trigger_body
      WHERE parent_triggers.trigger_body IS NULL;
 
+    SELECT INTO v_interval_unit
+        CASE
+          WHEN EXTRACT(year FROM p_interval) <> 0 THEN 'year'
+          WHEN EXTRACT(month FROM p_interval) <> 0 THEN 'month'
+          WHEN EXTRACT(day FROM p_interval) <> 0
+            AND EXTRACT(day FROM p_interval) % 7 = 0 THEN 'week'
+          WHEN EXTRACT(day FROM p_interval) <> 0 THEN 'day'
+          WHEN EXTRACT(hour FROM p_interval) <> 0 THEN 'hour'
+          WHEN EXTRACT(minute FROM p_interval) <> 0 THEN 'minute'
+          ELSE 'second'
+        END;
+
     SELECT INTO v_start_timestamp
                 COALESCE(
                     (
@@ -219,7 +238,7 @@ BEGIN
     FOR v_partitions IN
         WITH dateset AS (
             SELECT "date"
-              FROM generate_series((date_trunc(substring(p_interval::text FROM '\d+\s*(\w+)'), v_start_timestamp) - (p_interval * p_past)), (now() + (p_interval * p_future)), p_interval) AS "date"
+              FROM generate_series((date_trunc(v_interval_unit, v_start_timestamp) - (p_interval * p_past)), (now() + (p_interval * p_future)), p_interval) AS "date"
         )
         SELECT replace(
                     replace(
@@ -395,7 +414,12 @@ BEGIN
 
             -- Partition definition.
             v_ddl := v_ddl || format(
-                E'CREATE TABLE %1$I.%2$I\n    PARTITION OF %3$I.%4$I%5$s\n    FOR VALUES FROM (%6$L) TO (%7$L)%8$s%9$s;\n'
+                E'CREATE TABLE %1$s%2$I.%3$I\n    PARTITION OF %4$I.%5$I%6$s\n    FOR VALUES FROM (%7$L) TO (%8$L)%9$s%10$s;\n'
+              , CASE p_use_if_not_exists
+                  WHEN true
+                    THEN 'IF NOT EXISTS '
+                  ELSE ''
+                END
               , v_partition_schema                                                             -- <1>
               , v_partitions.partition_name                                                    -- <2>
               , p_table_schema                                                                 -- <3>
@@ -616,7 +640,12 @@ BEGIN
 
         -- Partition definition.
         v_ddl := v_ddl || format(
-            E'CREATE TABLE %1$I.%2$I\n    PARTITION OF %3$I.%4$I%5$s\n    DEFAULT%6$s%7$s;\n'
+            E'CREATE TABLE %1$s%2$I.%3$I\n    PARTITION OF %4$I.%5$I%6$s\n    DEFAULT%7$s%8$s;\n'
+          , CASE p_use_if_not_exists
+              WHEN true
+                THEN 'IF NOT EXISTS '
+              ELSE ''
+            END
           , v_partition_schema                                              -- <1>
           , v_default_partition_name                                        -- <2>
           , p_table_schema                                                  -- <3>

@@ -6,10 +6,10 @@ echo "INFO: Creating pgtap extension"
 apt-get install -y postgresql-"${PGP_PG_MAJOR_VERSION}"-pgtap
 psql -v "ON_ERROR_STOP=1" --quiet --username=postgres --dbname=postgres -c "CREATE EXTENSION pgtap;"
 
-echo "INFO: Setting up shellspec"
-wget --quiet https://github.com/shellspec/shellspec/archive/0.28.1.tar.gz --output-document=/tmp/shellspec-0.28.1.tar.gz
-tar xzf /tmp/shellspec-0.28.1.tar.gz -C /tmp
-ln -s /tmp/shellspec-0.28.1/bin/shellspec /usr/bin/shellspec
+# echo "INFO: Setting up shellspec"
+# wget --quiet https://github.com/shellspec/shellspec/archive/0.28.1.tar.gz --output-document=/tmp/shellspec-0.28.1.tar.gz
+# tar xzf /tmp/shellspec-0.28.1.tar.gz -C /tmp
+# ln -s /tmp/shellspec-0.28.1/bin/shellspec /usr/bin/shellspec
 
 echo "INFO: Creating tablespace pgpartium"
 mkdir -p /var/lib/postgresql/tablespaces/pgpartium

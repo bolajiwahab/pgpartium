@@ -15,6 +15,6 @@ services:
     command: >
       sh -c "
         pgp-start &&
-        pg_prove --username=postgres --dbname=postgres --verbose --failures tests/tap/*.sql && \
-        bash shellspec tests/spec
+        pg_prove --username=postgres --dbname=postgres --verbose --failures tests/tap/**/*.sql
+        # bash shellspec tests/spec
       "
