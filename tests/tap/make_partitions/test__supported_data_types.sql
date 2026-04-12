@@ -99,7 +99,7 @@ SELECT results_eq(
 
 DROP TABLE test.transactions_by_timestamp;
 
--- partitioned by int4
+-- partitioned by int4 (int)
 CREATE TABLE test.transactions_by_int4 (
     created_at int4
   , amount numeric
@@ -128,7 +128,7 @@ SELECT results_eq(
 
 DROP TABLE test.transactions_by_int4;
 
--- partitioned by int8
+-- partitioned by int8 (bigint)
 CREATE TABLE test.transactions_by_int8 (
     created_at int8
   , amount numeric

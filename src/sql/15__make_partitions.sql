@@ -264,7 +264,7 @@ BEGIN
         END IF;
 
         -- Skip if this partition will be older than the retention period.
-        IF age(now(), CAST(v_partitions.upper_bound AS timestamptz)) > NULLIF(p_retention, '-1') THEN
+        IF age(now(), CAST(v_partitions.upper_bound AS timestamptz)) >= NULLIF(p_retention, '-1') THEN
             CONTINUE;
         END IF;
 

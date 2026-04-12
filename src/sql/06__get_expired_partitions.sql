@@ -84,7 +84,7 @@ AS $BODY$
                THEN age(now(), to_timestamp(CAST((matches)[2] AS bigint) / 1000))
              WHEN 'uuid'
                THEN age(now(), to_timestamp(('x' || replace(CAST((matches)[2] AS text), '-', ''))::bit(48)::bigint / 1000))
-           END > NULLIF(p_retention, '-1')
+           END >= NULLIF(p_retention, '-1')
      ORDER BY age DESC;
 
 $BODY$;
