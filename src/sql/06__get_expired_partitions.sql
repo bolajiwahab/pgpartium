@@ -72,10 +72,10 @@ AS $BODY$
        AND p.relname = p_table_name
        AND c.relispartition
        AND CASE keys_data_types
-             WHEN 'timestamptz'
-               THEN age(now(), CAST((matches)[2] AS timestamptz))
              WHEN 'timestamp'
                THEN age(now(), CAST((matches)[2] AS timestamp))
+             WHEN 'timestamptz'
+               THEN age(now(), CAST((matches)[2] AS timestamptz))
              WHEN 'date'
                THEN age(now(), CAST((matches)[2] AS date))
              WHEN 'int4'
@@ -84,7 +84,7 @@ AS $BODY$
                THEN age(now(), to_timestamp(CAST((matches)[2] AS bigint) / 1000))
              WHEN 'uuid'
                THEN age(now(), to_timestamp(('x' || replace(CAST((matches)[2] AS text), '-', ''))::bit(48)::bigint / 1000))
-           END >= NULLIF(p_retention, '-1')
+           END >= p_retention
      ORDER BY age DESC;
 
 $BODY$;

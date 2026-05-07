@@ -3,63 +3,12 @@ BEGIN;
 -- Deallocate all previous prepared statements.
 DEALLOCATE ALL;
 
+\i tests/fixtures/schema.sql
+
 SET search_path TO mock, pg_catalog, public;
 
 SELECT plan(28);
 
-CREATE SCHEMA test;
-
-CREATE TABLE test.transactions (
-    transaction_id uuid NOT NULL
-  , user_id uuid NOT NULL
-  , account_id uuid NOT NULL
-  , amount numeric NOT NULL
-  , status text NOT NULL
-  , created_at timestamptz NOT NULL
-  , updated_at timestamptz NOT NULL
-  , CONSTRAINT transactions_account_id_key UNIQUE (account_id, created_at)
-)
-PARTITION BY RANGE (created_at);
-
--- Partitioned by List.
-CREATE TABLE test.users (
-    user_id uuid NOT NULL
-  , email text NOT NULL
-  , created_at timestamptz NOT NULL
-  , updated_at timestamptz NOT NULL
-  , CONSTRAINT users_pkey PRIMARY KEY (user_id)
-)
-PARTITION BY LIST (user_id);
-
--- Multi-column partitioned table.
-CREATE TABLE test.scheduled_entries (
-    scheduled_entry_id uuid NOT NULL
-  , user_id uuid NOT NULL
-  , account_id uuid NOT NULL
-  , created_at timestamptz NOT NULL
-  , updated_at timestamptz NOT NULL
-)
-PARTITION BY RANGE (created_at, updated_at);
-
--- Partitioned by uuid.
-CREATE TABLE test.orders (
-    order_id uuid NOT NULL
-  , user_id uuid NOT NULL
-  , created_at timestamptz NOT NULL
-  , updated_at timestamptz NOT NULL
-)
-PARTITION BY RANGE (order_id);
-
--- Partitioned by unsupported data type - text.
-CREATE TABLE test.books (
-    book_id text NOT NULL
-  , user_id uuid NOT NULL
-  , created_at timestamptz NOT NULL
-  , updated_at timestamptz NOT NULL
-)
-PARTITION BY RANGE (book_id);
-
--- Exceptions
 SELECT throws_ok($$
     SELECT * FROM pgpartium.make_partitions (
         p_table_schema=>''
@@ -401,17 +350,6 @@ SELECT throws_ok($$
   , '22023'
   , 'interval must not be zero'
   , 'fail on zero interval'
-);
-
--- Non partitioned table.
-CREATE TABLE test.accounts (
-    user_id uuid NOT NULL
-  , charge_id uuid NOT NULL
-  , account_id uuid NOT NULL
-  , status text NOT NULL
-  , created_at timestamptz NOT NULL
-  , CONSTRAINT accounts_pkey PRIMARY KEY (user_id, created_at)
-  , CONSTRAINT accounts_charge_id_key UNIQUE (charge_id)
 );
 
 SELECT throws_ok($$

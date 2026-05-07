@@ -1,9 +1,7 @@
 BEGIN;
 
---- Deallocate all previous prepared statements.
+-- Deallocate all previous prepared statements.
 DEALLOCATE ALL;
-
-\! ls
 
 \i tests/fixtures/schema.sql
 
@@ -11,7 +9,7 @@ SET search_path TO mock, pg_catalog, public;
 
 SELECT plan(24);
 
---- We are using mocked now() - '2025-03-01 00:00:00'
+-- We are using mocked now() - '2025-03-01 00:00:00'
 
 PREPARE result_with_defaults AS
 SELECT * FROM pgpartium.make_partitions (

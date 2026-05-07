@@ -3,11 +3,11 @@ BEGIN;
 -- Deallocate all previous prepared statements.
 DEALLOCATE ALL;
 
+\i tests/fixtures/schema.sql
+
 SET search_path TO mock, pg_catalog, public;
 
 SELECT plan(7);
-
-CREATE SCHEMA test;
 
 SELECT throws_ok($$
     SELECT * FROM pgpartium.expire_partitions (
@@ -67,17 +67,6 @@ SELECT throws_ok($$
   , '42P01'
   , 'table "<NULL>"."<NULL>" does not exist'
   , 'fail on null parent table schema and name'
-);
-
--- Non partitioned table.
-CREATE TABLE test.accounts (
-    user_id uuid NOT NULL
-  , charge_id uuid NOT NULL
-  , account_id uuid NOT NULL
-  , status text NOT NULL
-  , created_at timestamptz NOT NULL
-  , CONSTRAINT accounts_pkey PRIMARY KEY (user_id, created_at)
-  , CONSTRAINT accounts_charge_id_key UNIQUE (charge_id)
 );
 
 SELECT throws_ok($$

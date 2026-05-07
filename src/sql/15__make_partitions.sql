@@ -3,29 +3,26 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_table_name text
   , p_partition_name_template text
   , p_interval interval
-  , p_past integer = 0
-  , p_future integer = 0
-  , p_create_default boolean = false
-  , p_default_partition_name_template text = NULL
-  , p_partition_schema text = NULL
-  , p_partition_tablespace text = 'pg_default'
-  , p_index_tablespace text = 'pg_default'
-  , p_storage_parameters jsonb = '{}'
-  , p_template_table_schema text = NULL
-  , p_template_table_name text = NULL
-  , p_retention interval = '-1'
-  , p_timezone text = 'Etc/UTC'
-  , p_skip_overlapping boolean = false
-  , p_idempotent_ddl boolean = false
+  , p_past integer DEFAULT 0
+  , p_future integer DEFAULT 0
+  , p_create_default boolean DEFAULT false
+  , p_default_partition_name_template text DEFAULT NULL
+  , p_partition_schema text DEFAULT NULL
+  , p_partition_tablespace text DEFAULT 'pg_default'
+  , p_index_tablespace text DEFAULT 'pg_default'
+  , p_storage_parameters jsonb DEFAULT '{}'
+  , p_template_table_schema text DEFAULT NULL
+  , p_template_table_name text DEFAULT NULL
+  , p_retention interval DEFAULT NULL
+  , p_timezone text DEFAULT 'Etc/UTC'
+  , p_skip_overlapping boolean DEFAULT false
+  , p_idempotent_ddl boolean DEFAULT false
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
 AS $BODY$
 DECLARE
-    v_partition               record;
-    v_parent_exists            boolean;
-    v_template_exists          boolean;
-    v_is_parent_partitioned    boolean;
+    v_partition                record;
     v_partitioning_details     record;
     v_ddl                      text := '';
     v_indexes                  text;
@@ -51,17 +48,14 @@ BEGIN
         USING ERRCODE = 'invalid_parameter_value';
     END IF;
 
-    v_parent_exists := pgpartium.table_exists(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
-    v_template_exists := pgpartium.table_exists(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name);
-    v_is_parent_partitioned := pgpartium.is_table_partitioned(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
     v_partitioning_details := pgpartium.get_partitioning_details(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
 
-    IF NOT v_parent_exists THEN
+    IF NOT pgpartium.table_exists(p_table_schema=>p_table_schema, p_table_name=>p_table_name) THEN
         RAISE 'table "%"."%" does not exist', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
 
-    IF NOT v_is_parent_partitioned THEN
+    IF NOT pgpartium.is_table_partitioned(p_table_schema=>p_table_schema, p_table_name=>p_table_name) THEN
         RAISE 'table "%"."%" is not partitioned', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
@@ -119,31 +113,31 @@ BEGIN
     END IF;
 
     IF (COALESCE(p_template_table_schema, '') > '' OR COALESCE(p_template_table_name, '') > '')
-    AND NOT v_template_exists THEN
+    AND NOT pgpartium.table_exists(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name) THEN
         RAISE 'template table "%"."%" does not exist', p_template_table_schema, p_template_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
 
-    SELECT INTO v_interval_unit
-        CASE
-          WHEN EXTRACT(year FROM p_interval) <> 0 THEN 'year'
-          WHEN EXTRACT(month FROM p_interval) <> 0 THEN 'month'
-          WHEN EXTRACT(day FROM p_interval) <> 0
-            AND EXTRACT(day FROM p_interval) % 7 = 0 THEN 'week'
-          WHEN EXTRACT(day FROM p_interval) <> 0 THEN 'day'
-          WHEN EXTRACT(hour FROM p_interval) <> 0 THEN 'hour'
-          WHEN EXTRACT(minute FROM p_interval) <> 0 THEN 'minute'
-          ELSE 'second'
-        END;
+    SELECT CASE
+             WHEN EXTRACT(year FROM p_interval) <> 0 THEN 'year'
+             WHEN EXTRACT(month FROM p_interval) <> 0 THEN 'month'
+             WHEN EXTRACT(day FROM p_interval) <> 0
+               AND EXTRACT(day FROM p_interval) % 7 = 0 THEN 'week'
+             WHEN EXTRACT(day FROM p_interval) <> 0 THEN 'day'
+             WHEN EXTRACT(hour FROM p_interval) <> 0 THEN 'hour'
+             WHEN EXTRACT(minute FROM p_interval) <> 0 THEN 'minute'
+             ELSE 'second'
+           END
+      INTO v_interval_unit;
 
-    SELECT INTO v_start_timestamp
-                COALESCE(
-                    (
-                        SELECT upper_bound
-                          FROM pgpartium.get_latest_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
-                    )
-                  , now()
-                );
+    SELECT COALESCE(
+               (
+                    SELECT upper_bound
+                      FROM pgpartium.get_latest_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
+               )
+             , now()
+           )
+      INTO v_start_timestamp;
 
     FOR v_partition IN
         WITH dateset AS (
@@ -218,16 +212,14 @@ BEGIN
                  , partition_clause
               FROM partitions
              WHERE NOT is_default
+               -- Skip already existing partitions.
                AND NOT EXISTS (
                        SELECT NULL
                          FROM current_bounds
                         WHERE current_bounds.lower_bound = partitions.lower_bound
                           AND current_bounds.upper_bound = partitions.upper_bound
                    )
-               AND age(
-                       now()
-                     , CAST(upper_bound AS timestamptz)
-                   ) < COALESCE(NULLIF(p_retention, '-1')::interval, 'infinity'::interval)
+               -- Optionally skip overlapping partitions.
                AND NOT EXISTS (
                        SELECT NULL
                          FROM current_bounds
@@ -235,6 +227,15 @@ BEGIN
                           AND (current_bounds.lower_bound, current_bounds.upper_bound)
                               OVERLAPS (partitions.lower_bound, partitions.upper_bound)
                    )
+               -- Retention filtering.
+               AND CASE
+                     WHEN p_retention IS NULL
+                       THEN true
+                     ELSE age(
+                            now()
+                          , partitions.upper_bound::timestamptz
+                        ) < p_retention
+                   END
             UNION ALL
             SELECT is_default
                  , name_template
@@ -317,8 +318,6 @@ BEGIN
                )
           INTO v_constraints
           FROM partition_constraints;
-
-        raise warning 'constraints: %', v_constraints;
 
         -- Get index create statement.
         WITH template_indexes AS (

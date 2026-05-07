@@ -3,42 +3,12 @@ BEGIN;
 -- Deallocate all previous prepared statements.
 DEALLOCATE ALL;
 
+\i tests/fixtures/schema.sql
+
 SET search_path TO mock, pg_catalog, public;
 
-SELECT plan(7);
+SELECT plan(9);
 
---- Test schema
-CREATE SCHEMA test;
-
-CREATE TABLE test.notifications (
-    notification_id uuid NOT NULL
-  , user_id uuid NOT NULL
-  , account_id uuid NOT NULL
-  , content text NOT NULL
-  , status text NOT NULL
-  , created_at timestamptz NOT NULL
-  , updated_at timestamptz NOT NULL
-  , CONSTRAINT notifications_pkey PRIMARY KEY (notification_id, created_at)
-)
-PARTITION BY RANGE (created_at);
-
-CREATE TABLE test.notifications_2025_01
-    PARTITION OF test.notifications
-    FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
-
-CREATE TABLE test.test__notifications__2024_12
-    PARTITION OF test.notifications
-    FOR VALUES FROM ('2024-12-01') TO ('2025-01-01');
-
-CREATE TABLE test.test__notifications__2025_02
-    PARTITION OF test.notifications
-    FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
-
-CREATE TABLE test.test__notifications__2025_03
-    PARTITION OF test.notifications
-    FOR VALUES FROM ('2025-03-01') TO ('2025-04-01');
-
---- Actual tests
 --- We are using mocked now() - '2025-03-01 00:00:00+00'
 
 PREPARE empty_result_with_defaults AS
@@ -56,12 +26,12 @@ PREPARE empty_result_with_disable_retention AS
 SELECT * FROM pgpartium.expire_partitions (
     p_table_schema=>'test'
   , p_table_name=>'notifications'
-  , p_retention=>'-1'
+  , p_retention=>NULL
 );
 
 SELECT is_empty(
     'empty_result_with_disable_retention'
-  , 'expire partitions with disable p_retention should return empty result'
+  , 'expire partitions with disabled retention should return empty result'
 );
 
 PREPARE result_with_retention AS
@@ -73,6 +43,8 @@ SELECT * FROM pgpartium.expire_partitions (
 
 PREPARE expected_with_retention AS VALUES (
 $$DROP TABLE test.test__notifications__2024_12;
+
+DROP TABLE test.notifications_2025_01;
 $$);
 
 SELECT results_eq(
@@ -94,6 +66,11 @@ $$ALTER TABLE test.notifications
     DETACH PARTITION test.test__notifications__2024_12;
 
 DROP TABLE test.test__notifications__2024_12;
+
+ALTER TABLE test.notifications
+    DETACH PARTITION test.notifications_2025_01;
+
+DROP TABLE test.notifications_2025_01;
 $$);
 
 SELECT results_eq(
@@ -136,6 +113,9 @@ SELECT * FROM pgpartium.expire_partitions (
 PREPARE expected_with_retention_detach_only AS VALUES (
 $$ALTER TABLE test.notifications
     DETACH PARTITION test.test__notifications__2024_12;
+
+ALTER TABLE test.notifications
+    DETACH PARTITION test.notifications_2025_01;
 $$);
 
 SELECT results_eq(
@@ -157,6 +137,9 @@ SELECT * FROM pgpartium.expire_partitions (
 PREPARE expected_with_retention_detach_only_concurrently AS VALUES (
 $$ALTER TABLE test.notifications
     DETACH PARTITION test.test__notifications__2024_12 CONCURRENTLY;
+
+ALTER TABLE test.notifications
+    DETACH PARTITION test.notifications_2025_01 CONCURRENTLY;
 $$);
 
 SELECT results_eq(
@@ -183,32 +166,6 @@ SELECT results_eq(
   , 'expire partitions with timezone range date'
 );
 
------ Test expire partitions with timezone range timestamp.
------ We are using mocked now() - '2025-03-01 00:00:00' at current timezone.
-CREATE TABLE IF NOT EXISTS test.messages (
-    transaction_id uuid NOT NULL
-  , user_id uuid NOT NULL
-  , account_id uuid NOT NULL
-  , amount numeric NOT NULL
-  , status text NOT NULL
-  , created_at timestamp NOT NULL
-  , updated_at timestamptz NOT NULL
-  , CONSTRAINT messages_account_id_key UNIQUE (account_id, created_at)
-)
-PARTITION BY RANGE (created_at);
-
-CREATE TABLE test.test__messages__2024_12
-    PARTITION OF test.messages
-    FOR VALUES FROM ('2024-12-01 00:00:00') TO ('2025-01-01 00:00:00');
-
-CREATE TABLE test.test__messages__2025_01
-    PARTITION OF test.messages
-    FOR VALUES FROM ('2025-01-01 00:00:00') TO ('2025-02-01 00:00:00');
-
-CREATE TABLE test.test__messages__2025_02
-    PARTITION OF test.messages
-    FOR VALUES FROM ('2025-02-01 00:00:00') TO ('2025-03-01 00:00:00');
-
 PREPARE result_with_timezone_range_timestamp AS
 SELECT * FROM pgpartium.expire_partitions (
     p_table_schema=>'test'
@@ -219,6 +176,8 @@ SELECT * FROM pgpartium.expire_partitions (
 
 PREPARE expected_with_timezone_range_timestamp AS VALUES (
 $$DROP TABLE test.test__messages__2024_12;
+
+DROP TABLE test.test__messages__2025_01;
 $$);
 
 SELECT results_eq(
@@ -226,8 +185,7 @@ SELECT results_eq(
   , 'expected_with_timezone_range_timestamp'
   , 'expire partitions with timezone range timestamp'
 );
-----
--- Finish the tests and clean up.
+
 SELECT * FROM finish();
 
 ROLLBACK;

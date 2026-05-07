@@ -3,21 +3,13 @@ BEGIN;
 -- Deallocate all previous prepared statements.
 DEALLOCATE ALL;
 
+\i tests/fixtures/schema.sql
+
 SET search_path TO mock, pg_catalog, public;
 
 SELECT plan(6);
 
 -- We are using mocked now() - '2025-03-01 00:00:00'
-
-CREATE SCHEMA test;
-
--- partitioned by date
-CREATE TABLE test.transactions_by_date (
-    date date
-  , amount numeric
-  , created_on date
-)
-PARTITION BY RANGE (created_on);
 
 PREPARE result_with_partition_by_date AS
 SELECT * FROM pgpartium.make_partitions (
@@ -39,15 +31,6 @@ SELECT results_eq(
   , 'make partitions with partition by date'
 );
 
-DROP TABLE test.transactions_by_date;
-
--- partitioned by timestamptz
-CREATE TABLE test.transactions_by_timestamptz (
-    created_at timestamptz
-  , amount numeric
-)
-PARTITION BY RANGE (created_at);
-
 PREPARE result_with_partition_by_timestamptz AS
 SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'test'
@@ -67,15 +50,6 @@ SELECT results_eq(
   , 'expected_with_partition_by_timestamptz'
   , 'make partitions with partition by timestamptz'
 );
-
-DROP TABLE test.transactions_by_timestamptz;
-
--- partitioned by timestamp
-CREATE TABLE test.transactions_by_timestamp (
-    created_at timestamp
-  , amount numeric
-)
-PARTITION BY RANGE (created_at);
 
 PREPARE result_with_partition_by_timestamp AS
 SELECT * FROM pgpartium.make_partitions (
@@ -97,15 +71,6 @@ SELECT results_eq(
   , 'make partitions with partition by timestamp'
 );
 
-DROP TABLE test.transactions_by_timestamp;
-
--- partitioned by int4 (int)
-CREATE TABLE test.transactions_by_int4 (
-    created_at int4
-  , amount numeric
-)
-PARTITION BY RANGE (created_at);
-
 PREPARE result_with_partition_by_int4 AS
 SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'test'
@@ -125,15 +90,6 @@ SELECT results_eq(
   , 'expected_with_partition_by_int4'
   , 'make partitions with partition by int4'
 );
-
-DROP TABLE test.transactions_by_int4;
-
--- partitioned by int8 (bigint)
-CREATE TABLE test.transactions_by_int8 (
-    created_at int8
-  , amount numeric
-)
-PARTITION BY RANGE (created_at);
 
 PREPARE result_with_partition_by_int8 AS
 SELECT * FROM pgpartium.make_partitions (
@@ -155,15 +111,6 @@ SELECT results_eq(
   , 'make partitions with partition by int8'
 );
 
-DROP TABLE test.transactions_by_int8;
-
--- partitioned by uuidv7
-CREATE TABLE test.transactions_by_uuidv7 (
-    created_at uuid
-  , amount numeric
-)
-PARTITION BY RANGE (created_at);
-
 PREPARE result_with_partition_by_uuidv7 AS
 SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'test'
@@ -183,8 +130,6 @@ SELECT results_eq(
   , 'expected_with_partition_by_uuidv7'
   , 'make partitions with partition by uuidv7'
 );
-
-DROP TABLE test.transactions_by_uuidv7;
 
 SELECT * FROM finish();
 

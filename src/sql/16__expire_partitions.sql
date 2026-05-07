@@ -1,33 +1,26 @@
 CREATE OR REPLACE FUNCTION pgpartium.expire_partitions (
     p_table_schema text
   , p_table_name text
-  , p_retention interval = '-1'
-  , p_detach_only boolean = false
-  , p_detach_first boolean = false
-  , p_detach_concurrently boolean = false
-  , p_timezone text = 'Etc/UTC'
+  , p_retention interval DEFAULT NULL
+  , p_detach_only boolean DEFAULT false
+  , p_detach_first boolean DEFAULT false
+  , p_detach_concurrently boolean DEFAULT false
+  , p_timezone text DEFAULT 'Etc/UTC'
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
 AS $BODY$
-DECLARE
-    v_parent_exists            boolean;
-    v_is_parent_partitioned    boolean;
 
 BEGIN
 
     PERFORM set_config('timezone', p_timezone, true);
-    PERFORM set_config('client_min_messages', 'warning', true);
 
-    v_parent_exists := pgpartium.table_exists(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
-    v_is_parent_partitioned := pgpartium.is_table_partitioned(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
-
-    IF NOT v_parent_exists THEN
+    IF NOT pgpartium.table_exists(p_table_schema=>p_table_schema, p_table_name=>p_table_name) THEN
         RAISE 'table "%"."%" does not exist', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
 
-    IF NOT v_is_parent_partitioned THEN
+    IF NOT pgpartium.is_table_partitioned(p_table_schema=>p_table_schema, p_table_name=>p_table_name) THEN
         RAISE 'table "%"."%" is not partitioned', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
