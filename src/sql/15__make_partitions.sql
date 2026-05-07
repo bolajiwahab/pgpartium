@@ -22,7 +22,7 @@ RETURNS SETOF text
 LANGUAGE plpgsql
 AS $BODY$
 DECLARE
-    v_partitions               record;
+    v_partition               record;
     v_parent_exists            boolean;
     v_template_exists          boolean;
     v_is_parent_partitioned    boolean;
@@ -32,7 +32,6 @@ DECLARE
     v_constraints              text;
     v_triggers                 text;
     v_storage_clause           text;
-    v_default_partition_name   text;
     v_partition_schema         text := COALESCE(p_partition_schema, p_table_schema);
     v_start_timestamp          timestamptz;
     v_interval_unit            text;
@@ -93,7 +92,7 @@ BEGIN
 
     IF p_partition_schema IS NOT NULL
     AND NOT EXISTS (
-        SELECT 1
+        SELECT NULL
           FROM pg_catalog.pg_namespace
          WHERE nspname = p_partition_schema
     ) THEN
@@ -102,7 +101,7 @@ BEGIN
     END IF;
 
     IF NOT EXISTS (
-        SELECT 1
+        SELECT NULL
           FROM pg_catalog.pg_tablespace
          WHERE spcname = p_partition_tablespace
     ) THEN
@@ -111,7 +110,7 @@ BEGIN
     END IF;
 
     IF NOT EXISTS (
-        SELECT 1
+        SELECT NULL
           FROM pg_catalog.pg_tablespace
          WHERE spcname = p_index_tablespace
     ) THEN
@@ -124,70 +123,6 @@ BEGIN
         RAISE 'template table "%"."%" does not exist', p_template_table_schema, p_template_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
-
-    DROP TABLE IF EXISTS current_bounds;
-
-    CREATE TEMPORARY TABLE current_bounds ON COMMIT DROP AS --
-    SELECT lower_bound
-         , upper_bound
-      FROM pgpartium.get_partition_bounds(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
-
-    DROP TABLE IF EXISTS partition_constraints;
-
-    CREATE TEMPORARY TABLE partition_constraints ON COMMIT DROP AS
-    WITH template_constraints AS ( --
-        SELECT constraint_name
-             , constraint_type
-             , constraint_definition
-          FROM pgpartium.get_constraints(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name)
-    )
-    , parent_constraints AS ( --
-        SELECT constraint_name
-             , constraint_type
-             , constraint_definition
-          FROM pgpartium.get_constraints(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
-    )
-    SELECT template_constraints.constraint_name
-         , template_constraints.constraint_type
-         , template_constraints.constraint_definition
-      FROM template_constraints
-      LEFT JOIN parent_constraints
-        ON template_constraints.constraint_definition = parent_constraints.constraint_definition
-     WHERE parent_constraints.constraint_definition IS NULL;
-
-    DROP TABLE IF EXISTS partition_triggers;
-
-    CREATE TEMPORARY TABLE partition_triggers ON COMMIT DROP AS
-    WITH template_triggers AS (
-        SELECT trigger_name
-             , is_trigger_enabled
-             , is_constraint_trigger
-             , event_timing
-             , trigger_event
-             , trigger_body
-          FROM pgpartium.get_triggers(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name)
-    )
-    , parent_triggers AS (
-        SELECT trigger_name
-             , is_trigger_enabled
-             , is_constraint_trigger
-             , event_timing
-             , trigger_event
-             , trigger_body
-          FROM pgpartium.get_triggers(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
-    )
-    SELECT template_triggers.trigger_name
-         , template_triggers.is_trigger_enabled
-         , template_triggers.is_constraint_trigger
-         , template_triggers.event_timing
-         , template_triggers.trigger_event
-         , template_triggers.trigger_body
-      FROM template_triggers
-      LEFT JOIN parent_triggers
-        ON template_triggers.event_timing = parent_triggers.event_timing
-       AND template_triggers.trigger_event = parent_triggers.trigger_event
-       AND template_triggers.trigger_body = parent_triggers.trigger_body
-     WHERE parent_triggers.trigger_body IS NULL;
 
     SELECT INTO v_interval_unit
         CASE
@@ -210,7 +145,7 @@ BEGIN
                   , now()
                 );
 
-    FOR v_partitions IN
+    FOR v_partition IN
         WITH dateset AS (
             SELECT "date"
               FROM generate_series(
@@ -218,8 +153,13 @@ BEGIN
                      , (now() + (p_interval * p_future))
                      , p_interval
                    ) AS "date"
-        ),
-        partitions AS (
+        )
+        , current_bounds AS (
+            SELECT lower_bound
+                 , upper_bound
+              FROM pgpartium.get_partition_bounds(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
+        )
+        , partitions AS (
             -- Range partitions
             SELECT false AS is_default
                  , p_partition_name_template AS name_template
@@ -227,7 +167,7 @@ BEGIN
                  , ("date" + p_interval) AS upper_bound
                  , format(
                        'FOR VALUES FROM (%1$L) TO (%2$L)'
-                     , CASE v_partitioning_details.keys_data_types                                  -- <1>
+                     , CASE v_partitioning_details.keys_data_types                                  -- <1: lower_bound>
                          WHEN 'timestamptz' THEN "date"::timestamptz::text
                          WHEN 'timestamp'   THEN "date"::timestamp::text
                          WHEN 'date'        THEN "date"::date::text
@@ -243,7 +183,7 @@ BEGIN
                             )
                          )::text
                        END
-                     , CASE v_partitioning_details.keys_data_types                                  -- <2>
+                     , CASE v_partitioning_details.keys_data_types                                  -- <2: upper_bound>
                          WHEN 'timestamptz' THEN ("date" + p_interval)::timestamptz::text
                          WHEN 'timestamp'   THEN ("date" + p_interval)::timestamp::text
                          WHEN 'date'        THEN ("date" + p_interval)::date::text
@@ -269,8 +209,8 @@ BEGIN
                  , NULL AS upper_bound
                  , 'DEFAULT' AS partition_clause
              WHERE p_create_default
-        ),
-        filtered AS (
+        )
+        , filtered AS (
             SELECT is_default
                  , name_template
                  , lower_bound
@@ -279,22 +219,22 @@ BEGIN
               FROM partitions
              WHERE NOT is_default
                AND NOT EXISTS (
-                SELECT NULL
-                  FROM current_bounds
-                 WHERE current_bounds.lower_bound = partitions.lower_bound
-                   AND current_bounds.upper_bound = partitions.upper_bound
-               )
+                       SELECT NULL
+                         FROM current_bounds
+                        WHERE current_bounds.lower_bound = partitions.lower_bound
+                          AND current_bounds.upper_bound = partitions.upper_bound
+                   )
                AND age(
-                   now()
-                 , CAST(upper_bound AS timestamptz)
-               ) < COALESCE(NULLIF(p_retention, '-1')::interval, 'infinity'::interval)
+                       now()
+                     , CAST(upper_bound AS timestamptz)
+                   ) < COALESCE(NULLIF(p_retention, '-1')::interval, 'infinity'::interval)
                AND NOT EXISTS (
-                   SELECT NULL
-                     FROM current_bounds
-                    WHERE p_skip_overlapping
-                      AND (current_bounds.lower_bound, current_bounds.upper_bound)
-                          OVERLAPS (partitions.lower_bound, partitions.upper_bound)
-               )
+                       SELECT NULL
+                         FROM current_bounds
+                        WHERE p_skip_overlapping
+                          AND (current_bounds.lower_bound, current_bounds.upper_bound)
+                              OVERLAPS (partitions.lower_bound, partitions.upper_bound)
+                   )
             UNION ALL
             SELECT is_default
                  , name_template
@@ -304,11 +244,12 @@ BEGIN
               FROM partitions
              WHERE is_default
                AND NOT EXISTS (
-                   SELECT pgpartium.get_default_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
-               )
-        ),
-        resolved AS (
-            SELECT replace(
+                       SELECT pgpartium.get_default_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
+                   )
+        )
+        , resolved AS (
+            SELECT is_default
+                 , replace(
                        replace(
                            CASE
                              WHEN is_default
@@ -321,41 +262,64 @@ BEGIN
                      , '{table_schema}'
                      , p_table_schema
                    ) AS partition_name
-                 , partition_clause,
+                 , partition_clause
               FROM filtered
         )
-        SELECT partition_name
+        SELECT is_default
+             , partition_name
              , partition_clause
           FROM resolved
-         ORDER BY is_default  -- default last
+         ORDER BY is_default -- default last
+
     LOOP
+
         -- Get constraint definition.
+        WITH template_constraints AS (
+            SELECT constraint_name
+                 , constraint_type
+                 , constraint_definition
+              FROM pgpartium.get_constraints(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name)
+        )
+        , parent_constraints AS (
+            SELECT constraint_name
+                 , constraint_type
+                 , constraint_definition
+              FROM pgpartium.get_constraints(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
+        )
+        , partition_constraints AS (
+            SELECT replace(
+                       template_constraints.constraint_name
+                     , p_template_table_name
+                     , v_partition.partition_name
+                   ) AS final_constraint_name
+                 , template_constraints.constraint_type
+                 , template_constraints.constraint_definition
+              FROM template_constraints
+              LEFT JOIN parent_constraints
+                ON template_constraints.constraint_definition = parent_constraints.constraint_definition
+             WHERE parent_constraints.constraint_definition IS NULL
+        )
         SELECT string_agg(
-                    format(
-                        '        CONSTRAINT %1$I %2$s'
-                      , replace(                           --<1>
-                            constraint_name
-                          , p_template_table_name
-                          , v_partitions.partition_name
-                        )
-                      , constraint_definition              --<2>
-                    )
-                  , E',\n'
-                    ORDER BY CASE constraint_type
-                               WHEN 'p'
-                                 THEN 0
-                               WHEN 'u'
-                                 THEN 1
-                               ELSE 2
-                             END
-                           , replace(
-                                 constraint_name
-                               , p_template_table_name
-                               , v_partitions.partition_name
-                             )
+                   format(
+                       '        CONSTRAINT %1$I %2$s'
+                     , partition_constraints.final_constraint_name              --<1: final_constraint_name>
+                     , partition_constraints.constraint_definition              --<2: constraint_definition>
+                   )
+                 , E',\n'
+                   ORDER BY CASE partition_constraints.constraint_type
+                              WHEN 'p'  -- primary key
+                                THEN 0
+                              WHEN 'u'  -- unique key
+                                THEN 1
+                              ELSE 2    -- other
+                            END
+                          , partition_constraints.final_constraint_name
                )
           INTO v_constraints
           FROM partition_constraints;
+
+        raise warning 'constraints: %', v_constraints;
+
         -- Get index create statement.
         WITH template_indexes AS (
             SELECT index_name
@@ -374,11 +338,10 @@ BEGIN
               FROM pgpartium.get_indexes(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
         )
         , partition_indexes AS (
-            SELECT template_indexes.index_name
-                 , replace(
+            SELECT replace(
                        template_indexes.index_name
                      , p_template_table_name
-                     , v_partitions.partition_name
+                     , v_partition.partition_name
                    ) AS final_index_name
                  , CASE
                      WHEN template_indexes.is_unique_index
@@ -394,122 +357,147 @@ BEGIN
              WHERE parent_indexes.full_index_definition IS NULL
         )
         SELECT string_agg(
-            format(
-                E'%1$s%2$s%3$s;\n'
-              , format(
-                        E'CREATE %1$s %2$s%3$I\n    ON %4$I.%5$I\n %6$s'
-                      , partition_indexes.index_type                        --<1>
-                      , CASE p_idempotent_ddl                               --<2>
-                          WHEN true
-                            THEN 'IF NOT EXISTS' || ' '
-                          ELSE ''
-                        END
-                      , partition_indexes.final_index_name                  --<3>
-                      , v_partition_schema                                  --<4>
-                      , v_partitions.partition_name                         --<5>
-                      , partition_indexes.index_definition_without_predicate                  --<6>
-                    )
-              , CASE
-                  WHEN p_index_tablespace != 'pg_default'
-                    THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
-                  ELSE ''
-                END
-              , CASE
-                  WHEN partition_indexes.index_predicate <> ''
-                    THEN E'\n ' || partition_indexes.index_predicate
-                    ELSE partition_indexes.index_predicate
-                END
-            )
-          , E'\n'
-            ORDER BY CASE partition_indexes.is_unique_index
-                       WHEN true THEN 0
-                       WHEN false THEN 1
-                     END
-                   , replace(
-                         partition_indexes.index_name
-                       , p_template_table_name
-                       , v_partitions.partition_name
-                     )
-        )
-          INTO v_indexes
-          FROM partition_indexes;
-        -- Get create trigger statement.
-        SELECT string_agg(
                    format(
-                       E'CREATE %1$s%2$s %3$I %4$s %5$s\n    ON %6$I.%7$I\n   %8$s;\n%9$s'
-                     , CASE p_idempotent_ddl                        --<1>
-                         WHEN true
-                           THEN 'OR REPLACE' || ' '
+                       E'%1$s%2$s%3$s;\n'
+                     , format(                                                     --<1: index_create_statement>
+                           E'CREATE %1$s %2$s%3$I\n    ON %4$I.%5$I\n %6$s'
+                         , partition_indexes.index_type                            --<1: index_type>
+                         , CASE p_idempotent_ddl                                   --<2: if_not_exists>
+                             WHEN true
+                               THEN 'IF NOT EXISTS' || ' '
+                             ELSE ''
+                           END
+                         , partition_indexes.final_index_name                      --<3: index_name>
+                         , v_partition_schema                                      --<4: table_schema>
+                         , v_partition.partition_name                              --<5: table_name>
+                         , partition_indexes.index_definition_without_predicate    --<6: index_definition_without_predicate>
+                       )
+                     , CASE                                                        --<2: index_tablespace>
+                         WHEN p_index_tablespace != 'pg_default'
+                           THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
                          ELSE ''
                        END
-                     , CASE                                         --<2>
-                         WHEN is_constraint_trigger
-                           THEN 'CONSTRAINT TRIGGER'
-                         ELSE 'TRIGGER'
+                     , CASE                                                        --<3: index_predicate>
+                         WHEN partition_indexes.index_predicate <> ''
+                           THEN E'\n ' || partition_indexes.index_predicate
+                           ELSE partition_indexes.index_predicate
                        END
-                     , replace(                                     --<3>
-                           trigger_name
-                         , p_template_table_name
-                         , v_partitions.partition_name
-                       )
-                     , event_timing                                 --<4>
-                     , trigger_event                                --<5>
-                     , v_partition_schema                           --<6>
-                     , v_partitions.partition_name                  --<7>
-                     , trigger_body                                 --<8>
-                     , CASE                                         --<9>
-                         WHEN NOT is_trigger_enabled
-                           THEN format(
-                                    E'\nALTER TABLE %1$I.%2$I\n    DISABLE TRIGGER %3$I;\n'
-                                  , v_partition_schema              --<1>
-                                  , v_partitions.partition_name     --<2>
-                                  , replace(                        --<3>
-                                     trigger_name
-                                   , p_template_table_name
-                                   , v_partitions.partition_name
-                                 )
-                            )
-                           ELSE ''
-                        END
                    )
-                   , E'\n'
-                   ORDER BY replace(
-                                trigger_name
-                              , p_template_table_name
-                              , v_partitions.partition_name
-                            )
+                 , E'\n'
+                   ORDER BY CASE partition_indexes.is_unique_index
+                              WHEN true THEN 0
+                              WHEN false THEN 1
+                            END
+                          , partition_indexes.final_index_name
                )
+          INTO v_indexes
+          FROM partition_indexes;
+
+        -- Get create trigger statement.
+        WITH template_triggers AS (
+            SELECT trigger_name
+                 , is_trigger_enabled
+                 , is_constraint_trigger
+                 , event_timing
+                 , trigger_event
+                 , trigger_body
+              FROM pgpartium.get_triggers(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name)
+        )
+        , parent_triggers AS (
+            SELECT trigger_name
+                 , is_trigger_enabled
+                 , is_constraint_trigger
+                 , event_timing
+                 , trigger_event
+                 , trigger_body
+              FROM pgpartium.get_triggers(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
+        )
+        , partition_triggers AS (
+            SELECT replace(
+                       template_triggers.trigger_name
+                     , p_template_table_name
+                     , v_partition.partition_name
+                   ) AS final_trigger_name
+                 , CASE
+                     WHEN template_triggers.is_constraint_trigger
+                       THEN 'CONSTRAINT TRIGGER'
+                      ELSE 'TRIGGER'
+                   END AS trigger_type
+                 , template_triggers.is_trigger_enabled
+                 , template_triggers.is_constraint_trigger
+                 , template_triggers.event_timing
+                 , template_triggers.trigger_event
+                 , template_triggers.trigger_body
+              FROM template_triggers
+              LEFT JOIN parent_triggers
+                ON template_triggers.event_timing = parent_triggers.event_timing
+               AND template_triggers.trigger_event = parent_triggers.trigger_event
+               AND template_triggers.trigger_body = parent_triggers.trigger_body
+             WHERE parent_triggers.trigger_body IS NULL
+        )
+        SELECT string_agg(
+            format(
+               E'CREATE %1$s%2$s %3$I %4$s %5$s\n    ON %6$I.%7$I\n   %8$s;\n%9$s'
+             , CASE p_idempotent_ddl                                --<1: idempotence>
+                 WHEN true
+                   THEN 'OR REPLACE' || ' '
+                 ELSE ''
+               END
+             , partition_triggers.trigger_type                      --<2: trigger_type>
+             , partition_triggers.final_trigger_name                --<3: trigger_name>
+             , partition_triggers.event_timing                      --<4: event_timing>
+             , partition_triggers.trigger_event                     --<5: trigger_event>
+             , v_partition_schema                                   --<6: partition_schema>
+             , v_partition.partition_name                           --<7: partition_name>
+             , partition_triggers.trigger_body                      --<8: trigger_body>
+             , CASE                                                 --<9: disable_trigger>
+                 WHEN NOT partition_triggers.is_trigger_enabled
+                   THEN format(
+                            E'\nALTER TABLE %1$I.%2$I\n    DISABLE TRIGGER %3$I;\n'
+                          , v_partition_schema                      --<1: partition_schema>
+                          , v_partition.partition_name              --<2: partition_name>
+                          , partition_triggers.final_trigger_name   --<3: trigger_name>
+                        )
+                 ELSE ''
+               END
+            )
+            , E'\n'
+              ORDER BY final_trigger_name
+        )
           INTO v_triggers
           FROM partition_triggers;
+
         -- Get storage parameters.
         -- We cannot use format here because NULL is treated as an empty string for `s` formats.
         SELECT COALESCE(E'\nWITH (' || string_agg(format('%1$I = %2$L', key, value), ', ') || ')', '')
           INTO v_storage_clause
           FROM jsonb_each_text(p_storage_parameters);
+
+        -- Add additional new line if needed
         IF v_ddl != '' THEN
             v_ddl := format(E'%1$s\n', v_ddl);
         END IF;
+
         v_ddl := v_ddl || format(
-                E'CREATE TABLE %1$s%2$I.%3$I\n    PARTITION OF %4$I.%5$I%6$s\n    %7$s%8$s%9$s;\n'
-            , CASE p_idempotent_ddl
-                    WHEN true THEN 'IF NOT EXISTS '
-                    ELSE ''
-                END                                                  -- <1>
-            , v_partition_schema                                     -- <2>
-            , v_partitions.partition_name                            -- <3>
-            , p_table_schema                                         -- <4>
-            , p_table_name                                           -- <5>
-            -- constraints (unchanged)
-            , COALESCE(E' (\n' || v_constraints || E'\n    )', '')    -- <6>
-            , v_partitions.partition_clause                          -- <7>
-          , v_storage_clause                                                               -- <9>
-          , CASE                                                                           -- <10>
+            E'CREATE TABLE %1$s%2$I.%3$I\n    PARTITION OF %4$I.%5$I%6$s\n    %7$s%8$s%9$s;\n'
+          , CASE p_idempotent_ddl                                  -- <1>
+                  WHEN true THEN 'IF NOT EXISTS '
+                  ELSE ''
+              END
+          , v_partition_schema                                     -- <2>
+          , v_partition.partition_name                             -- <3>
+          , p_table_schema                                         -- <4>
+          , p_table_name                                           -- <5>
+          , COALESCE(E' (\n' || v_constraints || E'\n    )', '')   -- <6>
+          , v_partition.partition_clause                           -- <7>
+          , v_storage_clause                                       -- <8>
+          , CASE                                                   -- <9>
               WHEN p_partition_tablespace != 'pg_default'
                 THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
               ELSE ''
             END
-            );
-        -- We cannot use format here because NULL is treated as an empty string for `s` formats.
+        );
+
         v_ddl := COALESCE(v_ddl || E'\n' || v_indexes, v_ddl);
         v_ddl := COALESCE(v_ddl || E'\n' || v_triggers, v_ddl);
 
