@@ -3,7 +3,7 @@
 set -euo pipefail
 
 echo "INFO: Installing pgtap extension files and required contrib extensions"
-apt-get install -y postgresql-16-pgtap postgresql-contrib-16
+apt-get install -y postgresql-"${PGP_PG_MAJOR_VERSION}"-pgtap postgresql-contrib-"${PGP_PG_MAJOR_VERSION}"
 
 echo "INFO: Setting up shellspec"
 wget --quiet https://github.com/shellspec/shellspec/archive/0.28.1.tar.gz --output-document=/tmp/shellspec-0.28.1.tar.gz
