@@ -36,7 +36,6 @@ DECLARE
 BEGIN
 
     PERFORM set_config('timezone', p_timezone, true);
-    PERFORM set_config('client_min_messages', 'warning', true);
 
     IF p_interval = interval '0' THEN
         RAISE 'interval must not be zero'
@@ -270,7 +269,7 @@ BEGIN
              , partition_name
              , partition_clause
           FROM resolved
-         ORDER BY is_default -- default last
+         ORDER BY partition_name, is_default -- default last
 
     LOOP
 

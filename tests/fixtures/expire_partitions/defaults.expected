@@ -1,1 +1,3 @@
+DROP TABLE test.test__notifications__2024_12;
+
 DROP TABLE test.notifications_2025_01;

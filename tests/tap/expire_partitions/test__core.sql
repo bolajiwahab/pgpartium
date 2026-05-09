@@ -3,8 +3,6 @@ BEGIN;
 -- Deallocate all previous prepared statements.
 DEALLOCATE ALL;
 
-\i tests/fixtures/schema.sql
-
 SET search_path TO mock, pg_catalog, public;
 
 SELECT plan(9);

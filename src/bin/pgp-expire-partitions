@@ -67,7 +67,7 @@ fi
 jsonschema /src/schema.json <<< "$(yq -o=json "${config}")"
 
 # Set defaults
-export DEFAULT_RETENTION='-1'
+export DEFAULT_RETENTION=NULL
 export DEFAULT_DETACH_ONLY=false
 export DEFAULT_DETACH_FIRST=false
 export DEFAULT_DETACH_CONCURRENTLY=false
@@ -122,8 +122,8 @@ while read -r table; do
     retention=$(yq '.partition.retention // strenv(GLOBAL_RETENTION)' <<< "${table}")
 
     # Because yq default value operator is used to provide alternative (or default) values
-    # when a particular expression is either null or false, we cannot use it here since detach_only is boolean
-    # and we need to override it only when it is not set. Same for detach_first and detach_concurrently
+    # when a particular expression is either null or false, we cannot use it as it would
+    # instead override partition level boolean values, instead we override them if they are not set.
     detach_only=$(yq '.partition.detach_only' <<< "${table}")
     if [[ "${detach_only}" == "null" ]]; then
         detach_only="${GLOBAL_DETACH_ONLY}"
@@ -166,7 +166,7 @@ SELECT *
   , p_detach_only=>:'detach_only'
   , p_detach_first=>:'detach_first'
   , p_detach_concurrently=>:'detach_concurrently'
-  , p_retention=>:'retention'
+  , p_retention=>NULLIF(:'retention', 'NULL')::interval
   , p_timezone=>:'timezone'
 )
 EOF

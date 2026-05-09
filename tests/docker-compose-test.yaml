@@ -14,7 +14,7 @@ services:
       PGP_INIT_DIR: ${PGP_INIT_DIR:-tests/fixtures/initdir}
     command: >
       sh -c "
-        pgp-start &&
-        pg_prove --username=postgres --dbname=postgres --verbose --failures tests/tap/**/*.sql
-        # bash shellspec tests/spec
+        pgp-start && \
+        pg_prove --username=postgres --dbname=postgres --verbose --failures tests/tap/**/*.sql && \
+        bash shellspec tests/spec --no-warning-as-failure
       "

@@ -14,7 +14,7 @@ usage()
 
     SAMPLE USAGE:
         ${0##*/} -v 17 -i initdir
-        PGP_PG_MAJOR_VERSION=17 INIT_DIR=initdir ${0##*/}
+        PGP_PG_MAJOR_VERSION=17 PGP_INIT_DIR=initdir ${0##*/}
 "
 }
 
@@ -36,6 +36,8 @@ done
 
 set -euo pipefail
 
+MIN_POSTGRES_VERSION=14
+
 pg_major_version=${pg_major_version:-${PGP_PG_MAJOR_VERSION:-}}
 init_dir=${init_dir:-${PGP_INIT_DIR:-}}
 
@@ -45,8 +47,8 @@ if [[ -z "${pg_major_version}" ]]; then
     exit 1
 fi
 
-if (( pg_major_version < 14 )); then
-  echo "Error: PostgreSQL major version must be at least 14" >&2
+if (( pg_major_version < MIN_POSTGRES_VERSION )); then
+  echo "Error: PostgreSQL major version must be at least ${MIN_POSTGRES_VERSION}" >&2
   exit 1
 fi
 

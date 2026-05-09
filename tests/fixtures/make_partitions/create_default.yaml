@@ -2,12 +2,14 @@
 generates:
   directory: "tests/fixtures/make_partitions"
   name_template: "{table_schema}__{table_name}__YYYY_MM"
-  interval: "1 mon"
+  create_default: false
   default_partition_name_template: "{table_schema}__{table_name}__default"
-  create_default: true
+  interval: "1 mon"
   tables:
     - table_schema: "test"
       table_name: "transactions"
       file_name_template: "{description}.result"
+      partition:
+        create_default: true
       description:
         make: "create_default"

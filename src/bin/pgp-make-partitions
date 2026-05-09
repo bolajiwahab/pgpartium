@@ -70,9 +70,10 @@ jsonschema /src/schema.json <<< "$(yq -o=json "${config}")"
 export DEFAULT_TABLESPACE="pg_default"
 export DEFAULT_PAST=0
 export DEFAULT_FUTURE=0
-export DEFAULT_RETENTION="-1"
+export DEFAULT_RETENTION=NULL
 export DEFAULT_CREATE_DEFAULT=false
 export DEFAULT_SKIP_OVERLAPPING=false
+export DEFAULT_IDEMPOTENT_DDL=false
 export DEFAULT_STORAGE_PARAMETERS="{}"
 export DEFAULT_TIMEZONE="Etc/UTC"
 
@@ -86,13 +87,14 @@ GLOBAL_RETENTION=$(yq '.generates.retention // strenv(DEFAULT_RETENTION)' "${con
 GLOBAL_CREATE_DEFAULT=$(yq '.generates.create_default // strenv(DEFAULT_CREATE_DEFAULT)' "${config}")
 GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE=$(yq '.generates.default_partition_name_template' "${config}")
 GLOBAL_SKIP_OVERLAPPING=$(yq '.generates.skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")
+GLOBAL_IDEMPOTENT_DDL=$(yq '.generates.idempotent_ddl // strenv(DEFAULT_IDEMPOTENT_DDL)' "${config}")
 GLOBAL_PARTITION_TABLESPACE=$(yq '.generates.partition_tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")
 GLOBAL_STORAGE_PARAMETERS=$(yq -o=json '.generates.storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")
 GLOBAL_TIMEZONE=$(yq '.generates.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
 
-export GLOBAL_PARTITION_TABLESPACE GLOBAL_PARTITION_SCHEMA GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL \
-    GLOBAL_RETENTION GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE GLOBAL_SKIP_OVERLAPPING \
-    GLOBAL_STORAGE_PARAMETERS GLOBAL_TIMEZONE
+export GLOBAL_PARTITION_TABLESPACE GLOBAL_PARTITION_SCHEMA GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST \
+    GLOBAL_FUTURE GLOBAL_INTERVAL GLOBAL_RETENTION GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE \
+    GLOBAL_SKIP_OVERLAPPING GLOBAL_STORAGE_PARAMETERS GLOBAL_TIMEZONE GLOBAL_CREATE_DEFAULT GLOBAL_IDEMPOTENT_DDL
 
 GLOBAL_INDEX_TABLESPACE=$(yq '.generates.index_tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' "${config}")
 
@@ -161,9 +163,20 @@ while read -r table; do
     future_partitions=$(yq '.partition.future // strenv(GLOBAL_FUTURE)' <<< "${table}")
     retention=$(yq '.partition.retention // strenv(GLOBAL_RETENTION)' <<< "${table}")
     timezone=$(yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)' <<< "${table}")
+
     # Because yq default value operator is used to provide alternative (or default) values
-    # when a particular expression is either null or false, we cannot use it here since create_default is boolean
-    # and we need to override it only when it is not set.
+    # when a particular expression is either null or false, we cannot use it as it would
+    # instead override partition level boolean values, instead we override them if they are not set.
+    skip_overlapping=$(yq '.partition.skip_overlapping' <<< "${table}")
+    if [[ "${skip_overlapping}" == "null" ]]; then
+        skip_overlapping="${GLOBAL_SKIP_OVERLAPPING}"
+    fi
+
+    idempotent_ddl=$(yq '.partition.idempotent_ddl' <<< "${table}")
+    if [[ "${idempotent_ddl}" == "null" ]]; then
+        idempotent_ddl="${GLOBAL_IDEMPOTENT_DDL}"
+    fi
+
     create_default=$(yq '.partition.create_default' <<< "${table}")
     if [[ "${create_default}" == "null" ]]; then
         create_default="${GLOBAL_CREATE_DEFAULT}"
@@ -176,7 +189,6 @@ while read -r table; do
         exit 1
     fi
 
-    skip_overlapping=$(yq '.partition.skip_overlapping // strenv(GLOBAL_SKIP_OVERLAPPING)' <<< "${table}")
     storage_parameters=$(yq '.partition.storage_parameters // strenv(GLOBAL_STORAGE_PARAMETERS)' <<< "${table}")
 
     template_table=$(yq '.template_table' <<< "${table}")
@@ -283,6 +295,7 @@ EOF
         -v retention="${retention}" \
         -v timezone="${timezone}" \
         -v skip_overlapping="${skip_overlapping}" \
+        -v idempotent_ddl="${idempotent_ddl}" \
         --output="${temp_migration_directory}/${output_filename}" \
         2>"${error_file}" \
         <<EOF
@@ -302,9 +315,10 @@ SELECT *
   , p_storage_parameters=>:'storage_parameters'
   , p_template_table_schema=>:'template_table_schema'
   , p_template_table_name=>:'template_table_name'
-  , p_retention=>:'retention'
+  , p_retention=>NULLIF(:'retention', 'NULL')::interval
   , p_timezone=>:'timezone'
   , p_skip_overlapping=>:'skip_overlapping'
+  , p_idempotent_ddl=>:'idempotent_ddl'
 )
 EOF
 

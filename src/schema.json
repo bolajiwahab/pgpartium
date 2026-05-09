@@ -864,6 +864,11 @@
             "description": "Whether to skip overlapping partitions. Useful when switching partition intervals. It allows resolving such overlaps manually",
             "type": "boolean",
             "default": false
+        },
+        "idempotent_ddl": {
+            "description": "Whether to generate idempotent DDL.",
+            "type": "boolean",
+            "default": false
         }
     },
     "properties": {
@@ -918,6 +923,9 @@
                 },
                 "skip_overlapping": {
                     "$ref": "#/definitions/skip_overlapping"
+                },
+                "idempotent_ddl": {
+                    "$ref": "#/definitions/idempotent_ddl"
                 },
                 "timezone": {
                     "$ref": "#/definitions/timezone"
@@ -989,6 +997,9 @@
                                     },
                                     "skip_overlapping": {
                                         "$ref": "#/definitions/skip_overlapping"
+                                    },
+                                    "idempotent_ddl": {
+                                        "$ref": "#/definitions/idempotent_ddl"
                                     },
                                     "timezone": {
                                         "description": "The timezone to use for the generation of the migration files.",
