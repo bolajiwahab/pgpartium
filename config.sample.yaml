@@ -38,6 +38,7 @@ generates:
   detach_only: false # Whether to only detach the expired partitions.
   detach_concurrently: false # Whether to detach the expired partitions concurrently.
   skip_overlapping: false # Whether to skip overlapping partitions.
+  idempotent_ddl: false # Whether to use idempotent DDL: (IF EXISTS) for create statements and (IF NOT EXISTS) for drop statements.
   timezone: "Etc/UTC" # The timezone to use for the generation of the migration files.
   tables: # List of tables to make or expire partitions for.
     - table_schema: "public" # The schema of a table.
@@ -83,6 +84,7 @@ generates:
         detach_first: false # Whether to detach the expired partitions first before dropping them.
         detach_only: false # Whether to only detach the expired partitions.
         detach_concurrently: false # Whether to detach the expired partitions concurrently.
+        idempotent_ddl: false # Whether to use idempotent DDL: (IF EXISTS) for create statements and (IF NOT EXISTS) for drop statements.
         skip_overlapping: false # Whether to skip overlapping partitions.
         timezone: "Etc/UTC" # The timezone to use for the generation of the migration files.
       template_table: # The template table to replicate objects such as constraints, indexes, triggers from.

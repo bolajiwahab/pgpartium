@@ -8,7 +8,7 @@ usage()
     Installs major PostgreSQL version, psql client, optionally creates a cluster, starts the cluster and applies init directory if provided.
 
     OPTIONS:
-      -v  the postgres version to use (Required)
+      -v  the postgres version to use (Required, must be at least ${PGP_MIN_POSTGRES_VERSION})
       -i  the init directory to apply (Optional) (supports .sh, .sql and .sql.gz)
       -h  show this help message.
 
@@ -36,7 +36,8 @@ done
 
 set -euo pipefail
 
-MIN_POSTGRES_VERSION=14
+PGP_MIN_POSTGRES_VERSION=14
+PGP_CLUSTER_NAME=${PGP_CLUSTER_NAME:-"pgpartium"}
 
 pg_major_version=${pg_major_version:-${PGP_PG_MAJOR_VERSION:-}}
 init_dir=${init_dir:-${PGP_INIT_DIR:-}}
@@ -47,8 +48,8 @@ if [[ -z "${pg_major_version}" ]]; then
     exit 1
 fi
 
-if (( pg_major_version < MIN_POSTGRES_VERSION )); then
-  echo "Error: PostgreSQL major version must be at least ${MIN_POSTGRES_VERSION}" >&2
+if (( pg_major_version < PGP_MIN_POSTGRES_VERSION )); then
+  echo "Error: PostgreSQL major version must be at least ${PGP_MIN_POSTGRES_VERSION}" >&2
   exit 1
 fi
 
@@ -57,7 +58,7 @@ apt.postgresql.org.sh -i -v "${pg_major_version}"
 
 if [[ -z ${NO_CLUSTER+yes} ]]; then
     echo "INFO: Creating PostgreSQL cluster"
-    pg_createcluster --start "${pg_major_version}" pgpartium -- -A trust
+    pg_createcluster --start "${pg_major_version}" "${PGP_CLUSTER_NAME}" -- -A trust
 
     # Ensure the provided init directory exists and is a directory
     if [[ -n "${init_dir}" && ! -d "${init_dir}" ]]; then

@@ -12,6 +12,8 @@ services:
     environment:
       PGP_PG_MAJOR_VERSION: ${PGP_PG_MAJOR_VERSION:-17}
       PGP_INIT_DIR: ${PGP_INIT_DIR:-tests/fixtures/initdir}
+      SHELL_SPEC_VERSION: "0.28.1"
+      PGP_CLUSTER_NAME: pgpartium
     command: >
       sh -c "
         pgp-start && \

@@ -384,7 +384,7 @@ SELECT results_eq(
   , 'make partitions with timezone'
 );
 
-PREPARE result_with_if_not_exists AS
+PREPARE result_with_idempotent_ddl AS
 SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'test'
   , p_table_name=>'transactions'
@@ -393,19 +393,19 @@ SELECT * FROM pgpartium.make_partitions (
   , p_idempotent_ddl=>true
 );
 
-PREPARE expected_with_if_not_exists AS VALUES (
+PREPARE expected_with_idempotent_ddl AS VALUES (
 $$CREATE TABLE IF NOT EXISTS test.test__transactions__2025_03
     PARTITION OF test.transactions
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 $$);
 
 SELECT results_eq(
-    'result_with_if_not_exists'
-  , 'expected_with_if_not_exists'
+    'result_with_idempotent_ddl'
+  , 'expected_with_idempotent_ddl'
   , 'make partitions if not exists'
 );
 
-PREPARE result_with_default_partition_if_not_exists AS
+PREPARE result_with_default_partition_idempotent_ddl AS
 SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'test'
   , p_table_name=>'transactions'
@@ -416,7 +416,7 @@ SELECT * FROM pgpartium.make_partitions (
   , p_idempotent_ddl=>true
 );
 
-PREPARE expected_with_default_partition_if_not_exists AS VALUES (
+PREPARE expected_with_default_partition_idempotent_ddl AS VALUES (
 $$CREATE TABLE IF NOT EXISTS test.test__transactions__2025_03
     PARTITION OF test.transactions
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
@@ -427,12 +427,12 @@ CREATE TABLE IF NOT EXISTS test.test__transactions__default
 $$);
 
 SELECT results_eq(
-    'result_with_default_partition_if_not_exists'
-  , 'expected_with_default_partition_if_not_exists'
+    'result_with_default_partition_idempotent_ddl'
+  , 'expected_with_default_partition_idempotent_ddl'
   , 'make partitions with default partition if not exists'
 );
 
-PREPARE result_with_template_with_if_not_exists AS
+PREPARE result_with_template_with_idempotent_ddl AS
 SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'test'
   , p_table_name=>'transactions'
@@ -443,7 +443,7 @@ SELECT * FROM pgpartium.make_partitions (
   , p_idempotent_ddl=>true
 );
 
-PREPARE expected_with_template_with_if_not_exists AS VALUES (
+PREPARE expected_with_template_with_idempotent_ddl AS VALUES (
 $$CREATE TABLE IF NOT EXISTS test.test__transactions__2025_03
     PARTITION OF test.transactions (
         CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
@@ -473,12 +473,12 @@ ALTER TABLE test.test__transactions__2025_03
 $$);
 
 SELECT results_eq(
-    'result_with_template_with_if_not_exists'
-  , 'expected_with_template_with_if_not_exists'
+    'result_with_template_with_idempotent_ddl'
+  , 'expected_with_template_with_idempotent_ddl'
   , 'make partitions with template with if not exists'
 );
 
-PREPARE result_with_create_default_with_template_with_if_not_exists AS
+PREPARE result_with_create_default_with_template_with_idempotent_ddl AS
 SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'test'
   , p_table_name=>'transactions'
@@ -491,7 +491,7 @@ SELECT * FROM pgpartium.make_partitions (
   , p_idempotent_ddl=>true
 );
 
-PREPARE expected_with_create_default_with_template_with_if_not_exists AS VALUES (
+PREPARE expected_with_create_default_with_template_with_idempotent_ddl AS VALUES (
 $$CREATE TABLE IF NOT EXISTS test.test__transactions__2025_03
     PARTITION OF test.transactions (
         CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
@@ -548,8 +548,8 @@ ALTER TABLE test.test__transactions__default
 $$);
 
 SELECT results_eq(
-    'result_with_create_default_with_template_with_if_not_exists'
-  , 'expected_with_create_default_with_template_with_if_not_exists'
+    'result_with_create_default_with_template_with_idempotent_ddl'
+  , 'expected_with_create_default_with_template_with_idempotent_ddl'
   , 'make partitions with create default with template with if not exists'
 );
 

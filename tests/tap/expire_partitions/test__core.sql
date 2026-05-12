@@ -5,7 +5,7 @@ DEALLOCATE ALL;
 
 SET search_path TO mock, pg_catalog, public;
 
-SELECT plan(9);
+SELECT plan(13);
 
 --- We are using mocked now() - '2025-03-01 00:00:00+00'
 
@@ -51,7 +51,27 @@ SELECT results_eq(
   , 'expire partitions with retention'
 );
 
-PREPARE result_with_retention_detach AS
+PREPARE result_with_retention_idempotent AS
+SELECT * FROM pgpartium.expire_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'notifications'
+  , p_retention=>'1 month'
+  , p_idempotent_ddl=>true
+);
+
+PREPARE expected_with_retention_idempotent AS VALUES (
+$$DROP TABLE IF EXISTS test.test__notifications__2024_12;
+
+DROP TABLE IF EXISTS test.notifications_2025_01;
+$$);
+
+SELECT results_eq(
+    'result_with_retention_idempotent'
+  , 'expected_with_retention_idempotent'
+  , 'expire partitions with retention idempotent'
+);
+
+PREPARE result_with_retention_detach_first AS
 SELECT * FROM pgpartium.expire_partitions (
     p_table_schema=>'test'
   , p_table_name=>'notifications'
@@ -59,7 +79,7 @@ SELECT * FROM pgpartium.expire_partitions (
   , p_detach_first=>true
 );
 
-PREPARE expected_with_retention_detach AS VALUES (
+PREPARE expected_with_retention_detach_first AS VALUES (
 $$ALTER TABLE test.notifications
     DETACH PARTITION test.test__notifications__2024_12;
 
@@ -72,12 +92,39 @@ DROP TABLE test.notifications_2025_01;
 $$);
 
 SELECT results_eq(
-    'result_with_retention_detach'
-  , 'expected_with_retention_detach'
+    'result_with_retention_detach_first'
+  , 'expected_with_retention_detach_first'
   , 'expire partitions with detach first'
 );
 
-PREPARE result_with_retention_detach_concurrent AS
+PREPARE result_with_retention_detach_first_idempotent AS
+SELECT * FROM pgpartium.expire_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'notifications'
+  , p_retention=>'1 month'
+  , p_detach_first=>true
+  , p_idempotent_ddl=>true
+);
+
+PREPARE expected_with_retention_detach_first_idempotent AS VALUES (
+$$ALTER TABLE IF EXISTS test.notifications
+    DETACH PARTITION test.test__notifications__2024_12;
+
+DROP TABLE IF EXISTS test.test__notifications__2024_12;
+
+ALTER TABLE IF EXISTS test.notifications
+    DETACH PARTITION test.notifications_2025_01;
+
+DROP TABLE IF EXISTS test.notifications_2025_01;
+$$);
+
+SELECT results_eq(
+    'result_with_retention_detach_first_idempotent'
+  , 'expected_with_retention_detach_first_idempotent'
+  , 'expire partitions with detach first'
+);
+
+PREPARE result_with_retention_detach_first_concurrently AS
 SELECT * FROM pgpartium.expire_partitions (
     p_table_schema=>'test'
   , p_table_name=>'notifications'
@@ -86,17 +133,50 @@ SELECT * FROM pgpartium.expire_partitions (
   , p_detach_concurrently=>true
 );
 
-PREPARE expected_with_retention_detach_concurrent AS VALUES (
+PREPARE expected_with_retention_detach_first_concurrently AS VALUES (
 $$ALTER TABLE test.notifications
     DETACH PARTITION test.test__notifications__2024_12 CONCURRENTLY;
 
 DROP TABLE test.test__notifications__2024_12;
+
+ALTER TABLE test.notifications
+    DETACH PARTITION test.notifications_2025_01 CONCURRENTLY;
+
+DROP TABLE test.notifications_2025_01;
 $$);
 
 SELECT results_eq(
-    'result_with_retention_detach'
-  , 'expected_with_retention_detach'
+    'result_with_retention_detach_first_concurrently'
+  , 'expected_with_retention_detach_first_concurrently'
   , 'expire partitions with detach first concurrently'
+);
+
+PREPARE result_with_retention_detach_first_concurrently_idempotent AS
+SELECT * FROM pgpartium.expire_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'notifications'
+  , p_retention=>'1 month'
+  , p_detach_first=>true
+  , p_detach_concurrently=>true
+  , p_idempotent_ddl=>true
+);
+
+PREPARE expected_with_retention_detach_first_concurrently_idempotent AS VALUES (
+$$ALTER TABLE IF EXISTS test.notifications
+    DETACH PARTITION test.test__notifications__2024_12 CONCURRENTLY;
+
+DROP TABLE IF EXISTS test.test__notifications__2024_12;
+
+ALTER TABLE IF EXISTS test.notifications
+    DETACH PARTITION test.notifications_2025_01 CONCURRENTLY;
+
+DROP TABLE IF EXISTS test.notifications_2025_01;
+$$);
+
+SELECT results_eq(
+    'result_with_retention_detach_first_concurrently_idempotent'
+  , 'expected_with_retention_detach_first_concurrently_idempotent'
+  , 'expire partitions with detach first concurrently idempotent'
 );
 
 PREPARE result_with_retention_detach_only AS
@@ -122,7 +202,31 @@ SELECT results_eq(
   , 'expire partitions with detach only'
 );
 
-PREPARE result_with_retention_detach_only_concurrently AS
+PREPARE result_with_retention_detach_only_idempotent AS
+SELECT * FROM pgpartium.expire_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'notifications'
+  , p_retention=>'1 month'
+  , p_detach_first=>true
+  , p_detach_only=>true
+  , p_idempotent_ddl=>true
+);
+
+PREPARE expected_with_retention_detach_only_idempotent AS VALUES (
+$$ALTER TABLE IF EXISTS test.notifications
+    DETACH PARTITION test.test__notifications__2024_12;
+
+ALTER TABLE IF EXISTS test.notifications
+    DETACH PARTITION test.notifications_2025_01;
+$$);
+
+SELECT results_eq(
+    'result_with_retention_detach_only_idempotent'
+  , 'expected_with_retention_detach_only_idempotent'
+  , 'expire partitions with detach only idempotent'
+);
+
+PREPARE result_with_retention_detach_only_concurrently_idempotent AS
 SELECT * FROM pgpartium.expire_partitions (
     p_table_schema=>'test'
   , p_table_name=>'notifications'
@@ -130,20 +234,35 @@ SELECT * FROM pgpartium.expire_partitions (
   , p_detach_first=>true
   , p_detach_only=>true
   , p_detach_concurrently=>true
+  , p_idempotent_ddl=>true
 );
 
-PREPARE expected_with_retention_detach_only_concurrently AS VALUES (
-$$ALTER TABLE test.notifications
+-- PREPARE expected_with_retention_detach_only_concurrently_idempotent AS VALUES (
+-- $$ALTER TABLE test.notifications
+--     DETACH PARTITION test.test__notifications__2024_12 CONCURRENTLY;
+
+-- ALTER TABLE test.notifications
+--     DETACH PARTITION test.notifications_2025_01 CONCURRENTLY;
+-- $$);
+
+-- SELECT results_eq(
+--     'result_with_retention_detach_only_concurrently_idempotent'
+--   , 'expected_with_retention_detach_only_concurrently_idempotent'
+--   , 'expire partitions with detach only concurrently'
+-- );
+
+PREPARE expected_with_retention_detach_only_concurrently_idempotent AS VALUES (
+$$ALTER TABLE IF EXISTS test.notifications
     DETACH PARTITION test.test__notifications__2024_12 CONCURRENTLY;
 
-ALTER TABLE test.notifications
+ALTER TABLE IF EXISTS test.notifications
     DETACH PARTITION test.notifications_2025_01 CONCURRENTLY;
 $$);
 
 SELECT results_eq(
-    'result_with_retention_detach_only_concurrently'
-  , 'expected_with_retention_detach_only_concurrently'
-  , 'expire partitions with detach only concurrently'
+    'result_with_retention_detach_only_concurrently_idempotent'
+  , 'expected_with_retention_detach_only_concurrently_idempotent'
+  , 'expire partitions with detach only concurrently idempotent'
 );
 
 PREPARE result_with_timezone_range_date AS

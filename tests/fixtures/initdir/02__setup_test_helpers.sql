@@ -23,5 +23,3 @@ AS $BODY$
 $BODY$;
 
 ALTER SYSTEM SET search_path = mock, pg_catalog, public;
-
-SELECT pg_reload_conf();

@@ -1,8 +1,11 @@
 /*
+    https://www.rfc-editor.org/rfc/rfc9562#name-uuid-version-7
     Generate a uuidv7 value with a 48-bits timestamp (milliseconds precision)
     and 74-bits of randomness.
+
+    Extracted from https://github.com/dverite/postgres-uuidv7-sql/blob/main/sql/uuidv7-sql--1.0.sql#L6-L19
 */
-CREATE OR REPLACE FUNCTION pgpartium.gen_uuid_v7 (
+CREATE OR REPLACE FUNCTION pgpartium.generate_uuid_v7 (
     p_timestamptz timestamptz = pg_catalog.clock_timestamp()
 )
 RETURNS uuid

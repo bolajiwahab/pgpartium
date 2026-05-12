@@ -118,13 +118,18 @@ BEGIN
     END IF;
 
     SELECT CASE
-             WHEN EXTRACT(year FROM p_interval) <> 0 THEN 'year'
-             WHEN EXTRACT(month FROM p_interval) <> 0 THEN 'month'
+             WHEN EXTRACT(year FROM p_interval) <> 0
+               THEN 'year'
+             WHEN EXTRACT(month FROM p_interval) <> 0
+               THEN 'month'
+             WHEN EXTRACT(day FROM p_interval) <> 0 AND EXTRACT(day FROM p_interval) % 7 = 0
+               THEN 'week'
              WHEN EXTRACT(day FROM p_interval) <> 0
-               AND EXTRACT(day FROM p_interval) % 7 = 0 THEN 'week'
-             WHEN EXTRACT(day FROM p_interval) <> 0 THEN 'day'
-             WHEN EXTRACT(hour FROM p_interval) <> 0 THEN 'hour'
-             WHEN EXTRACT(minute FROM p_interval) <> 0 THEN 'minute'
+               THEN 'day'
+             WHEN EXTRACT(hour FROM p_interval) <> 0
+               THEN 'hour'
+             WHEN EXTRACT(minute FROM p_interval) <> 0
+               THEN 'minute'
              ELSE 'second'
            END
       INTO v_interval_unit;
@@ -161,36 +166,48 @@ BEGIN
                  , format(
                        'FOR VALUES FROM (%1$L) TO (%2$L)'
                      , CASE v_partitioning_details.keys_data_types                                  -- <1: lower_bound>
-                         WHEN 'timestamptz' THEN "date"::timestamptz::text
-                         WHEN 'timestamp'   THEN "date"::timestamp::text
-                         WHEN 'date'        THEN "date"::date::text
-                         WHEN 'int4'        THEN (EXTRACT(EPOCH FROM "date")::integer)::text
-                         WHEN 'int8'        THEN (EXTRACT(EPOCH FROM "date")::bigint * 1000)::text
-                         WHEN 'uuid' THEN (
-                             overlay(
-                                 overlay(
-                                     pgpartium.gen_uuid_v7("date")::text
-                                     PLACING '0000' FROM 15 FOR 4
-                                 )
-                                 PLACING '0000-000000000000' FROM 20
-                            )
-                         )::text
+                         WHEN 'timestamptz'
+                           THEN "date"::timestamptz::text
+                         WHEN 'timestamp'
+                           THEN "date"::timestamp::text
+                         WHEN 'date'
+                           THEN "date"::date::text
+                         WHEN 'int4'
+                           THEN (EXTRACT(EPOCH FROM "date")::integer)::text
+                         WHEN 'int8'
+                           THEN (EXTRACT(EPOCH FROM "date")::bigint * 1000)::text
+                         WHEN 'uuid'
+                           THEN (
+                               overlay(
+                                   overlay(
+                                       pgpartium.generate_uuid_v7("date")::text
+                                       PLACING '0000' FROM 15 FOR 4
+                                   )
+                                   PLACING '0000-000000000000' FROM 20
+                               )
+                           )::text
                        END
                      , CASE v_partitioning_details.keys_data_types                                  -- <2: upper_bound>
-                         WHEN 'timestamptz' THEN ("date" + p_interval)::timestamptz::text
-                         WHEN 'timestamp'   THEN ("date" + p_interval)::timestamp::text
-                         WHEN 'date'        THEN ("date" + p_interval)::date::text
-                         WHEN 'int4'        THEN (EXTRACT(EPOCH FROM ("date" + p_interval))::integer)::text
-                         WHEN 'int8'        THEN (EXTRACT(EPOCH FROM ("date" + p_interval))::bigint * 1000)::text
-                         WHEN 'uuid' THEN (
-                             overlay(
-                                 overlay(
-                                     pgpartium.gen_uuid_v7("date" + p_interval)::text
-                                     PLACING '0000' FROM 15 FOR 4
-                                )
-                                PLACING '0000-000000000000' FROM 20
-                             )
-                         )::text
+                         WHEN 'timestamptz'
+                           THEN ("date" + p_interval)::timestamptz::text
+                         WHEN 'timestamp'
+                           THEN ("date" + p_interval)::timestamp::text
+                         WHEN 'date'
+                           THEN ("date" + p_interval)::date::text
+                         WHEN 'int4'
+                           THEN (EXTRACT(EPOCH FROM ("date" + p_interval))::integer)::text
+                         WHEN 'int8'
+                           THEN (EXTRACT(EPOCH FROM ("date" + p_interval))::bigint * 1000)::text
+                         WHEN 'uuid'
+                           THEN (
+                               overlay(
+                                   overlay(
+                                       pgpartium.generate_uuid_v7("date" + p_interval)::text
+                                       PLACING '0000' FROM 15 FOR 4
+                                  )
+                                  PLACING '0000-000000000000' FROM 20
+                               )
+                           )::text
                        END
                    ) AS partition_clause
               FROM dateset
@@ -274,122 +291,28 @@ BEGIN
     LOOP
 
         -- Get constraint definition.
-        WITH template_constraints AS (
-            SELECT constraint_name
-                 , constraint_type
-                 , constraint_definition
-              FROM pgpartium.get_constraints(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name)
+        SELECT pgpartium.generate_partition_constraints_ddl(
+               p_parent_table_schema   => p_table_schema
+             , p_parent_table_name     => p_table_name
+             , p_template_table_schema => p_template_table_schema
+             , p_template_table_name   => p_template_table_name
+             , p_partition_schema      => v_partition_schema
+             , p_partition_name        => v_partition.partition_name
         )
-        , parent_constraints AS (
-            SELECT constraint_name
-                 , constraint_type
-                 , constraint_definition
-              FROM pgpartium.get_constraints(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
-        )
-        , partition_constraints AS (
-            SELECT replace(
-                       template_constraints.constraint_name
-                     , p_template_table_name
-                     , v_partition.partition_name
-                   ) AS final_constraint_name
-                 , template_constraints.constraint_type
-                 , template_constraints.constraint_definition
-              FROM template_constraints
-              LEFT JOIN parent_constraints
-                ON template_constraints.constraint_definition = parent_constraints.constraint_definition
-             WHERE parent_constraints.constraint_definition IS NULL
-        )
-        SELECT string_agg(
-                   format(
-                       '        CONSTRAINT %1$I %2$s'
-                     , partition_constraints.final_constraint_name              --<1: final_constraint_name>
-                     , partition_constraints.constraint_definition              --<2: constraint_definition>
-                   )
-                 , E',\n'
-                   ORDER BY CASE partition_constraints.constraint_type
-                              WHEN 'p'  -- primary key
-                                THEN 0
-                              WHEN 'u'  -- unique key
-                                THEN 1
-                              ELSE 2    -- other
-                            END
-                          , partition_constraints.final_constraint_name
-               )
-          INTO v_constraints
-          FROM partition_constraints;
+          INTO v_constraints;
 
         -- Get index create statement.
-        WITH template_indexes AS (
-            SELECT index_name
-                 , is_unique_index
-                 , full_index_definition
-                 , index_definition_without_predicate
-                 , index_predicate
-              FROM pgpartium.get_indexes(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name)
+        SELECT pgpartium.generate_partition_indexes_ddl(
+               p_parent_table_schema   => p_table_schema
+             , p_parent_table_name     => p_table_name
+             , p_template_table_schema => p_template_table_schema
+             , p_template_table_name   => p_template_table_name
+             , p_partition_schema      => v_partition_schema
+             , p_partition_name        => v_partition.partition_name
+             , p_index_tablespace      => p_index_tablespace
+             , p_idempotent_ddl        => p_idempotent_ddl
         )
-        , parent_indexes AS (
-            SELECT index_name
-                 , is_unique_index
-                 , full_index_definition
-                 , index_definition_without_predicate
-                 , index_predicate
-              FROM pgpartium.get_indexes(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
-        )
-        , partition_indexes AS (
-            SELECT replace(
-                       template_indexes.index_name
-                     , p_template_table_name
-                     , v_partition.partition_name
-                   ) AS final_index_name
-                 , CASE
-                     WHEN template_indexes.is_unique_index
-                       THEN 'UNIQUE INDEX'
-                     ELSE 'INDEX'
-                   END AS index_type
-                 , template_indexes.is_unique_index
-                 , template_indexes.index_definition_without_predicate
-                 , template_indexes.index_predicate
-              FROM template_indexes
-              LEFT JOIN parent_indexes
-                ON template_indexes.full_index_definition = parent_indexes.full_index_definition
-             WHERE parent_indexes.full_index_definition IS NULL
-        )
-        SELECT string_agg(
-                   format(
-                       E'%1$s%2$s%3$s;\n'
-                     , format(                                                     --<1: index_create_statement>
-                           E'CREATE %1$s %2$s%3$I\n    ON %4$I.%5$I\n %6$s'
-                         , partition_indexes.index_type                            --<1: index_type>
-                         , CASE p_idempotent_ddl                                   --<2: if_not_exists>
-                             WHEN true
-                               THEN 'IF NOT EXISTS' || ' '
-                             ELSE ''
-                           END
-                         , partition_indexes.final_index_name                      --<3: index_name>
-                         , v_partition_schema                                      --<4: table_schema>
-                         , v_partition.partition_name                              --<5: table_name>
-                         , partition_indexes.index_definition_without_predicate    --<6: index_definition_without_predicate>
-                       )
-                     , CASE                                                        --<2: index_tablespace>
-                         WHEN p_index_tablespace != 'pg_default'
-                           THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
-                         ELSE ''
-                       END
-                     , CASE                                                        --<3: index_predicate>
-                         WHEN partition_indexes.index_predicate <> ''
-                           THEN E'\n ' || partition_indexes.index_predicate
-                           ELSE partition_indexes.index_predicate
-                       END
-                   )
-                 , E'\n'
-                   ORDER BY CASE partition_indexes.is_unique_index
-                              WHEN true THEN 0
-                              WHEN false THEN 1
-                            END
-                          , partition_indexes.final_index_name
-               )
-          INTO v_indexes
-          FROM partition_indexes;
+          INTO v_indexes;
 
         -- Get create trigger statement.
         WITH template_triggers AS (
@@ -466,6 +389,8 @@ BEGIN
           FROM partition_triggers;
 
         -- Get storage parameters.
+        -- We can probably support getting the storage parameters from the template table,
+        -- otherwise we fall back to the provided ones from the config.
         -- We cannot use format here because NULL is treated as an empty string for `s` formats.
         SELECT COALESCE(E'\nWITH (' || string_agg(format('%1$I = %2$L', key, value), ', ') || ')', '')
           INTO v_storage_clause
@@ -479,9 +404,10 @@ BEGIN
         v_ddl := v_ddl || format(
             E'CREATE TABLE %1$s%2$I.%3$I\n    PARTITION OF %4$I.%5$I%6$s\n    %7$s%8$s%9$s;\n'
           , CASE p_idempotent_ddl                                  -- <1>
-                  WHEN true THEN 'IF NOT EXISTS '
-                  ELSE ''
-              END
+              WHEN true
+                THEN 'IF NOT EXISTS '
+              ELSE ''
+            END
           , v_partition_schema                                     -- <2>
           , v_partition.partition_name                             -- <3>
           , p_table_schema                                         -- <4>
