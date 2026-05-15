@@ -228,7 +228,7 @@ SELECT * FROM pgpartium.make_partitions (
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
-  , p_storage_parameters=>'{"fillfactor": "90"}'
+  , p_partition_storage_parameters=>'{"fillfactor": "90"}'
 );
 
 PREPARE expected_with_partition_storage_parameters AS VALUES (

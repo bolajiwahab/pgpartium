@@ -612,7 +612,7 @@
                 "US/Samoa"
             ]
         },
-        "storage_parameters": {
+        "partition_storage_parameters": {
             "description": "The storage parameters for the partitions.",
             "type": "object",
             "properties": {
@@ -888,8 +888,8 @@
                 "index_tablespace": {
                     "$ref": "#/definitions/index_tablespace"
                 },
-                "storage_parameters": {
-                    "$ref": "#/definitions/storage_parameters"
+                "partition_storage_parameters": {
+                    "$ref": "#/definitions/partition_storage_parameters"
                 },
                 "name_template": {
                     "$ref": "#/definitions/name_template"
@@ -962,8 +962,8 @@
                                     "index_tablespace": {
                                         "$ref": "#/definitions/index_tablespace"
                                     },
-                                    "storage_parameters": {
-                                        "$ref": "#/definitions/storage_parameters"
+                                    "partition_storage_parameters": {
+                                        "$ref": "#/definitions/partition_storage_parameters"
                                     },
                                     "name_template": {
                                         "$ref": "#/definitions/name_template"

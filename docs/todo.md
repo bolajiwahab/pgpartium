@@ -2,7 +2,7 @@
 
 ** Important **
 We need more name template rather than blindly replacing the template table name/schema with the partition name/schema
-The issue is thst there are cases where these replacers won't exist in the source/template indexes/triggers/constraints
+The issue is that there are cases where these replacers won't exist in the source/template indexes/triggers/constraints
 leading to already existing indexes/triggers/constraints and thus statement errors.
 
 - Index_name_template -> {partition_schema}__{index_columns}_{index_filter}_idx
@@ -11,10 +11,10 @@ leading to already existing indexes/triggers/constraints and thus statement erro
 - Constraint_name_template
 - Trigger_name_template
 
-1. Index options such as AUTOSUMMARIZE =           DEDUPLICATE_ITEMS =       FILLFACTOR =              PAGES_PER_RANGE =
+1. Support Index options such as AUTOSUMMARIZE =           DEDUPLICATE_ITEMS =       FILLFACTOR =              PAGES_PER_RANGE =
 BUFFERING =               FASTUPDATE =              GIN_PENDING_LIST_LIMIT =
 
-2. Need to support more storage options with regards to toast
+2. Need to support more storage options with regards to toast table
 toast.autovacuum_enabled                     toast.autovacuum_multixact_freeze_table_age  toast.autovacuum_vacuum_threshold
 toast.autovacuum_freeze_max_age              toast.autovacuum_vacuum_cost_delay           toast.log_autovacuum_min_duration
 toast.autovacuum_freeze_min_age              toast.autovacuum_vacuum_cost_limit           toast.vacuum_index_cleanup

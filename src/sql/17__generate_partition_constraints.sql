@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION pgpartium.generate_partition_constraints_ddl (
+CREATE OR REPLACE FUNCTION pgpartium.generate_partition_constraints (
     p_parent_table_schema text
   , p_parent_table_name text
   , p_partition_schema text

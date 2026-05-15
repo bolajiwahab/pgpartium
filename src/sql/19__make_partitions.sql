@@ -9,8 +9,8 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_default_partition_name_template text DEFAULT NULL
   , p_partition_schema text DEFAULT NULL
   , p_partition_tablespace text DEFAULT 'pg_default'
+  , p_partition_storage_parameters jsonb DEFAULT '{}'
   , p_index_tablespace text DEFAULT 'pg_default'
-  , p_storage_parameters jsonb DEFAULT '{}'
   , p_template_table_schema text DEFAULT NULL
   , p_template_table_name text DEFAULT NULL
   , p_retention interval DEFAULT NULL
@@ -291,7 +291,7 @@ BEGIN
     LOOP
 
         -- Get constraint definition.
-        SELECT pgpartium.generate_partition_constraints_ddl(
+        SELECT pgpartium.generate_partition_constraints(
                p_parent_table_schema   => p_table_schema
              , p_parent_table_name     => p_table_name
              , p_template_table_schema => p_template_table_schema
@@ -302,7 +302,7 @@ BEGIN
           INTO v_constraints;
 
         -- Get index create statement.
-        SELECT pgpartium.generate_partition_indexes_ddl(
+        SELECT pgpartium.generate_partition_indexes(
                p_parent_table_schema   => p_table_schema
              , p_parent_table_name     => p_table_name
              , p_template_table_schema => p_template_table_schema
@@ -315,86 +315,25 @@ BEGIN
           INTO v_indexes;
 
         -- Get create trigger statement.
-        WITH template_triggers AS (
-            SELECT trigger_name
-                 , is_trigger_enabled
-                 , is_constraint_trigger
-                 , event_timing
-                 , trigger_event
-                 , trigger_body
-              FROM pgpartium.get_triggers(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name)
+        SELECT pgpartium.generate_trigger_constraints(
+               p_parent_table_schema   => p_table_schema
+             , p_parent_table_name     => p_table_name
+             , p_template_table_schema => p_template_table_schema
+             , p_template_table_name   => p_template_table_name
+             , p_partition_schema      => v_partition_schema
+             , p_partition_name        => v_partition.partition_name
+             , p_idempotent_ddl        => p_idempotent_ddl
         )
-        , parent_triggers AS (
-            SELECT trigger_name
-                 , is_trigger_enabled
-                 , is_constraint_trigger
-                 , event_timing
-                 , trigger_event
-                 , trigger_body
-              FROM pgpartium.get_triggers(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
-        )
-        , partition_triggers AS (
-            SELECT replace(
-                       template_triggers.trigger_name
-                     , p_template_table_name
-                     , v_partition.partition_name
-                   ) AS final_trigger_name
-                 , CASE
-                     WHEN template_triggers.is_constraint_trigger
-                       THEN 'CONSTRAINT TRIGGER'
-                      ELSE 'TRIGGER'
-                   END AS trigger_type
-                 , template_triggers.is_trigger_enabled
-                 , template_triggers.is_constraint_trigger
-                 , template_triggers.event_timing
-                 , template_triggers.trigger_event
-                 , template_triggers.trigger_body
-              FROM template_triggers
-              LEFT JOIN parent_triggers
-                ON template_triggers.event_timing = parent_triggers.event_timing
-               AND template_triggers.trigger_event = parent_triggers.trigger_event
-               AND template_triggers.trigger_body = parent_triggers.trigger_body
-             WHERE parent_triggers.trigger_body IS NULL
-        )
-        SELECT string_agg(
-            format(
-               E'CREATE %1$s%2$s %3$I %4$s %5$s\n    ON %6$I.%7$I\n   %8$s;\n%9$s'
-             , CASE p_idempotent_ddl                                --<1: idempotence>
-                 WHEN true
-                   THEN 'OR REPLACE' || ' '
-                 ELSE ''
-               END
-             , partition_triggers.trigger_type                      --<2: trigger_type>
-             , partition_triggers.final_trigger_name                --<3: trigger_name>
-             , partition_triggers.event_timing                      --<4: event_timing>
-             , partition_triggers.trigger_event                     --<5: trigger_event>
-             , v_partition_schema                                   --<6: partition_schema>
-             , v_partition.partition_name                           --<7: partition_name>
-             , partition_triggers.trigger_body                      --<8: trigger_body>
-             , CASE                                                 --<9: disable_trigger>
-                 WHEN NOT partition_triggers.is_trigger_enabled
-                   THEN format(
-                            E'\nALTER TABLE %1$I.%2$I\n    DISABLE TRIGGER %3$I;\n'
-                          , v_partition_schema                      --<1: partition_schema>
-                          , v_partition.partition_name              --<2: partition_name>
-                          , partition_triggers.final_trigger_name   --<3: trigger_name>
-                        )
-                 ELSE ''
-               END
-            )
-            , E'\n'
-              ORDER BY final_trigger_name
-        )
-          INTO v_triggers
-          FROM partition_triggers;
+          INTO v_triggers;
 
         -- Get storage parameters.
-        -- We can probably support getting the storage parameters from the template table,
-        -- otherwise we fall back to the provided ones from the config.
-        -- We cannot use format here because NULL is treated as an empty string for `s` formats.
-        SELECT COALESCE(E'\nWITH (' || string_agg(format('%1$I = %2$L', key, value), ', ') || ')', '')
-          INTO v_storage_clause
-          FROM jsonb_each_text(p_storage_parameters);
+        SELECT normalized_formatted_overridden_storage_parameters
+          FROM pgpartium.normalize_storage_parameters(
+               p_relation_schema => p_template_table_schema
+             , p_relation_name   => p_template_table_name
+             , p_override        => p_partition_storage_parameters
+        )
+          INTO v_storage_clause;
 
         -- Add additional new line if needed
         IF v_ddl != '' THEN
@@ -414,7 +353,7 @@ BEGIN
           , p_table_name                                           -- <5>
           , COALESCE(E' (\n' || v_constraints || E'\n    )', '')   -- <6>
           , v_partition.partition_clause                           -- <7>
-          , v_storage_clause                                       -- <8>
+          , E'\n' || v_storage_clause                              -- <8>
           , CASE                                                   -- <9>
               WHEN p_partition_tablespace != 'pg_default'
                 THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
