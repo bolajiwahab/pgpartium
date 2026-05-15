@@ -89,7 +89,7 @@ GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE=$(yq '.generates.default_partition_name_t
 GLOBAL_SKIP_OVERLAPPING=$(yq '.generates.skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")
 GLOBAL_IDEMPOTENT_DDL=$(yq '.generates.idempotent_ddl // strenv(DEFAULT_IDEMPOTENT_DDL)' "${config}")
 GLOBAL_PARTITION_TABLESPACE=$(yq '.generates.partition_tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")
-GLOBAL_STORAGE_PARAMETERS=$(yq -o=json '.generates.storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")
+GLOBAL_STORAGE_PARAMETERS=$(yq -o=json '.generates.partition_storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")
 GLOBAL_TIMEZONE=$(yq '.generates.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
 
 export GLOBAL_PARTITION_TABLESPACE GLOBAL_PARTITION_SCHEMA GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST \
@@ -189,7 +189,7 @@ while read -r table; do
         exit 1
     fi
 
-    storage_parameters=$(yq '.partition.storage_parameters // strenv(GLOBAL_STORAGE_PARAMETERS)' <<< "${table}")
+    partition_storage_parameters=$(yq '.partition.partition_storage_parameters // strenv(GLOBAL_STORAGE_PARAMETERS)' <<< "${table}")
 
     template_table=$(yq '.template_table' <<< "${table}")
 
@@ -289,7 +289,7 @@ EOF
         -v partition_schema="${partition_schema}" \
         -v partition_tablespace="${partition_tablespace}" \
         -v index_tablespace="${index_tablespace}" \
-        -v storage_parameters="${storage_parameters}" \
+        -v partition_storage_parameters="${partition_storage_parameters}" \
         -v template_table_schema="${template_table_schema}" \
         -v template_table_name="${template_table_name}" \
         -v retention="${retention}" \
@@ -312,7 +312,7 @@ SELECT *
   , p_partition_schema=>:'partition_schema'
   , p_partition_tablespace=>:'partition_tablespace'
   , p_index_tablespace=>:'index_tablespace'
-  , p_storage_parameters=>:'storage_parameters'
+  , p_partition_storage_parameters=>:'partition_storage_parameters'
   , p_template_table_schema=>:'template_table_schema'
   , p_template_table_name=>:'template_table_name'
   , p_retention=>NULLIF(:'retention', 'NULL')::interval

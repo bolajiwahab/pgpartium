@@ -3,7 +3,7 @@ generates:
   directory: "tests/fixtures/make_partitions"
   name_template: "{table_schema}__{table_name}__YYYY_MM"
   interval: "1 mon"
-  storage_parameters:
+  partition_storage_parameters:
     fillfactor: 90
   tables:
     - table_schema: "test"
