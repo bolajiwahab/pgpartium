@@ -5,7 +5,7 @@ DEALLOCATE ALL;
 
 SET search_path TO mock, pg_catalog, public;
 
-SELECT plan(24);
+SELECT plan(26);
 
 -- We are using mocked now() - '2025-03-01 00:00:00'
 
@@ -125,12 +125,12 @@ $$CREATE TABLE test.test__transactions__2025_03
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
-CREATE UNIQUE INDEX test__transactions__2025_03_status_active_key
+CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
  USING btree (status)
  WHERE status = 'active'::text;
 
-CREATE INDEX test__transactions__2025_03_account_id_idx
+CREATE INDEX
     ON test.test__transactions__2025_03
  USING btree (account_id);
 
@@ -152,12 +152,12 @@ CREATE TABLE test.test__transactions__default
     )
     DEFAULT;
 
-CREATE UNIQUE INDEX test__transactions__default_status_active_key
+CREATE UNIQUE INDEX
     ON test.test__transactions__default
  USING btree (status)
  WHERE status = 'active'::text;
 
-CREATE INDEX test__transactions__default_account_id_idx
+CREATE INDEX
     ON test.test__transactions__default
  USING btree (account_id);
 
@@ -198,6 +198,27 @@ SELECT results_eq(
     'result_with_partition_schema'
   , 'expected_with_partition_schema'
   , 'make partitions with partition schema'
+);
+
+PREPARE result_with_null_partition_tablespace AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+  , p_partition_tablespace=>NULL
+);
+
+PREPARE expected_with_null_partition_tablespace AS VALUES (
+$$CREATE TABLE test.test__transactions__2025_03
+    PARTITION OF test.transactions
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+$$);
+
+SELECT results_eq(
+    'result_with_null_partition_tablespace'
+  , 'expected_with_null_partition_tablespace'
+  , 'make partitions with null partition tablespace'
 );
 
 PREPARE result_with_partition_tablespace AS
@@ -262,12 +283,12 @@ $$CREATE TABLE test.test__transactions__2025_03
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
-CREATE UNIQUE INDEX test__transactions__2025_03_status_active_key
+CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
  USING btree (status)
  WHERE status = 'active'::text;
 
-CREATE INDEX test__transactions__2025_03_account_id_idx
+CREATE INDEX
     ON test.test__transactions__2025_03
  USING btree (account_id);
 
@@ -289,7 +310,53 @@ SELECT results_eq(
   , 'make partitions with template table'
 );
 
-PREPARE result_with_template_table_and_index_tablespace AS
+PREPARE result_with_null_index_tablespace AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+  , p_template_table_schema=>'test'
+  , p_template_table_name=>'transactions_template'
+  , p_index_tablespace=>NULL
+);
+
+PREPARE expected_with_null_index_tablespace AS VALUES (
+$$CREATE TABLE test.test__transactions__2025_03
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+
+CREATE UNIQUE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (status)
+ WHERE status = 'active'::text;
+
+CREATE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (account_id);
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
+$$);
+
+SELECT results_eq(
+    'result_with_null_index_tablespace'
+  , 'expected_with_null_index_tablespace'
+  , 'make partitions with null index tablespace'
+);
+
+PREPARE result_with_template_table_with_index_tablespace AS
 SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'test'
   , p_table_name=>'transactions'
@@ -300,7 +367,7 @@ SELECT * FROM pgpartium.make_partitions (
   , p_index_tablespace=>'pgpartium'
 );
 
-PREPARE expected_with_template_table_and_index_tablespace AS VALUES (
+PREPARE expected_with_template_table_with_index_tablespace AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
         CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
@@ -308,13 +375,13 @@ $$CREATE TABLE test.test__transactions__2025_03
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
-CREATE UNIQUE INDEX test__transactions__2025_03_status_active_key
+CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
  USING btree (status)
 TABLESPACE pgpartium
  WHERE status = 'active'::text;
 
-CREATE INDEX test__transactions__2025_03_account_id_idx
+CREATE INDEX
     ON test.test__transactions__2025_03
  USING btree (account_id)
 TABLESPACE pgpartium;
@@ -332,9 +399,9 @@ ALTER TABLE test.test__transactions__2025_03
 $$);
 
 SELECT results_eq(
-    'result_with_template_table_and_index_tablespace'
-  , 'expected_with_template_table_and_index_tablespace'
-  , 'make partitions with template table and index tablespace'
+    'result_with_template_table_with_index_tablespace'
+  , 'expected_with_template_table_with_index_tablespace'
+  , 'make partitions with template table with index tablespace'
 );
 
 PREPARE result_with_retention AS
@@ -451,12 +518,12 @@ $$CREATE TABLE IF NOT EXISTS test.test__transactions__2025_03
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
-CREATE UNIQUE INDEX IF NOT EXISTS test__transactions__2025_03_status_active_key
+CREATE UNIQUE INDEX IF NOT EXISTS
     ON test.test__transactions__2025_03
  USING btree (status)
  WHERE status = 'active'::text;
 
-CREATE INDEX IF NOT EXISTS test__transactions__2025_03_account_id_idx
+CREATE INDEX IF NOT EXISTS
     ON test.test__transactions__2025_03
  USING btree (account_id);
 
@@ -499,12 +566,12 @@ $$CREATE TABLE IF NOT EXISTS test.test__transactions__2025_03
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
-CREATE UNIQUE INDEX IF NOT EXISTS test__transactions__2025_03_status_active_key
+CREATE UNIQUE INDEX IF NOT EXISTS
     ON test.test__transactions__2025_03
  USING btree (status)
  WHERE status = 'active'::text;
 
-CREATE INDEX IF NOT EXISTS test__transactions__2025_03_account_id_idx
+CREATE INDEX IF NOT EXISTS
     ON test.test__transactions__2025_03
  USING btree (account_id);
 
@@ -526,12 +593,12 @@ CREATE TABLE IF NOT EXISTS test.test__transactions__default
     )
     DEFAULT;
 
-CREATE UNIQUE INDEX IF NOT EXISTS test__transactions__default_status_active_key
+CREATE UNIQUE INDEX IF NOT EXISTS
     ON test.test__transactions__default
  USING btree (status)
  WHERE status = 'active'::text;
 
-CREATE INDEX IF NOT EXISTS test__transactions__default_account_id_idx
+CREATE INDEX IF NOT EXISTS
     ON test.test__transactions__default
  USING btree (account_id);
 

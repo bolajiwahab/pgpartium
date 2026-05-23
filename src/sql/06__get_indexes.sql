@@ -39,7 +39,9 @@ AS $BODY$
                    ORDER BY u.ordinality
                ) AS index_keys
              , substring(pg_catalog.pg_get_indexdef(i.indexrelid, 0, TRUE) FROM 'USING .*') AS full_index_definition
-             , (pgpartium.normalize_storage_parameters(inp.nspname, ix.relname)).normalized_current_storage_parameters AS index_storage_parameters
+             , pgpartium.render_storage_parameters(
+                   p_config => pgpartium.get_storage_parameters(inp.nspname, ix.relname)
+               ) AS index_storage_parameters
              , COALESCE('WHERE ' || pg_catalog.pg_get_expr(i.indpred, i.indrelid, TRUE), '') AS index_predicate
           FROM pg_catalog.pg_namespace AS n
          INNER JOIN pg_catalog.pg_class AS r

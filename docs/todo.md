@@ -1,5 +1,9 @@
 # TODO
 
+Why I would not make inheritance the default:
+
+Because tablespace is more environment / lifecycle / operational policy than schema definition.
+
 ** Important **
 -- we need to test triggers with args
 We need more name template rather than blindly replacing the template table name/schema with the partition name/schema
@@ -27,3 +31,11 @@ toast.autovacuum_multixact_freeze_max_age    toast.autovacuum_vacuum_insert_thre
 -- We can probably support getting the storage parameters from the template table as well,
 -- we then do dict comparison between the template table and the config and if an option is provided by both the with config takes precedence
 -- otherwise we fall back to the provided ones from the config.
+
+## Tests
+
+1. Need to test triggers with args
+2. Template table tablespace
+3. Template index tablespace
+4. Template table storage parameters
+5. Template index storage parameters

@@ -81,14 +81,20 @@ AS $BODY$
                format(
                    E'%1$s%2$s%3$s;\n'
                  , format(                                                                              --<1: index_create_statement>
-                       E'CREATE %1$s %2$s%3$I\n    ON %4$I.%5$I\n %6$s'
+                       E'CREATE %1$s%2$s%3$s\n    ON %4$I.%5$I\n %6$s'
                      , partition_indexes.index_type                                                   --<1: index_type>
                      , CASE p_idempotent_ddl                                                          --<2: if_not_exists>
                          WHEN true
-                           THEN 'IF NOT EXISTS' || ' '
+                           THEN ' IF NOT EXISTS'
                          ELSE ''
                        END
-                     , partition_indexes.final_index_name                                             --<3: index_name>
+                       -- We are using CASE here instead of COALESCE because we need to escape the identifier only if there is
+                       -- a final_index_name.
+                     , CASE                                                                           --<3: index_name>
+                         WHEN partition_indexes.final_index_name IS NULL
+                           THEN ''
+                         ELSE format(' %1$I', partition_indexes.final_index_name)
+                        END
                      , p_partition_schema                                                             --<4: table_schema>
                      , p_partition_name                                                               --<5: table_name>
                      , partition_indexes.index_definition_excluding_storage_parameters_and_predicate  --<6: index_definition_excluding_storage_parameters_and_predicate>

@@ -8,9 +8,13 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_create_default boolean DEFAULT false
   , p_default_partition_name_template text DEFAULT NULL
   , p_partition_schema text DEFAULT NULL
-  , p_partition_tablespace text DEFAULT 'pg_default'
-  , p_partition_storage_parameters jsonb DEFAULT '{}'
-  , p_index_tablespace text DEFAULT 'pg_default'
+  , p_partition_tablespace text DEFAULT NULL
+  , p_inherit_template_table_tablespace boolean DEFAULT false
+  , p_partition_storage_parameters jsonb DEFAULT NULL
+  , p_inherit_template_table_storage_parameters boolean DEFAULT false
+  , p_index_name_template text DEFAULT NULL
+  , p_index_tablespace text DEFAULT NULL
+  , p_inherit_template_index_tablespace boolean DEFAULT false
   , p_template_table_schema text DEFAULT NULL
   , p_template_table_name text DEFAULT NULL
   , p_retention interval DEFAULT NULL
@@ -28,10 +32,13 @@ DECLARE
     v_indexes                  text;
     v_constraints              text;
     v_triggers                 text;
-    v_storage_clause           text;
+    -- v_storage_clause           text;
     v_partition_schema         text := COALESCE(p_partition_schema, p_table_schema);
     v_start_timestamp          timestamptz;
     v_interval_unit            text;
+    v_partition_tablespace     text;
+    v_partition_storage_clause text;
+    v_template_table_tablespace text;
 
 BEGIN
 
@@ -93,20 +100,16 @@ BEGIN
         USING ERRCODE = 'invalid_schema_name';
     END IF;
 
-    IF NOT EXISTS (
-        SELECT NULL
-          FROM pg_catalog.pg_tablespace
-         WHERE spcname = p_partition_tablespace
-    ) THEN
+    IF p_partition_tablespace IS NOT NULL
+    AND NOT pgpartium.tablespace_exists(p_partition_tablespace)
+    THEN
         RAISE 'partition tablespace "%" does not exist', p_partition_tablespace
         USING ERRCODE = 'undefined_object';
     END IF;
 
-    IF NOT EXISTS (
-        SELECT NULL
-          FROM pg_catalog.pg_tablespace
-         WHERE spcname = p_index_tablespace
-    ) THEN
+    IF p_index_tablespace IS NOT NULL
+    AND NOT pgpartium.tablespace_exists(p_index_tablespace)
+    THEN
         RAISE 'index tablespace "%" does not exist', p_index_tablespace
         USING ERRCODE = 'undefined_object';
     END IF;
@@ -142,6 +145,41 @@ BEGIN
              , now()
            )
       INTO v_start_timestamp;
+
+    SELECT COALESCE(
+               p_partition_tablespace
+             , CASE p_inherit_template_table_tablespace
+                 WHEN TRUE
+                   THEN pgpartium.get_relation_tablespace(p_relation_schema=>p_table_schema, p_relation_name=>p_table_name)
+                 ELSE NULL
+               END
+           )
+      INTO v_partition_tablespace;
+
+    -- Get storage parameters.
+    -- SELECT pgpartium.get_storage_parameters(p_relation_schema=>p_table_schema, p_relation_name=>p_table_name)
+    --   INTO v_template_table_storage_parameters;
+
+    SELECT pgpartium.render_storage_parameters(
+               p_config => pgpartium.merge_configs(
+                   pgpartium.get_storage_parameters(
+                       p_relation_schema=>p_table_schema
+                     , p_relation_name=>p_table_name
+                   )
+                 , p_partition_storage_parameters
+               )
+           )
+      INTO v_partition_storage_clause;
+
+    -- SELECT normalized_formatted_overridden_storage_parameters
+    --   FROM pgpartium.normalize_storage_parameters(
+    --        p_relation_schema => p_template_table_schema
+    --      , p_relation_name   => p_template_table_name
+    --      , p_override        => CASE p_inherit_template_table_storage_parameters
+    --          WHEN TRUE
+    --          THEN         => p_partition_storage_parameters
+    -- )
+    --   INTO v_storage_clause;
 
     FOR v_partition IN
         WITH dateset AS (
@@ -326,15 +364,6 @@ BEGIN
         )
           INTO v_triggers;
 
-        -- Get storage parameters.
-        SELECT normalized_formatted_overridden_storage_parameters
-          FROM pgpartium.normalize_storage_parameters(
-               p_relation_schema => p_template_table_schema
-             , p_relation_name   => p_template_table_name
-             , p_override        => p_partition_storage_parameters
-        )
-          INTO v_storage_clause;
-
         -- Add additional new line if needed
         IF v_ddl != '' THEN
             v_ddl := format(E'%1$s\n', v_ddl);
@@ -353,10 +382,10 @@ BEGIN
           , p_table_name                                           -- <5>
           , COALESCE(E' (\n' || v_constraints || E'\n    )', '')   -- <6>
           , v_partition.partition_clause                           -- <7>
-          , E'\n' || v_storage_clause                              -- <8>
+          , E'\n' || NULLIF(v_partition_storage_clause, '')        -- <8>
           , CASE                                                   -- <9>
-              WHEN p_partition_tablespace != 'pg_default'
-                THEN format(E'\nTABLESPACE %I', p_partition_tablespace)
+              WHEN v_partition_tablespace IS NOT NULL
+                THEN format(E'\nTABLESPACE %1$I', p_partition_tablespace)
               ELSE ''
             END
         );
