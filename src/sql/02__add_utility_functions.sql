@@ -1,4 +1,5 @@
 /* Utility functions */
+
 CREATE OR REPLACE FUNCTION pgpartium.table_exists (
     p_table_schema text
   , p_table_name text
