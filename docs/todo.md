@@ -1,6 +1,7 @@
 # TODO
 
 ** Important **
+-- we need to test triggers with args
 We need more name template rather than blindly replacing the template table name/schema with the partition name/schema
 The issue is that there are cases where these replacers won't exist in the source/template indexes/triggers/constraints
 leading to already existing indexes/triggers/constraints and thus statement errors.

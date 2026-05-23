@@ -11,3 +11,4 @@ PostgreSQL does not support DETACH PARTITION IF EXISTS.
 Generated detach statements are therefore only partially idempotent.
 A migration may fail if the partition has already been detached externally.
 
+“We prefer named intent over inline computation”

@@ -1,3 +1,28 @@
+-- select * from pgpartium.render_template('{parent_table_name}_{ordinal}', jsonb_build_object('{parent_table_name}', 'notifications_2026_01', '{ordinal}', 5));
+
+CREATE OR REPLACE FUNCTION pgpartium.render_template (
+    p_template text,
+    p_values jsonb
+)
+RETURNS text
+LANGUAGE plpgsql
+IMMUTABLE
+AS $$
+DECLARE
+    v_result text := p_template;
+    v_key text;
+    v_value text;
+BEGIN
+    FOR v_key, v_value IN
+        SELECT * FROM jsonb_each_text(p_values)
+    LOOP
+        v_result := replace(v_result, v_key, v_value);
+    END LOOP;
+
+    RETURN v_result;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION pgpartium.normalize_storage_parameters (
     p_relation_schema text
   , p_relation_name text
@@ -11,11 +36,11 @@ LANGUAGE SQL
 AS $BODY$
 
     /*
-    * @param p_relation_schema: The schema of the relation
-    * @param p_relation_name: The name of the relation
-    * @param p_override: JSON object to override the current storage parameters
+    * @param p_relation_schema: The schema of the relation.
+    * @param p_relation_name: The name of the relation.
+    * @param p_override: JSON object to override the current storage parameters.
     *
-    * @return normalized_storage_parameters
+    * @return normalized_current_storage_parameters
     *     Canonical storage parameter clause matching the formatting
     *     produced by pg_catalog.pg_get_indexdef().
     *

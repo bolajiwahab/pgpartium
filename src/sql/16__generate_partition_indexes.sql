@@ -7,6 +7,7 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partition_indexes (
   , p_template_table_name text
   , p_index_tablespace text
   , p_idempotent_ddl boolean
+  , p_index_name_template text DEFAULT NULL
 )
 RETURNS text
 LANGUAGE SQL
@@ -15,9 +16,12 @@ AS $BODY$
     WITH template_indexes AS (
         SELECT index_name
              , is_unique_index
+             , index_keys
+             , ordinal
              , full_index_definition
              , index_definition_excluding_storage_parameters_and_predicate
              , index_predicate
+             , index_storage_parameters
           FROM pgpartium.get_indexes(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name)
     )
     , parent_indexes AS (
@@ -29,15 +33,37 @@ AS $BODY$
           FROM pgpartium.get_indexes(p_table_schema=>p_parent_table_schema, p_table_name=>p_parent_table_name)
     )
     , partition_indexes AS (
-        SELECT replace(
-                   replace(
-                       template_indexes.index_name
-                     , p_template_table_schema
-                     , p_partition_schema
+        SELECT pgpartium.render_template(
+                   p_index_name_template
+                 , jsonb_build_object(
+                       '{parent_table_schema}', p_parent_table_schema
+                     , '{parent_table_name}', p_parent_table_name
+                     , '{partition_schema}', p_partition_schema
+                     , '{partition_name}', p_partition_name
+                     , '{index_keys}', template_indexes.index_keys
+                     , '{ordinal}', template_indexes.ordinal
                    )
-                 , p_template_table_name
-                 , p_partition_name
                ) AS final_index_name
+        -- replace(
+        --                replace(
+        --                    p_index_name_template
+        --                  , '{table_name}'
+        --                  , p_table_name
+        --                )
+        --              , '{table_schema}'
+        --              , p_table_schema
+        --            ) AS final_index_name
+        -- CASE p_index_name_template
+        --          WHEN NOT NULL
+        -- replace(
+        --            replace(
+        --                template_indexes.index_name
+        --              , p_template_table_schema
+        --              , p_partition_schema
+        --            )
+        --          , p_template_table_name
+        --          , p_partition_name
+        --        ) AS final_index_name
              , CASE
                  WHEN template_indexes.is_unique_index
                    THEN 'UNIQUE INDEX'

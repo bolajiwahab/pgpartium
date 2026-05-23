@@ -10,6 +10,7 @@
 - Partition creation and expiration
 - Time-based range partitioning
 - Partition name templating
+- deterministic naming
 - Partition schema
 - Partition tablespace
 - Index tablespace
