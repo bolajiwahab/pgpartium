@@ -5,22 +5,24 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_interval interval
   , p_past integer DEFAULT 0
   , p_future integer DEFAULT 0
-  , p_create_default boolean DEFAULT false
+  , p_create_default boolean DEFAULT FALSE
   , p_default_partition_name_template text DEFAULT NULL
   , p_partition_schema text DEFAULT NULL
   , p_partition_tablespace text DEFAULT NULL
-  , p_inherit_template_table_tablespace boolean DEFAULT false
+  , p_inherit_table_tablespace_from_template_table boolean DEFAULT FALSE
   , p_partition_storage_parameters jsonb DEFAULT NULL
-  , p_inherit_template_table_storage_parameters boolean DEFAULT false
+  , p_inherit_table_storage_parameters_from_template_table boolean DEFAULT FALSE
   , p_index_name_template text DEFAULT NULL
   , p_index_tablespace text DEFAULT NULL
-  , p_inherit_template_index_tablespace boolean DEFAULT false
+  , p_inherit_index_tablespace_from_template_table boolean DEFAULT FALSE
+  , p_index_storage_parameters jsonb DEFAULT NULL
+  , p_inherit_index_storage_parameters_from_template_table boolean DEFAULT FALSE
   , p_template_table_schema text DEFAULT NULL
   , p_template_table_name text DEFAULT NULL
   , p_retention interval DEFAULT NULL
   , p_timezone text DEFAULT 'Etc/UTC'
-  , p_skip_overlapping boolean DEFAULT false
-  , p_idempotent_ddl boolean DEFAULT false
+  , p_skip_overlapping boolean DEFAULT FALSE
+  , p_idempotent_ddl boolean DEFAULT FALSE
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
@@ -32,7 +34,6 @@ DECLARE
     v_indexes                  text;
     v_constraints              text;
     v_triggers                 text;
-    -- v_storage_clause           text;
     v_partition_schema         text := COALESCE(p_partition_schema, p_table_schema);
     v_start_timestamp          timestamptz;
     v_interval_unit            text;
@@ -42,7 +43,7 @@ DECLARE
 
 BEGIN
 
-    PERFORM set_config('timezone', p_timezone, true);
+    PERFORM set_config('timezone', p_timezone, TRUE);
 
     IF p_interval = interval '0' THEN
         RAISE 'interval must not be zero'
@@ -148,38 +149,35 @@ BEGIN
 
     SELECT COALESCE(
                p_partition_tablespace
-             , CASE p_inherit_template_table_tablespace
+             , CASE p_inherit_table_tablespace_from_template_table
                  WHEN TRUE
-                   THEN pgpartium.get_relation_tablespace(p_relation_schema=>p_table_schema, p_relation_name=>p_table_name)
+                   THEN pgpartium.get_relation_tablespace(p_relation_schema=>p_template_table_schema, p_relation_name=>p_template_table_name)
                  ELSE NULL
                END
            )
       INTO v_partition_tablespace;
 
-    -- Get storage parameters.
-    -- SELECT pgpartium.get_storage_parameters(p_relation_schema=>p_table_schema, p_relation_name=>p_table_name)
-    --   INTO v_template_table_storage_parameters;
-
-    SELECT pgpartium.render_storage_parameters(
-               p_config => pgpartium.merge_configs(
-                   pgpartium.get_storage_parameters(
-                       p_relation_schema=>p_table_schema
-                     , p_relation_name=>p_table_name
-                   )
-                 , p_partition_storage_parameters
-               )
+    SELECT CASE p_inherit_table_storage_parameters_from_template_table
+             WHEN TRUE
+               THEN COALESCE(
+                        pgpartium.render_storage_parameters(
+                            p_relation_schema=>p_template_table_schema
+                          , p_relation_name=>p_template_table_name
+                          , p_user_config=>p_partition_storage_parameters
+                          , p_pretty=>TRUE
+                        )
+                      , ''
+                    )
+           ELSE COALESCE(pgpartium.render_storage_parameters(
+                    p_relation_schema=>NULL
+                  , p_relation_name=>NULL
+                  , p_user_config=>p_partition_storage_parameters
+                  , p_pretty=>TRUE
+                )
+              , ''
            )
+           END
       INTO v_partition_storage_clause;
-
-    -- SELECT normalized_formatted_overridden_storage_parameters
-    --   FROM pgpartium.normalize_storage_parameters(
-    --        p_relation_schema => p_template_table_schema
-    --      , p_relation_name   => p_template_table_name
-    --      , p_override        => CASE p_inherit_template_table_storage_parameters
-    --          WHEN TRUE
-    --          THEN         => p_partition_storage_parameters
-    -- )
-    --   INTO v_storage_clause;
 
     FOR v_partition IN
         WITH dateset AS (
@@ -197,7 +195,7 @@ BEGIN
         )
         , partitions AS (
             -- Range partitions
-            SELECT false AS is_default
+            SELECT FALSE AS is_default
                  , p_partition_name_template AS name_template
                  , "date" AS lower_bound
                  , ("date" + p_interval) AS upper_bound
@@ -251,7 +249,7 @@ BEGIN
               FROM dateset
             UNION ALL
             -- Default partition
-            SELECT true AS is_default
+            SELECT TRUE AS is_default
                  , p_default_partition_name_template AS name_template
                  , NULL AS lower_bound
                  , NULL AS upper_bound
@@ -284,7 +282,7 @@ BEGIN
                -- Retention filtering.
                AND CASE
                      WHEN p_retention IS NULL
-                       THEN true
+                       THEN TRUE
                      ELSE age(
                             now()
                           , partitions.upper_bound::timestamptz
@@ -341,14 +339,18 @@ BEGIN
 
         -- Get index create statement.
         SELECT pgpartium.generate_partition_indexes(
-               p_parent_table_schema   => p_table_schema
-             , p_parent_table_name     => p_table_name
-             , p_template_table_schema => p_template_table_schema
-             , p_template_table_name   => p_template_table_name
-             , p_partition_schema      => v_partition_schema
-             , p_partition_name        => v_partition.partition_name
-             , p_index_tablespace      => p_index_tablespace
-             , p_idempotent_ddl        => p_idempotent_ddl
+               p_parent_table_schema                                  => p_table_schema
+             , p_parent_table_name                                    => p_table_name
+             , p_template_table_schema                                => p_template_table_schema
+             , p_template_table_name                                  => p_template_table_name
+             , p_partition_schema                                     => v_partition_schema
+             , p_partition_name                                       => v_partition.partition_name
+             , p_index_name_template                                  => p_index_name_template
+             , p_idempotent_ddl                                       => p_idempotent_ddl
+             , p_index_tablespace                                     => p_index_tablespace
+             , p_inherit_index_tablespace_from_template_table         => p_inherit_index_tablespace_from_template_table
+             , p_index_storage_parameters                             => p_index_storage_parameters
+             , p_inherit_index_storage_parameters_from_template_table => p_inherit_index_storage_parameters_from_template_table
         )
           INTO v_indexes;
 
@@ -372,7 +374,7 @@ BEGIN
         v_ddl := v_ddl || format(
             E'CREATE TABLE %1$s%2$I.%3$I\n    PARTITION OF %4$I.%5$I%6$s\n    %7$s%8$s%9$s;\n'
           , CASE p_idempotent_ddl                                  -- <1>
-              WHEN true
+              WHEN TRUE
                 THEN 'IF NOT EXISTS '
               ELSE ''
             END
@@ -385,7 +387,7 @@ BEGIN
           , E'\n' || NULLIF(v_partition_storage_clause, '')        -- <8>
           , CASE                                                   -- <9>
               WHEN v_partition_tablespace IS NOT NULL
-                THEN format(E'\nTABLESPACE %1$I', p_partition_tablespace)
+                THEN format(E'\nTABLESPACE %1$I', v_partition_tablespace)
               ELSE ''
             END
         );

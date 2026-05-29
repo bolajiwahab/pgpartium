@@ -291,7 +291,7 @@ SELECT throws_ok($$
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
-      , p_create_default=>true
+      , p_create_default=>TRUE
       , p_default_partition_name_template=>''
     )$$
   , '22023'
@@ -305,7 +305,7 @@ SELECT throws_ok($$
       , p_table_name=>'transactions'
       , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
       , p_interval=>'1 month'
-      , p_create_default=>true
+      , p_create_default=>TRUE
       , p_default_partition_name_template=>NULL)$$
   , '22023'
   , 'creating default partition requires default partition name template'

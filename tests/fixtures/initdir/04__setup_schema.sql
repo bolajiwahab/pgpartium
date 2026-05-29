@@ -27,11 +27,25 @@ CREATE TABLE test.transactions_template (
   , CONSTRAINT transactions_template_pkey PRIMARY KEY (transaction_id)
   , CONSTRAINT transactions_template_user_id_key UNIQUE (user_id)
   , CONSTRAINT transactions_template_account_id_created_at_key UNIQUE (account_id, created_at)
-);
+)
+WITH (autovacuum_enabled=FALSE, fillfactor=100, toast.vacuum_truncate = FALSE)
+TABLESPACE pg_default;
+
+CREATE INDEX transactions_template_account_id_idx
+    ON test.transactions_template (account_id)
+TABLESPACE pgpartium_fast;
+
+CREATE UNIQUE INDEX transactions_template_status_active_key
+    ON test.transactions_template (status)
+WITH (fillfactor=80, deduplicate_items = FALSE)
+ WHERE status = 'active';
+
+CREATE INDEX transactions_template_updated_at_idx
+    ON test.transactions_template (updated_at);
 
 CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig
     BEFORE UPDATE ON test.transactions_template
-    FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
+    FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger('arg');
 
 CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig_2
     BEFORE UPDATE ON test.transactions_template
@@ -39,16 +53,6 @@ CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig_2
 
 ALTER TABLE test.transactions_template
     DISABLE TRIGGER suppress_redundant_updates_trig_2;
-
-CREATE INDEX transactions_template_account_id_idx
-    ON test.transactions_template (account_id);
-
-CREATE UNIQUE INDEX transactions_template_status_active_key
-    ON test.transactions_template (status)
- WHERE status = 'active';
-
-CREATE INDEX transactions_template_updated_at_idx
-    ON test.transactions_template (updated_at);
 
 -- Partitioned by List.
 CREATE TABLE test.users (

@@ -15,13 +15,13 @@ AS $BODY$
     SELECT tg.tgname AS trigger_name
          , CASE tg.tgenabled
              WHEN 'D'
-               THEN false
-             ELSE true
+               THEN FALSE
+             ELSE TRUE
            END AS is_trigger_enabled
          , CASE tg.tgconstraint
              WHEN 0
-               THEN false
-             ELSE true
+               THEN FALSE
+             ELSE TRUE
            END AS is_constraint_trigger
          , CASE CAST(tgtype AS integer) & 66
              WHEN 2

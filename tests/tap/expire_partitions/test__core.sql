@@ -56,7 +56,7 @@ SELECT * FROM pgpartium.expire_partitions (
     p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'1 month'
-  , p_idempotent_ddl=>true
+  , p_idempotent_ddl=>TRUE
 );
 
 PREPARE expected_with_retention_idempotent AS VALUES (
@@ -76,7 +76,7 @@ SELECT * FROM pgpartium.expire_partitions (
     p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'1 month'
-  , p_detach_first=>true
+  , p_detach_first=>TRUE
 );
 
 PREPARE expected_with_retention_detach_first AS VALUES (
@@ -102,8 +102,8 @@ SELECT * FROM pgpartium.expire_partitions (
     p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'1 month'
-  , p_detach_first=>true
-  , p_idempotent_ddl=>true
+  , p_detach_first=>TRUE
+  , p_idempotent_ddl=>TRUE
 );
 
 PREPARE expected_with_retention_detach_first_idempotent AS VALUES (
@@ -129,8 +129,8 @@ SELECT * FROM pgpartium.expire_partitions (
     p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'1 month'
-  , p_detach_first=>true
-  , p_detach_concurrently=>true
+  , p_detach_first=>TRUE
+  , p_detach_concurrently=>TRUE
 );
 
 PREPARE expected_with_retention_detach_first_concurrently AS VALUES (
@@ -156,9 +156,9 @@ SELECT * FROM pgpartium.expire_partitions (
     p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'1 month'
-  , p_detach_first=>true
-  , p_detach_concurrently=>true
-  , p_idempotent_ddl=>true
+  , p_detach_first=>TRUE
+  , p_detach_concurrently=>TRUE
+  , p_idempotent_ddl=>TRUE
 );
 
 PREPARE expected_with_retention_detach_first_concurrently_idempotent AS VALUES (
@@ -184,8 +184,8 @@ SELECT * FROM pgpartium.expire_partitions (
     p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'1 month'
-  , p_detach_first=>true
-  , p_detach_only=>true
+  , p_detach_first=>TRUE
+  , p_detach_only=>TRUE
 );
 
 PREPARE expected_with_retention_detach_only AS VALUES (
@@ -207,9 +207,9 @@ SELECT * FROM pgpartium.expire_partitions (
     p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'1 month'
-  , p_detach_first=>true
-  , p_detach_only=>true
-  , p_idempotent_ddl=>true
+  , p_detach_first=>TRUE
+  , p_detach_only=>TRUE
+  , p_idempotent_ddl=>TRUE
 );
 
 PREPARE expected_with_retention_detach_only_idempotent AS VALUES (
@@ -231,10 +231,10 @@ SELECT * FROM pgpartium.expire_partitions (
     p_table_schema=>'test'
   , p_table_name=>'notifications'
   , p_retention=>'1 month'
-  , p_detach_first=>true
-  , p_detach_only=>true
-  , p_detach_concurrently=>true
-  , p_idempotent_ddl=>true
+  , p_detach_first=>TRUE
+  , p_detach_only=>TRUE
+  , p_detach_concurrently=>TRUE
+  , p_idempotent_ddl=>TRUE
 );
 
 -- PREPARE expected_with_retention_detach_only_concurrently_idempotent AS VALUES (

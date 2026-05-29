@@ -3,9 +3,11 @@ BEGIN;
 -- Deallocate all previous prepared statements.
 DEALLOCATE ALL;
 
+SET client_min_messages TO ERROR;
+
 SET search_path TO mock, pg_catalog, public;
 
-SELECT plan(26);
+SELECT plan(33);
 
 -- We are using mocked now() - '2025-03-01 00:00:00'
 
@@ -85,7 +87,7 @@ SELECT * FROM pgpartium.make_partitions (
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
-  , p_create_default=>true
+  , p_create_default=>TRUE
   , p_default_partition_name_template=>'{table_schema}__{table_name}__default'
 );
 
@@ -105,13 +107,58 @@ SELECT results_eq(
   , 'make partitions with create default'
 );
 
+PREPARE result_with_template_table AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+  , p_template_table_schema=>'test'
+  , p_template_table_name=>'transactions_template'
+);
+
+PREPARE expected_with_template_table AS VALUES (
+$$CREATE TABLE test.test__transactions__2025_03
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+
+CREATE UNIQUE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (status)
+ WHERE status = 'active'::text;
+
+CREATE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (account_id);
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
+$$);
+
+SELECT results_eq(
+    'result_with_template_table'
+  , 'expected_with_template_table'
+  , 'make partitions with template table'
+);
+
 PREPARE result_with_create_default_with_template AS
 SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'test'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
-  , p_create_default=>true
+  , p_create_default=>TRUE
   , p_default_partition_name_template=>'{table_schema}__{table_name}__default'
   , p_template_table_schema=>'test'
   , p_template_table_name=>'transactions_template'
@@ -136,7 +183,7 @@ CREATE INDEX
 
 CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
     ON test.test__transactions__2025_03
-   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
 
 CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
     ON test.test__transactions__2025_03
@@ -163,7 +210,7 @@ CREATE INDEX
 
 CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
     ON test.test__transactions__default
-   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
 
 CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
     ON test.test__transactions__default
@@ -200,25 +247,51 @@ SELECT results_eq(
   , 'make partitions with partition schema'
 );
 
-PREPARE result_with_null_partition_tablespace AS
+PREPARE result_inherit_table_tablespace_from_template_table AS
 SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'test'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
-  , p_partition_tablespace=>NULL
+  , p_template_table_schema=>'test'
+  , p_template_table_name=>'transactions_template'
+  , p_inherit_table_tablespace_from_template_table=>TRUE
 );
 
-PREPARE expected_with_null_partition_tablespace AS VALUES (
+PREPARE expected_inherit_table_tablespace_from_template_table AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
-    PARTITION OF test.transactions
-    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00')
+TABLESPACE pg_default;
+
+CREATE UNIQUE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (status)
+ WHERE status = 'active'::text;
+
+CREATE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (account_id);
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
 $$);
 
 SELECT results_eq(
-    'result_with_null_partition_tablespace'
-  , 'expected_with_null_partition_tablespace'
-  , 'make partitions with null partition tablespace'
+    'result_inherit_table_tablespace_from_template_table'
+  , 'expected_inherit_table_tablespace_from_template_table'
+  , 'make partitions with inherit table tablespace from template table'
 );
 
 PREPARE result_with_partition_tablespace AS
@@ -227,14 +300,39 @@ SELECT * FROM pgpartium.make_partitions (
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
+  , p_template_table_schema=>'test'
+  , p_template_table_name=>'transactions_template'
   , p_partition_tablespace=>'pgpartium'
 );
 
 PREPARE expected_with_partition_tablespace AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
-    PARTITION OF test.transactions
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00')
 TABLESPACE pgpartium;
+
+CREATE UNIQUE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (status)
+ WHERE status = 'active'::text;
+
+CREATE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (account_id);
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
 $$);
 
 SELECT results_eq(
@@ -243,45 +341,26 @@ SELECT results_eq(
   , 'make partitions with partition tablespace'
 );
 
-PREPARE result_with_partition_storage_parameters AS
+PREPARE result_inherit_table_tablespace_from_template_table_and_partition_tablespace AS
 SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'test'
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
-  , p_partition_storage_parameters=>'{"fillfactor": "90"}'
+  , p_template_table_schema=>'test'
+  , p_template_table_name=>'transactions_template'
+  , p_inherit_table_tablespace_from_template_table=>TRUE
+  , p_partition_tablespace=>'pgpartium'
 );
 
-PREPARE expected_with_partition_storage_parameters AS VALUES (
+PREPARE expected_inherit_table_tablespace_from_template_table_and_partition_tablespace AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
-    PARTITION OF test.transactions
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00')
-WITH (fillfactor = '90');
-$$);
-
-SELECT results_eq(
-    'result_with_partition_storage_parameters'
-  , 'expected_with_partition_storage_parameters'
-  , 'make partitions with partition storage parameters'
-);
-
-PREPARE result_with_template_table AS
-SELECT * FROM pgpartium.make_partitions (
-    p_table_schema=>'test'
-  , p_table_name=>'transactions'
-  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
-  , p_interval=>'1 month'
-  , p_template_table_schema=>'test'
-  , p_template_table_name=>'transactions_template'
-);
-
-PREPARE expected_with_template_table AS VALUES (
-$$CREATE TABLE test.test__transactions__2025_03
-    PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
-    )
-    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+TABLESPACE pgpartium;
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
@@ -294,7 +373,7 @@ CREATE INDEX
 
 CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
     ON test.test__transactions__2025_03
-   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
 
 CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
     ON test.test__transactions__2025_03
@@ -305,12 +384,12 @@ ALTER TABLE test.test__transactions__2025_03
 $$);
 
 SELECT results_eq(
-    'result_with_template_table'
-  , 'expected_with_template_table'
-  , 'make partitions with template table'
+    'result_inherit_table_tablespace_from_template_table_and_partition_tablespace'
+  , 'expected_inherit_table_tablespace_from_template_table_and_partition_tablespace'
+  , 'make partitions with inherit table tablespace from template table with partition tablespace'
 );
 
-PREPARE result_with_null_index_tablespace AS
+PREPARE result_inherit_index_tablespace_from_template_table AS
 SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'test'
   , p_table_name=>'transactions'
@@ -318,10 +397,10 @@ SELECT * FROM pgpartium.make_partitions (
   , p_interval=>'1 month'
   , p_template_table_schema=>'test'
   , p_template_table_name=>'transactions_template'
-  , p_index_tablespace=>NULL
+  , p_inherit_index_tablespace_from_template_table=>TRUE
 );
 
-PREPARE expected_with_null_index_tablespace AS VALUES (
+PREPARE expected_inherit_index_tablespace_from_template_table AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
         CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
@@ -332,15 +411,17 @@ $$CREATE TABLE test.test__transactions__2025_03
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
  USING btree (status)
+TABLESPACE pg_default
  WHERE status = 'active'::text;
 
 CREATE INDEX
     ON test.test__transactions__2025_03
- USING btree (account_id);
+ USING btree (account_id)
+TABLESPACE pgpartium_fast;
 
 CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
     ON test.test__transactions__2025_03
-   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
 
 CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
     ON test.test__transactions__2025_03
@@ -351,12 +432,12 @@ ALTER TABLE test.test__transactions__2025_03
 $$);
 
 SELECT results_eq(
-    'result_with_null_index_tablespace'
-  , 'expected_with_null_index_tablespace'
-  , 'make partitions with null index tablespace'
+    'result_inherit_index_tablespace_from_template_table'
+  , 'expected_inherit_index_tablespace_from_template_table'
+  , 'make partitions with inherit index tablespace from template table'
 );
 
-PREPARE result_with_template_table_with_index_tablespace AS
+PREPARE result_with_index_tablespace AS
 SELECT * FROM pgpartium.make_partitions (
     p_table_schema=>'test'
   , p_table_name=>'transactions'
@@ -367,7 +448,7 @@ SELECT * FROM pgpartium.make_partitions (
   , p_index_tablespace=>'pgpartium'
 );
 
-PREPARE expected_with_template_table_with_index_tablespace AS VALUES (
+PREPARE expected_with_index_tablespace AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
         CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
@@ -388,7 +469,7 @@ TABLESPACE pgpartium;
 
 CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
     ON test.test__transactions__2025_03
-   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
 
 CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
     ON test.test__transactions__2025_03
@@ -399,9 +480,319 @@ ALTER TABLE test.test__transactions__2025_03
 $$);
 
 SELECT results_eq(
-    'result_with_template_table_with_index_tablespace'
-  , 'expected_with_template_table_with_index_tablespace'
-  , 'make partitions with template table with index tablespace'
+    'result_with_index_tablespace'
+  , 'expected_with_index_tablespace'
+  , 'make partitions with index tablespace'
+);
+
+PREPARE result_inherit_index_tablespace_from_template_table_and_index_tablespace AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+  , p_template_table_schema=>'test'
+  , p_template_table_name=>'transactions_template'
+  , p_inherit_index_tablespace_from_template_table=>TRUE
+  , p_index_tablespace=>'pgpartium'
+);
+
+PREPARE expected_inherit_index_tablespace_from_template_table_and_index_tablespace AS VALUES (
+$$CREATE TABLE test.test__transactions__2025_03
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+
+CREATE UNIQUE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (status)
+TABLESPACE pgpartium
+ WHERE status = 'active'::text;
+
+CREATE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (account_id)
+TABLESPACE pgpartium;
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
+$$);
+
+SELECT results_eq(
+    'result_inherit_index_tablespace_from_template_table_and_index_tablespace'
+  , 'expected_inherit_index_tablespace_from_template_table_and_index_tablespace'
+  , 'make partitions with inherit index tablespace from template table with index tablespace'
+);
+
+PREPARE result_inherit_table_storage_parameters_from_template_table AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+  , p_template_table_schema=>'test'
+  , p_template_table_name=>'transactions_template'
+  , p_inherit_table_storage_parameters_from_template_table=>TRUE
+);
+
+PREPARE expected_inherit_table_storage_parameters_from_template_table AS VALUES (
+$$CREATE TABLE test.test__transactions__2025_03
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00')
+WITH (autovacuum_enabled = 'false', fillfactor = '100', "toast.vacuum_truncate" = 'false');
+
+CREATE UNIQUE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (status)
+ WHERE status = 'active'::text;
+
+CREATE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (account_id);
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
+$$);
+
+SELECT results_eq(
+    'result_inherit_table_storage_parameters_from_template_table'
+  , 'expected_inherit_table_storage_parameters_from_template_table'
+  , 'make partitions with inherit table storage parameters from template table'
+);
+
+PREPARE result_with_partition_storage_parameters AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+  , p_partition_storage_parameters=>'{"fillfactor": "90", "toast.vacuum_truncate": "true"}'
+);
+
+PREPARE expected_with_partition_storage_parameters AS VALUES (
+$$CREATE TABLE test.test__transactions__2025_03
+    PARTITION OF test.transactions
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00')
+WITH (fillfactor = '90', "toast.vacuum_truncate" = 'true');
+$$);
+
+SELECT results_eq(
+    'result_with_partition_storage_parameters'
+  , 'expected_with_partition_storage_parameters'
+  , 'make partitions with partition storage parameters'
+);
+
+PREPARE result_inherit_table_storage_parameters_from_template_table_and_storage_parameters AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+  , p_template_table_schema=>'test'
+  , p_template_table_name=>'transactions_template'
+  , p_inherit_table_storage_parameters_from_template_table=>TRUE
+  , p_partition_storage_parameters=>'{"fillfactor": "90", "toast.vacuum_truncate": "true"}'
+);
+
+PREPARE expected_inherit_table_storage_parameters_from_template_table_and_storage_parameters AS VALUES (
+$$CREATE TABLE test.test__transactions__2025_03
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00')
+WITH (autovacuum_enabled = 'false', fillfactor = '90', "toast.vacuum_truncate" = 'true');
+
+CREATE UNIQUE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (status)
+ WHERE status = 'active'::text;
+
+CREATE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (account_id);
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
+$$);
+
+SELECT results_eq(
+    'result_inherit_table_storage_parameters_from_template_table_and_storage_parameters'
+  , 'expected_inherit_table_storage_parameters_from_template_table_and_storage_parameters'
+  , 'make partitions with inherit table storage parameters from template table and storage parameters'
+);
+
+PREPARE result_inherit_index_storage_parameters_from_template_table AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+  , p_template_table_schema=>'test'
+  , p_template_table_name=>'transactions_template'
+  , p_inherit_index_storage_parameters_from_template_table=>TRUE
+);
+
+PREPARE expected_inherit_index_storage_parameters_from_template_table AS VALUES (
+$$CREATE TABLE test.test__transactions__2025_03
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+
+CREATE UNIQUE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (status)
+  WITH (fillfactor = '80', deduplicate_items = 'false')
+ WHERE status = 'active'::text;
+
+CREATE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (account_id);
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
+$$);
+
+SELECT results_eq(
+    'result_inherit_index_storage_parameters_from_template_table'
+  , 'expected_inherit_index_storage_parameters_from_template_table'
+  , 'make partitions with inherit index storage parameters from template table'
+);
+
+PREPARE result_with_index_storage_parameters AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+  , p_template_table_schema=>'test'
+  , p_template_table_name=>'transactions_template'
+  , p_index_storage_parameters=>'{"fillfactor": "90"}'
+);
+
+PREPARE expected_with_index_storage_parameters AS VALUES (
+$$CREATE TABLE test.test__transactions__2025_03
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+
+CREATE UNIQUE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (status)
+  WITH (fillfactor = '90')
+ WHERE status = 'active'::text;
+
+CREATE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (account_id)
+  WITH (fillfactor = '90');
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
+$$);
+
+SELECT results_eq(
+    'result_with_index_storage_parameters'
+  , 'expected_with_index_storage_parameters'
+  , 'make partitions with index storage parameters'
+);
+
+PREPARE result_inherit_index_storage_parameters_from_template_table_and_storage_parameters AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+  , p_template_table_schema=>'test'
+  , p_template_table_name=>'transactions_template'
+  , p_inherit_index_storage_parameters_from_template_table=>TRUE
+  , p_index_storage_parameters=>'{"fillfactor": "96", "deduplicate_items": "TRUE", "fastupdate": "false", "autosummarize": "true"}'
+);
+
+PREPARE expected_inherit_index_storage_parameters_from_template_table_and_storage_parameters AS VALUES (
+$$CREATE TABLE test.test__transactions__2025_03
+    PARTITION OF test.transactions (
+        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
+        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+    )
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+
+CREATE UNIQUE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (status)
+  WITH (fillfactor = '96', deduplicate_items = 'TRUE', autosummarize = 'true', fastupdate = 'false')
+ WHERE status = 'active'::text;
+
+CREATE INDEX
+    ON test.test__transactions__2025_03
+ USING btree (account_id)
+  WITH (autosummarize = 'true', deduplicate_items = 'TRUE', fastupdate = 'false', fillfactor = '96');
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
+$$);
+
+SELECT results_eq(
+    'result_inherit_index_storage_parameters_from_template_table_and_storage_parameters'
+  , 'expected_inherit_index_storage_parameters_from_template_table_and_storage_parameters'
+  , 'make partitions with inherit index storage parameters from template table and storage parameters'
 );
 
 PREPARE result_with_retention AS
@@ -457,7 +848,7 @@ SELECT * FROM pgpartium.make_partitions (
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
-  , p_idempotent_ddl=>true
+  , p_idempotent_ddl=>TRUE
 );
 
 PREPARE expected_with_idempotent_ddl AS VALUES (
@@ -478,9 +869,9 @@ SELECT * FROM pgpartium.make_partitions (
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_default_partition_name_template=>'{table_schema}__{table_name}__default'
-  , p_create_default=>true
+  , p_create_default=>TRUE
   , p_interval=>'1 month'
-  , p_idempotent_ddl=>true
+  , p_idempotent_ddl=>TRUE
 );
 
 PREPARE expected_with_default_partition_idempotent_ddl AS VALUES (
@@ -507,7 +898,7 @@ SELECT * FROM pgpartium.make_partitions (
   , p_interval=>'1 month'
   , p_template_table_schema=>'test'
   , p_template_table_name=>'transactions_template'
-  , p_idempotent_ddl=>true
+  , p_idempotent_ddl=>TRUE
 );
 
 PREPARE expected_with_template_with_idempotent_ddl AS VALUES (
@@ -529,7 +920,7 @@ CREATE INDEX IF NOT EXISTS
 
 CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
     ON test.test__transactions__2025_03
-   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
 
 CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
     ON test.test__transactions__2025_03
@@ -551,11 +942,11 @@ SELECT * FROM pgpartium.make_partitions (
   , p_table_name=>'transactions'
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
-  , p_create_default=>true
+  , p_create_default=>TRUE
   , p_default_partition_name_template=>'{table_schema}__{table_name}__default'
   , p_template_table_schema=>'test'
   , p_template_table_name=>'transactions_template'
-  , p_idempotent_ddl=>true
+  , p_idempotent_ddl=>TRUE
 );
 
 PREPARE expected_with_create_default_with_template_with_idempotent_ddl AS VALUES (
@@ -577,7 +968,7 @@ CREATE INDEX IF NOT EXISTS
 
 CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
     ON test.test__transactions__2025_03
-   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
 
 CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
     ON test.test__transactions__2025_03
@@ -604,7 +995,7 @@ CREATE INDEX IF NOT EXISTS
 
 CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
     ON test.test__transactions__default
-   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
 
 CREATE OR REPLACE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
     ON test.test__transactions__default
@@ -657,7 +1048,7 @@ SELECT * FROM pgpartium.make_partitions (
   , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
   , p_interval=>'1 month'
   , p_future=>1
-  , p_skip_overlapping=>true
+  , p_skip_overlapping=>TRUE
 );
 
 PREPARE expected_with_skip_overlapping AS VALUES (

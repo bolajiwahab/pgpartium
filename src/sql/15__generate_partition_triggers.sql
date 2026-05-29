@@ -56,7 +56,7 @@ AS $BODY$
         format(
            E'CREATE %1$s%2$s %3$I %4$s %5$s\n    ON %6$I.%7$I\n   %8$s;\n%9$s'
          , CASE p_idempotent_ddl                                --<1: idempotence>
-             WHEN true
+             WHEN TRUE
                THEN 'OR REPLACE' || ' '
              ELSE ''
            END

@@ -34,8 +34,10 @@ toast.autovacuum_multixact_freeze_max_age    toast.autovacuum_vacuum_insert_thre
 
 ## Tests
 
-1. Need to test triggers with args
-2. Template table tablespace
-3. Template index tablespace
-4. Template table storage parameters
-5. Template index storage parameters
+<!-- 2. Template table tablespace with override -->
+<!-- 3. Template index tablespace with override -->
+<!-- 4. Template table storage parameters with override -->
+<!-- 5. Template index storage parameters with override -->
+6. Test index_template_naming
+7. Test constraint_template_naming
+8. Test trigger_template_naming

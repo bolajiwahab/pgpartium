@@ -9,8 +9,8 @@ RETURNS TABLE (
   , ordinal integer
   , full_index_definition text
   , index_definition_excluding_storage_parameters_and_predicate text
-  , index_storage_parameters text
   , index_predicate text
+  , index_tablespace text
 )
 LANGUAGE SQL
 AS $BODY$
@@ -25,8 +25,9 @@ AS $BODY$
     * @return ordinal: The ordinal of the index.
     * @return full_index_definition: The full definition of the index.
     * @return index_definition_excluding_storage_parameters_and_predicate: The definition of the index excluding storage parameters and predicate.
-    * @return index_storage_parameters: The storage parameters of the index.
     * @return index_predicate: The predicate of the index.
+    * @return index_storage_parameters: The storage parameters of the index.
+    * @return index_tablespace: The tablespace of the index.
     */
 
     WITH indexes AS (
@@ -39,10 +40,16 @@ AS $BODY$
                    ORDER BY u.ordinality
                ) AS index_keys
              , substring(pg_catalog.pg_get_indexdef(i.indexrelid, 0, TRUE) FROM 'USING .*') AS full_index_definition
+             , 'WHERE ' || pg_catalog.pg_get_expr(i.indpred, i.indrelid, TRUE) AS index_predicate
              , pgpartium.render_storage_parameters(
-                   p_config => pgpartium.get_storage_parameters(inp.nspname, ix.relname)
-               ) AS index_storage_parameters
-             , COALESCE('WHERE ' || pg_catalog.pg_get_expr(i.indpred, i.indrelid, TRUE), '') AS index_predicate
+                   p_relation_schema => inp.nspname
+                 , p_relation_name => ix.relname
+                 , p_pretty => FALSE
+               ) AS rendered_storage_parameters
+             , pgpartium.get_relation_tablespace(
+                   p_relation_schema=>inp.nspname
+                 , p_relation_name=>ix.relname
+               ) AS index_tablespace
           FROM pg_catalog.pg_namespace AS n
          INNER JOIN pg_catalog.pg_class AS r
             ON n.oid = r.relnamespace
@@ -79,14 +86,14 @@ AS $BODY$
                replace(
                    replace(
                        full_index_definition
-                     , COALESCE(index_storage_parameters, '')
+                     , COALESCE(rendered_storage_parameters, '')
                      , ''
                    )
-                 , index_predicate
+                 , COALESCE(index_predicate, '')
                  , ''
                )
            ) AS index_definition_excluding_storage_parameters_and_predicate
-         , index_storage_parameters
          , index_predicate
+         , index_tablespace
       FROM indexes;
 $BODY$;
