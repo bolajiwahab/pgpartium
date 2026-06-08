@@ -5,6 +5,7 @@ CREATE OR REPLACE FUNCTION pgpartium.get_indexes (
 RETURNS TABLE (
     index_name name
   , is_unique_index boolean
+  , index_type text
   , index_keys text
   , ordinal integer
   , full_index_definition text
@@ -14,6 +15,7 @@ RETURNS TABLE (
 )
 LANGUAGE SQL
 AS $BODY$
+
 
     /*
     * @param p_table_schema: The schema of the table.
@@ -34,6 +36,7 @@ AS $BODY$
         SELECT ix.oid AS index_oid
              , ix.relname AS index_name
              , indisunique AS is_unique_index
+             , am.amname AS index_type
              , string_agg(
                    COALESCE(a.attname, 'expr')
                  , '_'
@@ -57,6 +60,8 @@ AS $BODY$
             ON r.oid = i.indrelid AND i.indisvalid
          INNER JOIN pg_catalog.pg_class AS ix
             ON i.indexrelid = ix.oid
+         INNER JOIN pg_catalog.pg_am AS am
+            ON ix.relam = am.oid
          INNER JOIN pg_catalog.pg_namespace AS inp
             ON ix.relnamespace = inp.oid
           LEFT JOIN pg_catalog.pg_constraint AS c
@@ -73,12 +78,14 @@ AS $BODY$
              , ix.oid
              , ix.relname
              , i.indisunique
+             , am.amname
              , i.indpred
              , i.indrelid
              , i.indexrelid
    )
     SELECT index_name
          , is_unique_index
+         , index_type
          , index_keys
          , row_number() OVER (PARTITION BY index_keys ORDER BY index_oid) - 1 AS ordinal
          , full_index_definition

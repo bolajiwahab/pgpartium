@@ -7,7 +7,7 @@ SET client_min_messages TO ERROR;
 
 SET search_path TO mock, pg_catalog, public;
 
-SELECT plan(33);
+SELECT plan(34);
 
 -- We are using mocked now() - '2025-03-01 00:00:00'
 
@@ -120,14 +120,14 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_with_template_table AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
  WHERE status = 'active'::text;
 
 CREATE INDEX
@@ -167,14 +167,14 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_with_create_default_with_template AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
  WHERE status = 'active'::text;
 
 CREATE INDEX
@@ -194,14 +194,14 @@ ALTER TABLE test.test__transactions__2025_03
 
 CREATE TABLE test.test__transactions__default
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__default_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__default_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     DEFAULT;
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__default
- USING btree (status)
+ USING btree (account_id, status)
  WHERE status = 'active'::text;
 
 CREATE INDEX
@@ -261,15 +261,15 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_inherit_table_tablespace_from_template_table AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00')
 TABLESPACE pg_default;
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
  WHERE status = 'active'::text;
 
 CREATE INDEX
@@ -308,15 +308,15 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_with_partition_tablespace AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00')
 TABLESPACE pgpartium;
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
  WHERE status = 'active'::text;
 
 CREATE INDEX
@@ -356,15 +356,15 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_inherit_table_tablespace_from_template_table_and_partition_tablespace AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00')
 TABLESPACE pgpartium;
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
  WHERE status = 'active'::text;
 
 CREATE INDEX
@@ -403,14 +403,14 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_inherit_index_tablespace_from_template_table AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
 TABLESPACE pg_default
  WHERE status = 'active'::text;
 
@@ -451,14 +451,14 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_with_index_tablespace AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
 TABLESPACE pgpartium
  WHERE status = 'active'::text;
 
@@ -500,14 +500,14 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_inherit_index_tablespace_from_template_table_and_index_tablespace AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
 TABLESPACE pgpartium
  WHERE status = 'active'::text;
 
@@ -548,15 +548,15 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_inherit_table_storage_parameters_from_template_table AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00')
 WITH (autovacuum_enabled = 'false', fillfactor = '100', "toast.vacuum_truncate" = 'false');
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
  WHERE status = 'active'::text;
 
 CREATE INDEX
@@ -618,15 +618,15 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_inherit_table_storage_parameters_from_template_table_and_storage_parameters AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00')
 WITH (autovacuum_enabled = 'false', fillfactor = '90', "toast.vacuum_truncate" = 'true');
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
  WHERE status = 'active'::text;
 
 CREATE INDEX
@@ -665,14 +665,14 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_inherit_index_storage_parameters_from_template_table AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
   WITH (fillfactor = '80', deduplicate_items = 'false')
  WHERE status = 'active'::text;
 
@@ -712,14 +712,14 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_with_index_storage_parameters AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
   WITH (fillfactor = '90')
  WHERE status = 'active'::text;
 
@@ -761,14 +761,14 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_inherit_index_storage_parameters_from_template_table_and_storage_parameters AS VALUES (
 $$CREATE TABLE test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
 CREATE UNIQUE INDEX
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
   WITH (fillfactor = '96', deduplicate_items = 'TRUE', autosummarize = 'true', fastupdate = 'false')
  WHERE status = 'active'::text;
 
@@ -793,6 +793,52 @@ SELECT results_eq(
     'result_inherit_index_storage_parameters_from_template_table_and_storage_parameters'
   , 'expected_inherit_index_storage_parameters_from_template_table_and_storage_parameters'
   , 'make partitions with inherit index storage parameters from template table and storage parameters'
+);
+
+PREPARE result_with_index_name_template AS
+SELECT * FROM pgpartium.make_partitions (
+    p_table_schema=>'test'
+  , p_table_name=>'transactions'
+  , p_partition_name_template=>'{table_schema}__{table_name}__YYYY_MM'
+  , p_interval=>'1 month'
+  , p_template_table_schema=>'test'
+  , p_template_table_name=>'transactions_template'
+  , p_index_name_template=>'{parent_table_schema}_{parent_table_name}__{partition_schema}_{partition_name}__{index_keys}_idx{ordinal}'
+);
+
+PREPARE expected_with_index_name_template AS VALUES (
+$$CREATE TABLE test.test__transactions__2025_03
+    PARTITION OF test.transactions (
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
+    )
+    FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
+
+CREATE UNIQUE INDEX test_transactions__test_test__transactions__2025_03__account_id_status_idx0
+    ON test.test__transactions__2025_03
+ USING btree (account_id, status)
+ WHERE status = 'active'::text;
+
+CREATE INDEX test_transactions__test_test__transactions__2025_03__account_id_idx0
+    ON test.test__transactions__2025_03
+ USING btree (account_id);
+
+CREATE TRIGGER suppress_redundant_updates_trig BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger('arg');
+
+CREATE TRIGGER suppress_redundant_updates_trig_2 BEFORE UPDATE
+    ON test.test__transactions__2025_03
+   FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
+
+ALTER TABLE test.test__transactions__2025_03
+    DISABLE TRIGGER suppress_redundant_updates_trig_2;
+$$);
+
+SELECT results_eq(
+    'result_with_index_name_template'
+  , 'expected_with_index_name_template'
+  , 'make partitions with index name template'
 );
 
 PREPARE result_with_retention AS
@@ -904,14 +950,14 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_with_template_with_idempotent_ddl AS VALUES (
 $$CREATE TABLE IF NOT EXISTS test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
 CREATE UNIQUE INDEX IF NOT EXISTS
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
  WHERE status = 'active'::text;
 
 CREATE INDEX IF NOT EXISTS
@@ -952,14 +998,14 @@ SELECT * FROM pgpartium.make_partitions (
 PREPARE expected_with_create_default_with_template_with_idempotent_ddl AS VALUES (
 $$CREATE TABLE IF NOT EXISTS test.test__transactions__2025_03
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__2025_03_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__2025_03_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     FOR VALUES FROM ('2025-03-01 00:00:00+00') TO ('2025-04-01 00:00:00+00');
 
 CREATE UNIQUE INDEX IF NOT EXISTS
     ON test.test__transactions__2025_03
- USING btree (status)
+ USING btree (account_id, status)
  WHERE status = 'active'::text;
 
 CREATE INDEX IF NOT EXISTS
@@ -979,14 +1025,14 @@ ALTER TABLE test.test__transactions__2025_03
 
 CREATE TABLE IF NOT EXISTS test.test__transactions__default
     PARTITION OF test.transactions (
-        CONSTRAINT test__transactions__default_pkey PRIMARY KEY (transaction_id),
-        CONSTRAINT test__transactions__default_user_id_key UNIQUE (user_id)
+        CONSTRAINT PRIMARY KEY (transaction_id),
+        CONSTRAINT UNIQUE (user_id)
     )
     DEFAULT;
 
 CREATE UNIQUE INDEX IF NOT EXISTS
     ON test.test__transactions__default
- USING btree (status)
+ USING btree (account_id, status)
  WHERE status = 'active'::text;
 
 CREATE INDEX IF NOT EXISTS

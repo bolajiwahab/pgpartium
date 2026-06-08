@@ -14,7 +14,7 @@ Describe "pgp-make-partitions"
 
     It "makes partitions with valid config ($1)"
         When run script pgp-make-partitions -c "$1"
-        The output should be present # See: https://github.com/shellspec/shellspec/issues/122
+        # The output should be present # See: https://github.com/shellspec/shellspec/issues/122
         diff -u "$2" "$3"
         The status should be success
     End

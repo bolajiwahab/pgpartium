@@ -84,7 +84,11 @@ BEGIN
              , t.v_value
           FROM jsonb_each_text(p_values) AS t(v_key, v_value)
     LOOP
-        v_result := replace(v_result, v_key, v_value);
+        v_result := replace(
+                        v_result
+                      , v_key
+                      , v_value
+                    );
     END LOOP;
 
     RETURN v_result;

@@ -12,11 +12,15 @@ services:
     environment:
       PGP_PG_MAJOR_VERSION: ${PGP_PG_MAJOR_VERSION:-17}
       PGP_INIT_DIR: ${PGP_INIT_DIR:-tests/fixtures/initdir}
+      PGP_USER: ${PGP_USER:-postgres}
+      PGP_PASSWORD: ${PGP_PASSWORD:-postgres}
+      PGP_HOST: ${PGP_HOST:-localhost}
+      PGP_PORT: ${PGP_PORT:-5432}
+      PGP_DATABASE: ${PGP_DATABASE:-postgres}
       SHELL_SPEC_VERSION: "0.28.1"
       PGP_CLUSTER_NAME: pgpartium
     command: >
       sh -c "
         pgp-start && \
-        pg_prove --username=postgres --dbname=postgres --verbose --failures tests/tap/**/*.sql && \
-        bash shellspec tests/spec --no-warning-as-failure
+        bats --tap tests/conftest.sh
       "

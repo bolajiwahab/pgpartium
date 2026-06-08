@@ -19,8 +19,9 @@ AS $BODY$
     WITH template_indexes AS (
         SELECT index_name
              , is_unique_index
+             , index_type
              , index_keys
-             , ordinal
+             , ordinal::text AS ordinal
              , full_index_definition
              , index_definition_excluding_storage_parameters_and_predicate
              , index_predicate
@@ -62,14 +63,19 @@ AS $BODY$
                      , '{partition_schema}', p_partition_schema
                      , '{partition_name}', p_partition_name
                      , '{index_keys}', template_indexes.index_keys
-                     , '{ordinal}', template_indexes.ordinal
+                     , '{index_type}', template_indexes.index_type
+                     , '{ordinal}', CASE template_indexes.ordinal
+                                      WHEN '0'
+                                        THEN ''
+                                      ELSE template_indexes.ordinal
+                                    END
                    )
                ) AS final_index_name
              , CASE
                  WHEN template_indexes.is_unique_index
                    THEN 'UNIQUE INDEX'
                  ELSE 'INDEX'
-               END AS index_type
+               END AS index_qualifier
              , template_indexes.is_unique_index
              , template_indexes.index_definition_excluding_storage_parameters_and_predicate
              , template_indexes.index_predicate
@@ -85,7 +91,7 @@ AS $BODY$
                    E'%1$s%2$s%3$s%4$s;\n'
                  , format(                                                                              --<1: index_create_statement>
                        E'CREATE %1$s%2$s%3$s\n    ON %4$I.%5$I\n %6$s'
-                     , partition_indexes.index_type                                                   --<1: index_type>
+                     , partition_indexes.index_qualifier                                                --<1: index_qualifier>
                      , CASE p_idempotent_ddl                                                          --<2: if_not_exists>
                          WHEN TRUE
                            THEN ' IF NOT EXISTS'

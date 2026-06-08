@@ -38,6 +38,54 @@ toast.autovacuum_multixact_freeze_max_age    toast.autovacuum_vacuum_insert_thre
 <!-- 3. Template index tablespace with override -->
 <!-- 4. Template table storage parameters with override -->
 <!-- 5. Template index storage parameters with override -->
-6. Test index_template_naming
-7. Test constraint_template_naming
+<!-- 6. Test index_template_naming -->
+7. Test constraint_template_naming , test exclusion, foreign key and check constraints
 8. Test trigger_template_naming
+9. Test for expression indexes
+
+
+Your current behavior:
+
+CHECK (status IS NOT NULL)
+→ status
+
+CHECK (status = ANY (...))
+→ status
+
+CHECK (lower(status) = status)
+→ status
+
+CHECK (lower(status) = status AND true)
+→ status
+
+is effectively saying:
+
+"Which columns does this constraint depend on?"
+
+rather than:
+
+"What is the exact expression?"
+
+That's usually the more useful metadata.
+
+for index name conflicts, postgres uses index_keys, same thing for expression indexes
+but for constraints, postgres uses constraint type and constraint keys to resolve conflicts
+since constraint type is part of the default naming
+
+✔ Corrected version of your first statement
+
+PostgreSQL derives index base names from index keys (columns or expressions), and uses suffixing for conflicts.
+
+✔ Corrected version of your second statement
+
+PostgreSQL derives constraint base names from constraint type and associated columns/expressions, and uses suffixing for conflicts when needed.
+
+c = check constraint, f = foreign key constraint, n = not-null constraint, p = primary key constraint, u = unique constraint, t = constraint trigger, x = exclusion constraint
+
+This gives contributors a single primitive to use.
+
+pg_prove --username=postgres --dbname=postgres --verbose --failures tests/tap/**/*.sql && \
+
+bash shellspec tests/spec --no-warning-as-failure
+
+we need constraint trigger and foreign key

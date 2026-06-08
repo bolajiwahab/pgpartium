@@ -17,12 +17,15 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_inherit_index_tablespace_from_template_table boolean DEFAULT FALSE
   , p_index_storage_parameters jsonb DEFAULT NULL
   , p_inherit_index_storage_parameters_from_template_table boolean DEFAULT FALSE
+  , p_constraint_name_template text DEFAULT '{partition_name}_{constraint_keys}_{constraint_type_name}{ordinal}'
   , p_template_table_schema text DEFAULT NULL
   , p_template_table_name text DEFAULT NULL
   , p_retention interval DEFAULT NULL
   , p_timezone text DEFAULT 'Etc/UTC'
   , p_skip_overlapping boolean DEFAULT FALSE
   , p_idempotent_ddl boolean DEFAULT FALSE
+  , p_constraint_type_map jsonb DEFAULT NULL
+  , p_start_timestamp timestamptz DEFAULT NULL
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
@@ -143,6 +146,7 @@ BEGIN
                     SELECT upper_bound
                       FROM pgpartium.get_latest_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
                )
+             , p_start_timestamp
              , now()
            )
       INTO v_start_timestamp;
@@ -334,8 +338,23 @@ BEGIN
              , p_template_table_name   => p_template_table_name
              , p_partition_schema      => v_partition_schema
              , p_partition_name        => v_partition.partition_name
+             , p_constraint_name_template => p_constraint_name_template
+             , p_constraint_type_map      => p_constraint_type_map
         )
           INTO v_constraints;
+
+        -- Get not null constraint definition.
+        -- SELECT pgpartium.generate_not_null_constraints(
+        --        p_parent_table_schema   => p_table_schema
+        --      , p_parent_table_name     => p_table_name
+        --      , p_template_table_schema => p_template_table_schema
+        --      , p_template_table_name   => p_template_table_name
+        --      , p_partition_schema      => v_partition_schema
+        --      , p_partition_name        => v_partition.partition_name
+        --      , p_constraint_name_template => p_constraint_name_template
+        --      , p_constraint_type_map      => p_constraint_type_map
+        -- )
+        --   INTO v_not_null_constraints;
 
         -- Get index create statement.
         SELECT pgpartium.generate_partition_indexes(

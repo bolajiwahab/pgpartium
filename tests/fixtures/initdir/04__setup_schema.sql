@@ -35,8 +35,8 @@ CREATE INDEX transactions_template_account_id_idx
     ON test.transactions_template (account_id)
 TABLESPACE pgpartium_fast;
 
-CREATE UNIQUE INDEX transactions_template_status_active_key
-    ON test.transactions_template (status)
+CREATE UNIQUE INDEX transactions_template_account_id_status_active_key
+    ON test.transactions_template (account_id, status)
 WITH (fillfactor=80, deduplicate_items = FALSE)
  WHERE status = 'active';
 
