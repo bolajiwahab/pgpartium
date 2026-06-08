@@ -22,5 +22,5 @@ services:
     command: >
       sh -c "
         pgp-start && \
-        bats --tap tests/conftest.sh
+        bats --tap --timing tests/conftest.sh
       "
