@@ -1,6 +1,6 @@
 ---
 generates:
-  directory: "tests/fixtures/make_partitions"
+  directory: "tests/fixtures/make_partitions/create_default"
   name_template: "{table_schema}__{table_name}__YYYY_MM"
   create_default: false
   default_partition_name_template: "{table_schema}__{table_name}__default"
@@ -8,8 +8,5 @@ generates:
   tables:
     - table_schema: "test"
       table_name: "transactions"
-      file_name_template: "{description}.result"
       partition:
         create_default: true
-      description:
-        make: "create_default"

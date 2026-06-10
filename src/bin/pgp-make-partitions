@@ -8,38 +8,17 @@ usage() {
 
     OPTIONS:
       -c  the config file in yaml (Required)
-      -u  the database username (Default: postgres)
-      -w  the database password (Default: postgres)
-      -s  the database host (Default: localhost)
-      -p  the database port (Default: 5432)
-      -d  the database name (Default: postgres)
       -h  show this help message.
 
     SAMPLE USAGE:
-        ${0##*/} -c config.yaml
-        ${0##*/} -c config.yaml -u user -w password -s host -p port -d database
+        PGP_USER=user PGP_PASSWORD=password PGP_HOST=host PGP_PORT=port PGP_DATABASE=database ${0##*/} -c config.yaml
 "
 }
 
-while getopts "c:u:w:s:p:d:h" option; do
+while getopts "c:h" option; do
     case "${option}" in
     c)
         config="${OPTARG}"
-        ;;
-    u)
-        dbuser="${OPTARG}"
-        ;;
-    w)
-        dbpassword="${OPTARG}"
-        ;;
-    s)
-        dbhost="${OPTARG}"
-        ;;
-    p)
-        dbport="${OPTARG}"
-        ;;
-    d)
-        dbname="${OPTARG}"
         ;;
     h | *)
         usage
@@ -49,15 +28,8 @@ while getopts "c:u:w:s:p:d:h" option; do
 done
 
 set -euo pipefail
-IFS=$'\n\t'
-# set -x
 
 config=${config:-}
-dbuser=${dbuser:-postgres}
-dbpassword=${dbpassword:-postgres}
-dbhost=${dbhost:-localhost}
-dbport=${dbport:-5432}
-dbname=${dbname:-postgres}
 
 # shellcheck source=../utils/logging.sh
 # source ../utils/logging.sh
@@ -71,11 +43,22 @@ fi
 # Validate schema.
 jsonschema /src/schema.json <<< "$(yq -o=json "${config}")"
 
+validate_timezone() {
+  local tz="$1"
+
+  if [[ -f "/usr/share/zoneinfo/$tz" ]]; then
+    return 0
+  fi
+
+  echo "Invalid timezone: $tz"
+  return 1
+}
+
 # Set defaults.
-export DEFAULT_TABLESPACE=NULL
+export DEFAULT_TABLESPACE=null
 export DEFAULT_PAST=0
 export DEFAULT_FUTURE=0
-export DEFAULT_RETENTION=NULL
+export DEFAULT_RETENTION=null
 export DEFAULT_CREATE_DEFAULT=false
 export DEFAULT_SKIP_OVERLAPPING=false
 export DEFAULT_IDEMPOTENT_DDL=false
@@ -100,12 +83,9 @@ GLOBAL_STORAGE_PARAMETERS="$(yq -o=json '.generates.partition_storage_parameters
 GLOBAL_TIMEZONE="$(yq '.generates.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")"
 
 export GLOBAL_PARTITION_TABLESPACE GLOBAL_INDEX_TABLESPACE GLOBAL_PARTITION_SCHEMA \
-        GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST \
-    GLOBAL_FUTURE GLOBAL_INTERVAL GLOBAL_RETENTION GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE \
-    GLOBAL_SKIP_OVERLAPPING GLOBAL_STORAGE_PARAMETERS GLOBAL_TIMEZONE GLOBAL_CREATE_DEFAULT GLOBAL_IDEMPOTENT_DDL
-
-
-# export GLOBAL_INDEX_TABLESPACE
+       GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL GLOBAL_RETENTION \
+       GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE GLOBAL_SKIP_OVERLAPPING GLOBAL_STORAGE_PARAMETERS \
+       GLOBAL_TIMEZONE GLOBAL_CREATE_DEFAULT GLOBAL_IDEMPOTENT_DDL
 
 directory="$(yq '.generates.directory' "${config}")"
 
@@ -128,20 +108,17 @@ trap cleanup EXIT ERR
 
 # Setup infrastructure.
 echo "INFO: Setting up infrastructure"
-pgp-setup-infrastructure -u "${dbuser}" -w "${dbpassword}" -s "${dbhost}" -p "${dbport}" -d "${dbname}"
+pgp-setup-infrastructure
 
 # Process each partitioned table.
 while read -r table; do
     table_schema="$(yq '.table_schema' <<< "${table}")"
     table_name="$(yq '.table_name' <<< "${table}")"
-    file_name_template="$(yq '.file_name_template' <<< "${table}")"
+    file_name_template="$(yq '.file_name_template // "result.sql"' <<< "${table}")"
     description="$(yq '.description.make // "Add partitions for {table_schema}_{table_name}"' <<< "${table}")"
     # Replace table_schema and table_name placeholders in the description.
     description="${description//\{table_schema\}/$table_schema}"
     description="${description//\{table_name\}/$table_name}"
-
-    output_filename="$(pgp-get-migration-filename -t "${file_name_template}" -d "${temp_migration_directory}" -m "${description}")"
-    echo "INFO: Making partitions for ${table_schema}.${table_name}"
 
     partition_schema="$(yq '.partition.partition_schema // strenv(GLOBAL_PARTITION_SCHEMA)' <<< "${table}")"
     # If no schema is provided either in the partition config or in the global config, default to table schema.
@@ -158,6 +135,7 @@ while read -r table; do
 
     partition_tablespace="$(yq '.partition.partition_tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' <<< "${table}")"
     index_tablespace="$(yq '.partition.index_tablespace // strenv(GLOBAL_INDEX_TABLESPACE)' <<< "${table}")"
+    # if index tablespace is not set, default to partition tablespace
 
     partition_interval="$(yq '.partition.interval // strenv(GLOBAL_INTERVAL)' <<< "${table}")"
     if [[ "${partition_interval}" == "null" ]]; then
@@ -171,9 +149,12 @@ while read -r table; do
     retention="$(yq '.partition.retention // strenv(GLOBAL_RETENTION)' <<< "${table}")"
     timezone="$(yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)' <<< "${table}")"
 
+    validate_timezone "${timezone}" || exit 1
+    export TZ="${timezone}"
+
     # Because yq default value operator is used to provide alternative (or default) values
     # when a particular expression is either null or false, we cannot use it as it would
-    # instead override partition level boolean values, instead we override them if they are not set.
+    # instead override partition level boolean values such as true, instead we override them if they are not set.
     skip_overlapping="$(yq '.partition.skip_overlapping' <<< "${table}")"
     if [[ "${skip_overlapping}" == "null" ]]; then
         skip_overlapping="${GLOBAL_SKIP_OVERLAPPING}"
@@ -200,12 +181,13 @@ while read -r table; do
 
     template_table="$(yq '.template_table' <<< "${table}")"
 
+    output_filename="$(pgp-get-migration-filename -t "${file_name_template}" -d "${temp_migration_directory}" -m "${description}")"
+    echo "INFO: Making partitions for ${table_schema}.${table_name}"
+
     if [[ "${template_table}" == "DEFAULT_PARTITION" ]]; then
         IFS=',' read -r template_table_schema template_table_name < <(
-            PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" psql \
-                --dbname="${dbname}" \
-                --host="${dbhost}" \
-                --port="${dbport}" \
+            PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" \
+            PGDATABASE="${PGP_DATABASE}" PGHOST="${PGP_HOST}" PGPORT="${PGP_PORT}" psql \
                 --tuples-only \
                 --no-align \
                 --quiet \
@@ -225,10 +207,8 @@ EOF
 
     elif [[ "${template_table}" == "LATEST_PARTITION" ]]; then
         IFS=',' read -r template_table_schema template_table_name < <(
-            PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" psql \
-                --dbname="${dbname}" \
-                --host="${dbhost}" \
-                --port="${dbport}" \
+            PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" \
+            PGDATABASE="${PGP_DATABASE}" PGHOST="${PGP_HOST}" PGPORT="${PGP_PORT}" psql \
                 --tuples-only \
                 --no-align \
                 --quiet \
@@ -248,10 +228,8 @@ EOF
 
     elif [[ "${template_table}" == "CURRENT_PARTITION" ]]; then
         IFS=',' read -r template_table_schema template_table_name < <(
-            PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" psql \
-                --dbname="${dbname}" \
-                --host="${dbhost}" \
-                --port="${dbport}" \
+            PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" \
+            PGDATABASE="${PGP_DATABASE}" PGHOST="${PGP_HOST}" PGPORT="${PGP_PORT}" psql \
                 --tuples-only \
                 --no-align \
                 --quiet \
@@ -277,7 +255,8 @@ EOF
 
     error_file="${temp_error_directory}/${table_schema}.${table_name}.error"
 
-    if ! PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" PGDATABASE="${PGP_DATABASE}" PGPORT="${PGP_PORT}" psql -v VERBOSITY=verbose \
+    if ! PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" \
+         PGDATABASE="${PGP_DATABASE}" PGHOST="${PGP_HOST}" PGPORT="${PGP_PORT}" psql \
         --tuples-only \
         --no-align \
         --quiet \
@@ -313,13 +292,13 @@ SELECT *
   , p_future=>:'future_partitions'
   , p_create_default=>:'create_default_partition'
   , p_default_partition_name_template=>:'default_partition_name_template'
-  , p_partition_schema=>:'partition_schema'
-  , p_partition_tablespace=>NULLIF(:'partition_tablespace', 'NULL')
-  , p_index_tablespace=>NULLIF(:'index_tablespace', 'NULL')
+  , p_partition_schema=>COALESCE(NULLIF(:'partition_schema', 'null'), :'table_schema')
+  , p_partition_tablespace=>NULLIF(:'partition_tablespace', 'null')
+  , p_index_tablespace=>NULLIF(:'index_tablespace', 'null')
   , p_partition_storage_parameters=>:'partition_storage_parameters'
   , p_template_table_schema=>:'template_table_schema'
   , p_template_table_name=>:'template_table_name'
-  , p_retention=>NULLIF(:'retention', 'NULL')::interval
+  , p_retention=>NULLIF(:'retention', 'null')::interval
   , p_timezone=>:'timezone'
   , p_skip_overlapping=>:'skip_overlapping'
   , p_idempotent_ddl=>:'idempotent_ddl'

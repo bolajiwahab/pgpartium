@@ -10,15 +10,9 @@ apt-get install -y postgresql-"${PGP_PG_MAJOR_VERSION}"-pgtap postgresql-contrib
 # tar xzf /tmp/shellspec-"${SHELL_SPEC_VERSION}".tar.gz -C /tmp
 # ln -s /tmp/shellspec-"${SHELL_SPEC_VERSION}"/bin/shellspec /usr/bin/shellspec
 
-# sudo apt install bats
-# apt-get install -y bats=1.8.2
-
-# bats --version
-# npm install @bats-core/bats@1.13.0
-
 git clone https://github.com/bats-core/bats-core.git
 cd bats-core
-git checkout --quiet v1.13.0   # pin exact version
+git checkout --quiet "${BATS_CORE_VERSION}"
 ./install.sh /usr/local
 bats --version
 

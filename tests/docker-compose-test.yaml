@@ -17,10 +17,10 @@ services:
       PGP_HOST: ${PGP_HOST:-localhost}
       PGP_PORT: ${PGP_PORT:-5432}
       PGP_DATABASE: ${PGP_DATABASE:-postgres}
-      SHELL_SPEC_VERSION: "0.28.1"
+      BATS_CORE_VERSION: "v1.13.0"
       PGP_CLUSTER_NAME: pgpartium
     command: >
       sh -c "
         pgp-start && \
-        bats --tap --timing tests/conftest.sh
+        bats --pretty --timing tests/conftest.sh
       "

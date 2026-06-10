@@ -2,35 +2,29 @@
 
 run_fixture() {
     local fixture="$1"
-    local base="${fixture%.yaml}"
+    local config="$2"
+    local expected="$3"
+    local result="${fixture}/result.sql"
 
-    pgp-make-partitions -c "$fixture"
+    pgp-make-partitions -c "${config}"
 
     echo "running diff"
     diff -u \
-        "${base}.expected" \
-        "${base}.result"
+        "${expected}" \
+        "${fixture}/result.sql"
 
-    # PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" psql -v ON_ERROR_STOP=1 -f "${base}.result"
-    echo "running psql"
-    # PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" psql -X -v ON_ERROR_STOP=1 -v AUTOCOMMIT=off -f "${base}.result"
     PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" createdb --template="${PGP_DATABASE}" pgpartium_test_$$
-    PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" psql -d pgpartium_test_$$ -X -v ON_ERROR_STOP=1 -f "${base}.result"
+    PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" psql -d pgpartium_test_$$ -X -v ON_ERROR_STOP=1 -f "${result}"
     PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" dropdb pgpartium_test_$$
 
-    # [ "$status" -eq 0 ]
+    rm -f "${result}"
 }
 
-for fixture in tests/fixtures/make_partitions/*.yaml; do
+for fixture in tests/fixtures/make_partitions/*; do
+    config="${fixture}/config.yaml"
+    expected="${fixture}/expected.sql"
+
     bats_test_function \
-        --description "testing make_partitions with $(basename "${fixture%.yaml}")" \
-        -- run_fixture "$fixture"
+        --description "testing make_partitions with $(basename "${fixture}")" \
+        -- run_fixture "${fixture}" "${config}" "${expected}"
 done
-
-# perform_test() {
-#     # fill the actual test code here
-# }
-
-# for f in ./*; do
-#   bats_test_function --description "testing $f" --tags foo -- perform_test $f
-# done
