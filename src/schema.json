@@ -4,19 +4,34 @@
     "description": "Schema for partition lifecycle.",
     "type": "object",
     "definitions": {
+        "trimmed_non_blank_string": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\S(?:.*\\S)?$"
+        },
+        "name": {
+            "description": "Name of a thing.",
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\S+$"
+        },
+        "name_template": {
+            "$ref": "#/definitions/name",
+            "description": "Template for naming objects."
+        },
         "description": {
             "description": "A description of the partition lifecycle, available for use as {description} in output_file_template.",
             "type": "object",
             "properties": {
                 "make": {
                     "description": "A description for making of partitions.",
-                    "type": "string",
-                    "minLength": 1
+                    "$ref": "#/definitions/trimmed_non_blank_string",
+                    "default": "Make partitions for {table_schema}_{table_name}"
                 },
                 "expire": {
                     "description": "A description for expiration of partitions.",
-                    "type": "string",
-                    "minLength": 1
+                    "$ref": "#/definitions/trimmed_non_blank_string",
+                    "default": "Expire partitions for {table_schema}_{table_name}"
                 }
             },
             "minProperties": 1,
@@ -24,18 +39,18 @@
         },
         "output_file_template": {
             "description": "Template for generating the output file name.",
-            "type": "string",
+            "$ref": "#/definitions/trimmed_non_blank_string",
             "examples": [
                 "V{integer}__{description}.sql",
                 "V{integer:3}__{description}.sql",
                 "{timestamp}__{description}.sql",
                 "{epoch}_{description}.up.sql"
             ],
-            "minLength": 1
+            "default": "output.sql"
         },
         "timezone": {
+            "$ref": "#/definitions/name",
             "description": "IANA timezone identifier defining the logical time context for all time-based operations (generation, expiry), independent of the execution environment (e.g. Europe/Berlin, UTC).",
-            "type": "string",
             "default": "Etc/UTC"
         },
         "storage_parameters": {
@@ -53,163 +68,261 @@
             ],
             "minProperties": 1
         },
-        "trimmed_non_blank_string": {
-            "type": "string",
-            "minLength": 1,
-            "pattern": "^\\S(?:.*\\S)?$"
-        },
-        "name": {
-            "$ref": "#/definitions/trimmed_non_blank_string",
-            "description": "Name of a something."
-        },
         "directory": {
             "$ref": "#/definitions/name",
             "description": "The directory to generate output files in."
-        },
-        "schema": {
-            "$ref": "#/definitions/name",
-            "description": "Schema name."
-        },
-
-        "partition": {
-            "type": "object",
-            "description": "Partition configuration.",
-            "properties": {
-                "schema": {
-                    "$ref": "#/definitions/schema"
-                },
-                "tablespace": {
-                    "$ref": "#/definitions/tablespace"
-                },
-                "index_tablespace": {
-                    "$ref": "#/definitions/tablespace"
-                },
-                "storage_parameters": {
-                    "$ref": "#/definitions/storage_parameters",
-                    "description": "Storage parameters for the partitions."
-                },
-                "index_storage_parameters": {
-                    "$ref": "#/definitions/storage_parameters"
-                },
-                "name_template": {
-                    "$ref": "#/definitions/name"
-                },
-                "interval": {
-                    "$ref": "#/definitions/interval"
-                },
-                "past": {
-                    "$ref": "#/definitions/past"
-                },
-                "future": {
-                    "$ref": "#/definitions/future"
-                },
-                "create_default": {
-                    "$ref": "#/definitions/create_default"
-                },
-                "default_partition_name_template": {
-                    "$ref": "#/definitions/name"
-                },
-                "retention": {
-                    "$ref": "#/definitions/retention"
-                },
-                "detach_first": {
-                    "$ref": "#/definitions/detach_first"
-                },
-                "detach_only": {
-                    "$ref": "#/definitions/detach_only"
-                },
-                "detach_concurrently": {
-                    "$ref": "#/definitions/detach_concurrently"
-                },
-                "skip_overlapping": {
-                    "$ref": "#/definitions/skip_overlapping"
-                },
-                "idempotent_ddl": {
-                    "$ref": "#/definitions/idempotent_ddl"
-                }
-            },
-            "additionalProperties": false
-        },
-
-        "tablespace": {
-            "$ref": "#/definitions/name",
-            "description": "Tablespace name."
-        },
-        "index_tablespace": {
-            "$ref": "#/definitions/tablespace",
-            "description": "The tablespace for the indexes.",
-            "default": "partition's tablespace"
-        },
-        "name_template": {
-            "$ref": "#/definitions/name",
-            "description": "The name template for the partitions.",
-            "examples": [
-                "{table_schema}__{table_name}__YYYY_MM_DD",
-                "{table_schema}__{table_name}__YYYY_MM"
-            ]
-        },
-        "default_partition_name_template": {
-            "$ref": "#/definitions/name",
-            "description": "The name template for the default partition.",
-            "examples": [
-                "{table_schema}__{table_name}__default"
-            ]
-        },
-        "interval": {
-            "description": "The partition interval.",
-            "type": "string",
-            "minLength": 1
-        },
-        "past": {
-            "description": "The number of past partitions to make.",
-            "type": "integer",
-            "minimum": 0,
-            "default": 0
-        },
-        "future": {
-            "description": "The number of future partitions to make.",
-            "type": "integer",
-            "minimum": 0,
-            "default": 0
-        },
-        "create_default": {
-            "description": "Whether to create default partition.",
-            "type": "boolean",
-            "default": false
-        },
-        "retention": {
-            "description": "The retention time interval to expire partitions containing data older than the given interval.",
-            "type": [
-                "string",
-                "null"
-            ],
-            "minLength": 1,
-            "default": "null"
-        },
-        "detach_first": {
-            "description": "Whether to detach the expired partitions first before dropping them.",
-            "type": "boolean",
-            "default": false
-        },
-        "detach_only": {
-            "description": "Whether to only detach the expired partitions.",
-            "type": "boolean",
-            "default": false
-        },
-        "detach_concurrently": {
-            "description": "Whether to detach the expired partitions concurrently.",
-            "type": "boolean",
-            "default": false
-        },
-        "skip_overlapping": {
-            "description": "Whether to skip overlapping partitions. Useful when switching partition intervals. It allows resolving such overlaps manually",
-            "type": "boolean",
-            "default": false
         },
         "idempotent_ddl": {
             "description": "Whether to generate idempotent DDL.",
             "type": "boolean",
             "default": false
+        },
+        "constraint": {
+            "$ref": "#/definitions/name",
+            "description": "Name of a constraint."
+        },
+        "partition": {
+            "type": "object",
+            "description": "Partition configuration.",
+            "properties": {
+                "naming": {
+                    "description": "Partition naming configuration.",
+                    "type": "object",
+                    "properties": {
+                        "template": {
+                            "$ref": "#/definitions/name_template",
+                            "description": "The template for naming partitions.",
+                            "examples": [
+                                "{table_schema}__{table_name}__YYYY_MM_DD",
+                                "{table_schema}__{table_name}__YYYY_MM"
+                            ]
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false
+                },
+                "schema": {
+                    "$ref": "#/definitions/name",
+                    "description": "Schema name."
+                },
+                "tablespace": {
+                    "$ref": "#/definitions/name",
+                    "description": "Tablespace name."
+                },
+                "interval": {
+                    "$ref": "#/definitions/trimmed_non_blank_string",
+                    "description": "The partition interval."
+                },
+                "past": {
+                    "description": "The number of past partitions to make.",
+                    "type": "integer",
+                    "minimum": 0,
+                    "default": 0
+                },
+                "future": {
+                    "description": "The number of future partitions to make.",
+                    "type": "integer",
+                    "minimum": 0,
+                    "default": 0
+                },
+                "retention": {
+                    "description": "The retention time interval to expire partitions older than the given interval.",
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "minLength": 1,
+                    "default": "null"
+                },
+                "detach_first": {
+                    "description": "Whether to detach the expired partitions first before dropping them.",
+                    "type": "boolean",
+                    "default": false
+                },
+                "detach_only": {
+                    "description": "Whether to only detach the expired partitions.",
+                    "type": "boolean",
+                    "default": false
+                },
+                "detach_concurrently": {
+                    "description": "Whether to detach the expired partitions concurrently.",
+                    "type": "boolean",
+                    "default": false
+                },
+                "skip_overlapping": {
+                    "description": "Whether to skip overlapping partitions. Useful when switching partition intervals. It allows resolving such overlaps manually",
+                    "type": "boolean",
+                    "default": false
+                },
+                "default": {
+                    "type": "object",
+                    "description": "Default partition configuration.",
+                    "properties": {
+                        "naming": {
+                            "description": "Default partition naming configuration.",
+                            "type": "object",
+                            "properties": {
+                                "template": {
+                                    "$ref": "#/definitions/name_template",
+                                    "description": "The template for naming default partition.",
+                                    "examples": [
+                                        "{table_schema}__{table_name}__default"
+                                    ]
+                                }
+                            },
+                            "minProperties": 1,
+                            "additionalProperties": false
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "storage_parameters": {
+                    "$ref": "#/definitions/storage_parameters",
+                    "description": "Storage parameters for partitions."
+                },
+                "constraint": {
+                    "type": "object",
+                    "description": "Constraint configuration.",
+                    "properties": {
+                        "naming": {
+                            "type": "object",
+                            "properties": {
+                                "template": {
+                                    "$ref": "#/definitions/name_template",
+                                    "description": "The template for naming constraints.",
+                                    "examples": [
+                                        "{partition_name}_{constraint_keys}_{type}"
+                                    ]
+                                },
+                                "primary_key": {
+                                    "type": "object",
+                                    "properties": {
+                                        "template": {
+                                            "$ref": "#/definitions/name_template",
+                                            "description": "The template for naming primary keys.",
+                                            "examples": [
+                                                "{partition_name}_pkey"
+                                            ]
+                                        }
+                                    },
+                                    "minProperties": 1,
+                                    "additionalProperties": false
+                                },
+                                "foreign_key": {
+                                    "type": "object",
+                                    "properties": {
+                                        "template": {
+                                            "$ref": "#/definitions/name_template",
+                                            "description": "The template for naming foreign keys.",
+                                            "examples": [
+                                                "{partition_name}_{constraint_keys}_fkey"
+                                            ]
+                                        }
+                                    },
+                                    "minProperties": 1,
+                                    "additionalProperties": false
+                                },
+                                "unique": {
+                                    "type": "object",
+                                    "properties": {
+                                        "template": {
+                                            "$ref": "#/definitions/name_template",
+                                            "description": "The template for naming unique constraints.",
+                                            "examples": [
+                                                "{partition_name}_{constraint_keys}_key"
+                                            ]
+                                        }
+                                    },
+                                    "minProperties": 1,
+                                    "additionalProperties": false
+                                },
+                                "check": {
+                                    "type": "object",
+                                    "properties": {
+                                        "template": {
+                                            "$ref": "#/definitions/name_template",
+                                            "description": "The template for naming check constraints.",
+                                            "examples": [
+                                                "{partition_name}_{constraint_keys}_check"
+                                            ]
+                                        }
+                                    },
+                                    "minProperties": 1,
+                                    "additionalProperties": false
+                                },
+                                "exclusion": {
+                                    "type": "object",
+                                    "properties": {
+                                        "template": {
+                                            "$ref": "#/definitions/name",
+                                            "description": "The template for naming exclusion constraints.",
+                                            "examples": [
+                                                "{partition_name}_{constraint_keys}_excl"
+                                            ]
+                                        }
+                                    },
+                                    "minProperties": 1,
+                                    "additionalProperties": false
+                                }
+                            },
+                            "minProperties": 1,
+                            "additionalProperties": false
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false
+                },
+                "index": {
+                    "type": "object",
+                    "description": "Index configuration.",
+                    "properties": {
+                        "naming": {
+                            "type": "object",
+                            "properties": {
+                                "template": {
+                                    "$ref": "#/definitions/name_template",
+                                    "description": "The template for naming indexes.",
+                                    "examples": [
+                                        "{partition_name}_{index_keys}_idx",
+                                        "{partition_name}_{index_keys}_idx{ordinal}"
+                                    ]
+                                }
+                            }
+                        },
+                        "tablespace": {
+                            "$ref": "#/definitions/name",
+                            "description": "The tablespace for indexes.",
+                            "default": "partition's tablespace"
+                        },
+                        "storage_parameters": {
+                            "$ref": "#/definitions/storage_parameters",
+                            "description": "Storage parameters for indexes."
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false
+                },
+                "trigger": {
+                    "type": "object",
+                    "description": "Trigger configuration.",
+                    "properties": {
+                        "naming": {
+                            "type": "object",
+                            "properties": {
+                            "template": {
+                                "$ref": "#/definitions/name_template",
+                                "description": "The template for naming triggers.",
+                                "examples": [
+                                    "{partition_name}__{timing}_{events}__{function_name}"
+                                ]
+                            }
+                        }
+                        }
+                    }
+                }
+            },
+            "minProperties": 1,
+            "additionalProperties": false
         }
     },
     "properties": {
@@ -220,12 +333,18 @@
                 "directory": {
                     "$ref": "#/definitions/directory"
                 },
-
-                "partition": {
-                    "$ref": "#/definitions/partition",
-                    "description": "The partition configuration."
+                "description": {
+                    "$ref": "#/definitions/description"
                 },
-
+                "timezone": {
+                    "$ref": "#/definitions/timezone"
+                },
+                "output_file_template": {
+                    "$ref": "#/definitions/output_file_template"
+                },
+                "partition": {
+                    "$ref": "#/definitions/partition"
+                },
                 "tables": {
                     "description": "List of tables to run partition lifecycle for.",
                     "type": "array",
@@ -234,7 +353,7 @@
                         "type": "object",
                         "properties": {
                             "schema": {
-                                "$ref": "#/definitions/schema",
+                                "$ref": "#/definitions/name",
                                 "description": "The schema of the table."
                             },
                             "name": {
@@ -270,16 +389,16 @@
                                     {
                                         "type": "object",
                                         "properties": {
-                                            "table_schema": {
-                                                "$ref": "#/definitions/table_schema"
+                                            "schema": {
+                                                "$ref": "#/definitions/name"
                                             },
-                                            "table_name": {
-                                                "$ref": "#/definitions/table_name"
+                                            "name": {
+                                                "$ref": "#/definitions/name"
                                             }
                                         },
                                         "required": [
-                                            "table_schema",
-                                            "table_name"
+                                            "schema",
+                                            "name"
                                         ],
                                         "additionalProperties": false
                                     }
