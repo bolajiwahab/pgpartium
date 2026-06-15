@@ -89,3 +89,63 @@ pg_prove --username=postgres --dbname=postgres --verbose --failures tests/tap/**
 bash shellspec tests/spec --no-warning-as-failure
 
 we need constraint trigger and foreign key
+
+###############################################
+tests/
+├── config/
+│   ├── inherits_global
+│   ├── overrides_global
+│   └── required_fields
+│
+└── make_partitions/
+    ├── create_default
+    ├── future
+    ├── past
+    ├── retention
+    ├── partition_schema
+    ├── template_table
+    ├── tablespace
+    ├── storage_parameters
+    ├── skip_overlapping
+    ├── idempotent_ddl
+    └── timezone
+
+partition:
+  naming:
+    template: "..."
+
+  default:
+    naming:
+      template: "..."
+
+index:
+  naming:
+    template: "{table_schema}__{table_name}__{column}_{type}"
+  storage_parameters:
+    fillfactor: 90
+
+constraint:
+  naming:
+    primary_key:
+      template: "..."
+
+    foreign_key:
+      template: "..."
+
+    unique:
+      template: "..."
+
+    check:
+      template: "..."
+
+which says:
+
+"Default partitions inherit partition behavior; only their name differs."
+
+That's a very clean mental model.
+
+trigger_name_template: "{table_schema}__{table_name}__{trigger_timing}_{trigger_events}__{function_name}"
+trigger_name_template: "{table_schema}__{table_name}__{timing}_{events}__{function_name}"
+
+
+make fields required in the schema

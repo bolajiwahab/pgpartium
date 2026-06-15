@@ -15,6 +15,15 @@
             "minLength": 1,
             "pattern": "^\\S+$"
         },
+        "nullable_name": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "minLength": 1,
+            "pattern": "^\\S(?:.*\\S)?$",
+            "default": null
+        },
         "name_template": {
             "$ref": "#/definitions/name",
             "description": "Template for naming objects."
@@ -24,13 +33,13 @@
             "type": "object",
             "properties": {
                 "make": {
-                    "description": "A description for making of partitions.",
                     "$ref": "#/definitions/trimmed_non_blank_string",
+                    "description": "A description for making of partitions.",
                     "default": "Make partitions for {table_schema}_{table_name}"
                 },
                 "expire": {
-                    "description": "A description for expiration of partitions.",
                     "$ref": "#/definitions/trimmed_non_blank_string",
+                    "description": "A description for expiration of partitions.",
                     "default": "Expire partitions for {table_schema}_{table_name}"
                 }
             },
@@ -38,15 +47,15 @@
             "additionalProperties": false
         },
         "output_file_template": {
+            "$ref": "#/definitions/name",
             "description": "Template for generating the output file name.",
-            "$ref": "#/definitions/trimmed_non_blank_string",
             "examples": [
                 "V{integer}__{description}.sql",
                 "V{integer:3}__{description}.sql",
                 "{timestamp}__{description}.sql",
                 "{epoch}_{description}.up.sql"
             ],
-            "default": "output.sql"
+            "default": "pgpartium_output.sql"
         },
         "timezone": {
             "$ref": "#/definitions/name",
@@ -55,11 +64,15 @@
         },
         "storage_parameters": {
             "description": "Storage parameters for relations (tables and indexes).",
-            "type": "object",
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
             "examples": [
                 {
                     "fillfactor": 90,
-                    "autovacuum_enabled": "false"
+                    "autovacuum_enabled": false
                 },
                 {
                     "fillfactor": 80,
@@ -70,48 +83,90 @@
         },
         "directory": {
             "$ref": "#/definitions/name",
-            "description": "The directory to generate output files in."
+            "description": "Directory where generated files are written.",
+            "default": "."
         },
-        "idempotent_ddl": {
-            "description": "Whether to generate idempotent DDL.",
+        "idempotent": {
+            "description": "Whether to generate idempotent SQL.",
             "type": "boolean",
             "default": false
         },
-        "constraint": {
-            "$ref": "#/definitions/name",
-            "description": "Name of a constraint."
+        "naming": {
+            "description": "Naming configuration.",
+            "type": "object",
+            "properties": {
+                "template": {
+                    "$ref": "#/definitions/name_template",
+                    "description": "Template for naming objects.",
+                    "examples": [
+                        "{parent_schema}__{parent_name}__{partition_name}"
+                    ]
+                }
+            },
+            "minProperties": 1,
+            "additionalProperties": false
+        },
+        "required_naming": {
+            "description": "Naming configuration.",
+            "type": "object",
+            "properties": {
+                "template": {
+                    "$ref": "#/definitions/name_template",
+                    "description": "Template for naming objects.",
+                    "examples": [
+                        "{parent_schema}__{parent_name}__{partition_name}"
+                    ]
+                }
+            },
+            "minProperties": 1,
+            "additionalProperties": false,
+            "required": [
+                "template"
+            ]
+        },
+        "extendable_naming": {
+            "$ref": "#/definitions/naming",
+            "description": "Extendable Naming configuration.",
+            "additionalProperties": true
         },
         "partition": {
             "type": "object",
             "description": "Partition configuration.",
             "properties": {
                 "naming": {
+                    "$ref": "#/definitions/required_naming",
                     "description": "Partition naming configuration.",
-                    "type": "object",
                     "properties": {
                         "template": {
-                            "$ref": "#/definitions/name_template",
-                            "description": "The template for naming partitions.",
                             "examples": [
-                                "{table_schema}__{table_name}__YYYY_MM_DD",
-                                "{table_schema}__{table_name}__YYYY_MM"
+                                "{parent_schema}__{parent_name}__YYYY_MM",
+                                "{parent_schema}__{parent_name}__YYYY_MM_DD"
                             ]
                         }
-                    },
-                    "minProperties": 1,
-                    "additionalProperties": false
-                },
+                    }                },
                 "schema": {
                     "$ref": "#/definitions/name",
-                    "description": "Schema name."
+                    "description": "Schema name.",
+                    "default": "parent's schema"
                 },
                 "tablespace": {
-                    "$ref": "#/definitions/name",
+                    "$ref": "#/definitions/nullable_name",
                     "description": "Tablespace name."
+                },
+                "storage_parameters": {
+                    "$ref": "#/definitions/storage_parameters",
+                    "description": "Storage parameters for partitions."
                 },
                 "interval": {
                     "$ref": "#/definitions/trimmed_non_blank_string",
-                    "description": "The partition interval."
+                    "description": "The partition interval.",
+                    "example": [
+                        "(n) hours",
+                        "(n) days",
+                        "(n) weeks",
+                        "(n) months",
+                        "(n) years"
+                    ]
                 },
                 "past": {
                     "description": "The number of past partitions to make.",
@@ -125,14 +180,193 @@
                     "minimum": 0,
                     "default": 0
                 },
+                "default": {
+                    "type": "object",
+                    "description": "Default partition configuration.",
+                    "properties": {
+                        "naming": {
+                            "$ref": "#/definitions/required_naming",
+                            "description": "Default partition naming configuration.",
+                            "properties": {
+                                "template": {
+                                    "description": "Template for naming default partition.",
+                                    "examples": [
+                                        "{parent_schema}__{parent_name}__default"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                        "naming"
+                    ]
+                },
+                "skip_overlapping": {
+                    "description": "Whether to skip overlapping partitions. Useful when switching partition intervals. It allows resolving such overlaps manually",
+                    "type": "boolean",
+                    "default": false
+                },
+                "constraint": {
+                    "type": "object",
+                    "description": "Constraint configuration.",
+                    "properties": {
+                        "naming": {
+                            "type": "object",
+                            "description": "Naming configuration for constraints.",
+                            "properties": {
+                                "template": {
+                                    "$ref": "#/definitions/name_template",
+                                    "description": "Template for naming constraints.",
+                                    "examples": [
+                                        "{parent_schema}__{parent_name}__default"
+                                    ],
+                                    "default": "{partition_name}_{constraint_keys}_{constraint_suffix}"
+                                },
+                                "primary_key": {
+                                    "$ref": "#/definitions/naming",
+                                    "description": "Naming configuration for primary keys.",
+                                    "properties": {
+                                        "template": {
+                                            "description": "Template for naming primary keys.",
+                                            "examples": [
+                                                "{partition_name}_pkey"
+                                            ],
+                                            "default": "{partition_name}_pkey"
+                                        }
+                                    }
+                                },
+                                "foreign_key": {
+                                    "$ref": "#/definitions/naming",
+                                    "description": "Naming configuration for foreign keys.",
+                                    "properties": {
+                                        "template": {
+                                            "description": "Template for naming foreign keys.",
+                                            "examples": [
+                                                "{partition_name}_{constraint_keys}_fkey"
+                                            ],
+                                            "default": "{partition_name}_{constraint_keys}_fkey"
+                                        }
+                                    }
+                                },
+                                "unique": {
+                                    "$ref": "#/definitions/naming",
+                                    "description": "Naming configuration for unique constraints.",
+                                    "properties": {
+                                        "template": {
+                                            "description": "Template for naming unique constraints.",
+                                            "examples": [
+                                                "{partition_name}_{constraint_keys}_key"
+                                            ],
+                                            "default": "{partition_name}_{constraint_keys}_key"
+                                        }
+                                    }
+                                },
+                                "check": {
+                                    "$ref": "#/definitions/naming",
+                                    "description": "Naming configuration for check constraints.",
+                                    "properties": {
+                                        "template": {
+                                            "description": "Template for naming check constraints.",
+                                            "examples": [
+                                                "{partition_name}_{constraint_keys}_check"
+                                            ],
+                                            "default": "{partition_name}_{constraint_keys}_check"
+                                        }
+                                    }
+                                },
+                                "exclusion": {
+                                    "$ref": "#/definitions/naming",
+                                    "description": "Naming configuration for exclusion constraints.",
+                                    "properties": {
+                                        "template": {
+                                            "description": "Template for naming exclusion constraints.",
+                                            "examples": [
+                                                "{partition_name}_excl"
+                                            ],
+                                            "default": "{partition_name}_{constraint_keys}_excl"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                },
+                                "constraint_trigger": {
+                                    "$ref": "#/definitions/naming",
+                                    "description": "Naming configuration for constraint triggers.",
+                                    "properties": {
+                                        "template": {
+                                            "description": "Template for naming constraint triggers.",
+                                            "examples": [
+                                                "{partition_name}_{constraint_keys}_trig"
+                                            ],
+                                            "default": "{partition_name}_{constraint_keys}_trig"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false
+                },
+                "index": {
+                    "type": "object",
+                    "description": "Index configuration.",
+                    "properties": {
+                        "naming": {
+                            "$ref": "#/definitions/naming",
+                            "description": "Index naming configuration.",
+                            "properties": {
+                                "template": {
+                                    "description": "Template for naming indexes.",
+                                    "examples": [
+                                        "{partition_name}_{index_keys}_idx",
+                                        "{partition_name}_{index_keys}_idx{ordinal}"
+                                    ],
+                                    "default": "{partition_name}_{index_keys}_idx{ordinal}"
+                                }
+                            }
+                        },
+                        "tablespace": {
+                            "$ref": "#/definitions/nullable_name",
+                            "description": "Tablespace for indexes."
+                        },
+                        "storage_parameters": {
+                            "$ref": "#/definitions/storage_parameters",
+                            "description": "Storage parameters for indexes.",
+                            "examples": [
+                                {
+                                    "fillfactor": true,
+                                    "deduplicate_items": true
+                                }
+                            ]
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false
+                },
+                "trigger": {
+                    "type": "object",
+                    "description": "Trigger configuration.",
+                    "properties": {
+                        "naming": {
+                            "$ref": "#/definitions/naming",
+                            "description": "Trigger naming configuration.",
+                            "properties": {
+                                "template": {
+                                    "$ref": "#/definitions/name_template",
+                                    "description": "Template for naming triggers.",
+                                    "examples": [
+                                        "{partition_name}_{timing}_{events}_{function_name}"
+                                    ],
+                                    "default": "{partition_name}_{timing}_{events}_{function_name}"
+                                }
+                            }
+                        }
+                    }
+                },
                 "retention": {
-                    "description": "The retention time interval to expire partitions older than the given interval.",
-                    "type": [
-                        "string",
-                        "null"
-                    ],
-                    "minLength": 1,
-                    "default": "null"
+                    "$ref": "#/definitions/nullable_name",
+                    "description": "The retention time interval to expire partitions older than the given interval."
                 },
                 "detach_first": {
                     "description": "Whether to detach the expired partitions first before dropping them.",
@@ -148,181 +382,14 @@
                     "description": "Whether to detach the expired partitions concurrently.",
                     "type": "boolean",
                     "default": false
-                },
-                "skip_overlapping": {
-                    "description": "Whether to skip overlapping partitions. Useful when switching partition intervals. It allows resolving such overlaps manually",
-                    "type": "boolean",
-                    "default": false
-                },
-                "default": {
-                    "type": "object",
-                    "description": "Default partition configuration.",
-                    "properties": {
-                        "naming": {
-                            "description": "Default partition naming configuration.",
-                            "type": "object",
-                            "properties": {
-                                "template": {
-                                    "$ref": "#/definitions/name_template",
-                                    "description": "The template for naming default partition.",
-                                    "examples": [
-                                        "{table_schema}__{table_name}__default"
-                                    ]
-                                }
-                            },
-                            "minProperties": 1,
-                            "additionalProperties": false
-                        }
-                    },
-                    "additionalProperties": false
-                },
-                "storage_parameters": {
-                    "$ref": "#/definitions/storage_parameters",
-                    "description": "Storage parameters for partitions."
-                },
-                "constraint": {
-                    "type": "object",
-                    "description": "Constraint configuration.",
-                    "properties": {
-                        "naming": {
-                            "type": "object",
-                            "properties": {
-                                "template": {
-                                    "$ref": "#/definitions/name_template",
-                                    "description": "The template for naming constraints.",
-                                    "examples": [
-                                        "{partition_name}_{constraint_keys}_{type}"
-                                    ]
-                                },
-                                "primary_key": {
-                                    "type": "object",
-                                    "properties": {
-                                        "template": {
-                                            "$ref": "#/definitions/name_template",
-                                            "description": "The template for naming primary keys.",
-                                            "examples": [
-                                                "{partition_name}_pkey"
-                                            ]
-                                        }
-                                    },
-                                    "minProperties": 1,
-                                    "additionalProperties": false
-                                },
-                                "foreign_key": {
-                                    "type": "object",
-                                    "properties": {
-                                        "template": {
-                                            "$ref": "#/definitions/name_template",
-                                            "description": "The template for naming foreign keys.",
-                                            "examples": [
-                                                "{partition_name}_{constraint_keys}_fkey"
-                                            ]
-                                        }
-                                    },
-                                    "minProperties": 1,
-                                    "additionalProperties": false
-                                },
-                                "unique": {
-                                    "type": "object",
-                                    "properties": {
-                                        "template": {
-                                            "$ref": "#/definitions/name_template",
-                                            "description": "The template for naming unique constraints.",
-                                            "examples": [
-                                                "{partition_name}_{constraint_keys}_key"
-                                            ]
-                                        }
-                                    },
-                                    "minProperties": 1,
-                                    "additionalProperties": false
-                                },
-                                "check": {
-                                    "type": "object",
-                                    "properties": {
-                                        "template": {
-                                            "$ref": "#/definitions/name_template",
-                                            "description": "The template for naming check constraints.",
-                                            "examples": [
-                                                "{partition_name}_{constraint_keys}_check"
-                                            ]
-                                        }
-                                    },
-                                    "minProperties": 1,
-                                    "additionalProperties": false
-                                },
-                                "exclusion": {
-                                    "type": "object",
-                                    "properties": {
-                                        "template": {
-                                            "$ref": "#/definitions/name",
-                                            "description": "The template for naming exclusion constraints.",
-                                            "examples": [
-                                                "{partition_name}_{constraint_keys}_excl"
-                                            ]
-                                        }
-                                    },
-                                    "minProperties": 1,
-                                    "additionalProperties": false
-                                }
-                            },
-                            "minProperties": 1,
-                            "additionalProperties": false
-                        }
-                    },
-                    "minProperties": 1,
-                    "additionalProperties": false
-                },
-                "index": {
-                    "type": "object",
-                    "description": "Index configuration.",
-                    "properties": {
-                        "naming": {
-                            "type": "object",
-                            "properties": {
-                                "template": {
-                                    "$ref": "#/definitions/name_template",
-                                    "description": "The template for naming indexes.",
-                                    "examples": [
-                                        "{partition_name}_{index_keys}_idx",
-                                        "{partition_name}_{index_keys}_idx{ordinal}"
-                                    ]
-                                }
-                            }
-                        },
-                        "tablespace": {
-                            "$ref": "#/definitions/name",
-                            "description": "The tablespace for indexes.",
-                            "default": "partition's tablespace"
-                        },
-                        "storage_parameters": {
-                            "$ref": "#/definitions/storage_parameters",
-                            "description": "Storage parameters for indexes."
-                        }
-                    },
-                    "minProperties": 1,
-                    "additionalProperties": false
-                },
-                "trigger": {
-                    "type": "object",
-                    "description": "Trigger configuration.",
-                    "properties": {
-                        "naming": {
-                            "type": "object",
-                            "properties": {
-                            "template": {
-                                "$ref": "#/definitions/name_template",
-                                "description": "The template for naming triggers.",
-                                "examples": [
-                                    "{partition_name}__{timing}_{events}__{function_name}"
-                                ]
-                            }
-                        }
-                        }
-                    }
                 }
             },
             "minProperties": 1,
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "naming",
+                "interval"
+            ]
         }
     },
     "properties": {
@@ -415,7 +482,6 @@
                 }
             },
             "required": [
-                "directory",
                 "tables"
             ],
             "additionalProperties": false
