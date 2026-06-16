@@ -4,14 +4,14 @@ run_fixture() {
     local fixture="$1"
     local config="$2"
     local expected="$3"
-    local result="${fixture}/result.sql"
+    local result="${fixture}/pgpartium_output.sql"
 
-    pgp-make-partitions -c "${config}"
+    pgp-make-partitions -d "${config}"
 
     echo "running diff"
     diff -u \
         "${expected}" \
-        "${fixture}/result.sql"
+        "${fixture}/pgpartium_output.sql"
 
     PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" createdb --template="${PGP_DATABASE}" pgpartium_test_$$
     PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" psql -d pgpartium_test_$$ -X -v ON_ERROR_STOP=1 -f "${result}"

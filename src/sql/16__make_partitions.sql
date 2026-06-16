@@ -5,7 +5,7 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_interval interval
   , p_past integer DEFAULT 0
   , p_future integer DEFAULT 0
-  , p_create_default boolean DEFAULT FALSE
+--   , p_create_default boolean DEFAULT FALSE
   , p_default_partition_name_template text DEFAULT NULL
   , p_partition_schema text DEFAULT NULL
   , p_partition_tablespace text DEFAULT NULL
@@ -89,10 +89,10 @@ BEGIN
                  HINT = 'supported data types are: date, timestamp with time zone, timestamp without time zone, integer, bigint, and uuid';
     END IF;
 
-    IF p_create_default AND COALESCE(p_default_partition_name_template, '') = '' THEN
-        RAISE 'creating default partition requires default partition name template'
-        USING ERRCODE = 'invalid_parameter_value';
-    END IF;
+    -- IF p_create_default AND COALESCE(p_default_partition_name_template, '') = '' THEN
+    --     RAISE 'creating default partition requires default partition name template'
+    --     USING ERRCODE = 'invalid_parameter_value';
+    -- END IF;
 
     IF p_partition_schema IS NOT NULL
     AND NOT EXISTS (
@@ -258,7 +258,7 @@ BEGIN
                  , NULL AS lower_bound
                  , NULL AS upper_bound
                  , 'DEFAULT' AS partition_clause
-             WHERE p_create_default
+             WHERE p_default_partition_name_template IS NOT NULL
         )
         , filtered AS (
             SELECT is_default
@@ -274,7 +274,7 @@ BEGIN
                          FROM current_bounds
                         WHERE current_bounds.lower_bound = partitions.lower_bound
                           AND current_bounds.upper_bound = partitions.upper_bound
-                   )
+               )
                -- Optionally skip overlapping partitions.
                AND NOT EXISTS (
                        SELECT NULL
@@ -282,7 +282,11 @@ BEGIN
                         WHERE p_skip_overlapping
                           AND (current_bounds.lower_bound, current_bounds.upper_bound)
                               OVERLAPS (partitions.lower_bound, partitions.upper_bound)
-                   )
+               )
+               -- Skip default partition if one already exists.
+               AND NOT EXISTS (
+                    SELECT pgpartium.get_default_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
+               )
                -- Retention filtering.
                AND CASE
                      WHEN p_retention IS NULL

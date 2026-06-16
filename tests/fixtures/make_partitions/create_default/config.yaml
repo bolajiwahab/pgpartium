@@ -1,7 +1,6 @@
 ---
 lifecycle:
   directory: "tests/fixtures/make_partitions/create_default"
-  timezone: "ETC/UTC"
   tables:
     - schema: "test"
       name: "transactions"
@@ -9,35 +8,6 @@ lifecycle:
         naming:
           template: "{table_schema}__{table_name}__YYYY_MM"
         interval: "1 mon"
-        storage_parameters:
-          fillfactor: 90
-        tablespace: null
         default:
           naming:
             template: "{table_schema}__{table_name}__default"
-          storage_parameters:
-            fillfactor: 80
-            autovacuum_enabled: false
-        index:
-          naming:
-            template: "{table_schema}__{table_name}__{column}_{type}"
-          storage_parameters:
-            fillfactor: 90
-            autovacuum_enabled: false
-        constraint:
-          naming:
-            template: "{table_name}_{constraint_keys}_{type}"
-            primary_key:
-              template: "{table_name}_pkey"
-            foreign_key:
-              template: "{table_name}_{constraint_keys}_fkey"
-            unique:
-              template: "{table_name}_{constraint_keys}_key"
-            check:
-              template: "{table_name}_{constraint_keys}_check"
-            exclusion:
-              template: "{table_name}_{constraint_keys}_excl"
-        trigger:
-          naming:
-            template: "{table_name}_{constraint_keys}_trig"
-        retention: "1 mon"
