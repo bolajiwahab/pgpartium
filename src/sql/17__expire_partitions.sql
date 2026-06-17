@@ -6,7 +6,7 @@ CREATE OR REPLACE FUNCTION pgpartium.expire_partitions (
   , p_detach_first boolean DEFAULT FALSE
   , p_detach_concurrently boolean DEFAULT FALSE
   , p_timezone text DEFAULT 'Etc/UTC'
-  , p_idempotent_ddl boolean DEFAULT FALSE
+  , p_idempotency boolean DEFAULT FALSE
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
@@ -32,7 +32,7 @@ BEGIN
                  WHEN p_detach_only
                    THEN format(
                             E'ALTER TABLE %1$s%2$I.%3$I\n    DETACH PARTITION %4$I.%5$I%6$s;\n'
-                          , CASE p_idempotent_ddl                                  -- <1>
+                          , CASE p_idempotency                                  -- <1>
                               WHEN TRUE
                                 THEN 'IF EXISTS '
                               ELSE ''
@@ -50,7 +50,7 @@ BEGIN
                  WHEN p_detach_first
                    THEN format(
                             E'ALTER TABLE %1$s%2$I.%3$I\n    DETACH PARTITION %4$I.%5$I%6$s;\n\nDROP TABLE %1$s%4$I.%5$I;\n'
-                          , CASE p_idempotent_ddl                                  -- <1>
+                          , CASE p_idempotency                                  -- <1>
                               WHEN TRUE
                                 THEN 'IF EXISTS '
                               ELSE ''
@@ -67,7 +67,7 @@ BEGIN
                         )
                  ELSE format(
                           E'DROP TABLE %1$s%2$I.%3$I;\n'
-                        , CASE p_idempotent_ddl                                  -- <1>
+                        , CASE p_idempotency                                  -- <1>
                             WHEN TRUE
                               THEN 'IF EXISTS '
                             ELSE ''

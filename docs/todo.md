@@ -149,3 +149,8 @@ trigger_name_template: "{table_schema}__{table_name}__{timing}_{events}__{functi
 
 
 make fields required in the schema
+
+for i in $(seq 1 100); do
+    echo 'INFO: Waiting for database to be ready... (attempt $i/50)' && \
+    bats --pretty --timing --show-output-of-passing-tests tests/conftest.sh
+done

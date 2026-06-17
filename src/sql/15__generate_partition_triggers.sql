@@ -5,7 +5,7 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_trigger_constraints (
   , p_partition_name text
   , p_template_table_schema text
   , p_template_table_name text
-  , p_idempotent_ddl boolean
+  , p_idempotency boolean
 )
 RETURNS text
 LANGUAGE SQL
@@ -55,7 +55,7 @@ AS $BODY$
     SELECT string_agg(
         format(
            E'CREATE %1$s%2$s %3$I %4$s %5$s\n    ON %6$I.%7$I\n   %8$s;\n%9$s'
-         , CASE p_idempotent_ddl                                --<1: idempotence>
+         , CASE p_idempotency                                --<1: idempotence>
              WHEN TRUE
                THEN 'OR REPLACE' || ' '
              ELSE ''

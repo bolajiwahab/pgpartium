@@ -1,243 +1,189 @@
 #!/bin/bash
 
-usage() {
+function usage() {
     echo "
     ${0##*/}
 
-    Creates migration files to create partitions for partitioned tables.
+    Make partitions for partitioned tables.
 
     OPTIONS:
-      -c  the config file in yaml (Required)
-      -d  the configuration directory (Default: .)
+      -c  Path to a configuration file or directory containing configuration files (Default: .)
       -h  show this help message.
 
     SAMPLE USAGE:
         PGP_USER=user PGP_PASSWORD=password PGP_HOST=host PGP_PORT=port PGP_DATABASE=database ${0##*/} -c config.yaml
+        PGP_USER=user PGP_PASSWORD=password PGP_HOST=host PGP_PORT=port PGP_DATABASE=database ${0##*/} -c config_directory
 "
 }
 
-while getopts "c:d:h" option; do
+while getopts "c:h" option; do
     case "${option}" in
     c)
-        config="${OPTARG}"
+        config_path="${OPTARG}"
         ;;
-    d)
-        config_dir="${OPTARG}"
-        ;;
-    h | *)
+    h)
         usage
         exit 0
+        ;;
+    ?)
+        usage
+        exit 1
         ;;
     esac
 done
 
 set -euo pipefail
 
-config=${config:-}
-config_dir=${config_dir:-.}
+config_path=${config_path:-.}
 
-# shellcheck source=../utils/logging.sh
-# source ../utils/logging.sh
-
-# Ensure config is provided.
-# if [[ -z "${config}" ]]; then
-#     usage
+# Ensure the provided config path exists
+# if [[ -n "${config_path}" ]]; then
+#     echo "The provided config path ${config_path} does not exist" >&2
 #     exit 1
 # fi
+if [[ ! -e "${config_path}" ]]; then
+    echo "The provided config path '${config_path}' does not exist" >&2
+    exit 1
+fi
 
-# Ensure the provided init directory exists and is a directory
-# if [[ -n "${config_dir}" && ! -d "${config_dir}" ]]; then
-#     echo "The provided config directory ${config_dir} does not exist or is not a directory" >&2
-#     exit 1
-# fi
-
-# if [[ -d "${config_dir}" ]]; then
-#     echo "INFO: Applying init scripts from ${config_dir}"
-
-#     find "${config_dir}" -type f \( -iname "*.yaml" -o -iname "*.yml" \) \
-#     | sort \
-#     | while IFS= read -r file; do
-#         case "${file}" in
-#             *.yaml | *.yml)
-#                 if [[ -x "${file}" ]]; then
-#                     "${file}"
-#                 else
-#                     # shellcheck source=/dev/null
-#                     . "${file}"
-#                 fi
-#                 ;;
-#         esac
-#     done
-
-#     echo "INFO: Applied init scripts from ""${config_dir}"""
-# fi
-
-# run_make_partitions() {
-#     rm -rf "${temp_migration_directory}"
-# }
-
-cleanup() {
-    rm -rf "${temp_migration_directory}"
-    rm -rf "${temp_error_directory}"
+function cleanup() {
+    [[ -n "${temp_migration_directory:-}" ]] && rm -rf "${temp_migration_directory}"
+    [[ -n "${temp_error_directory:-}" ]] && rm -rf "${temp_error_directory}"
 }
 
-run_make_partitions() {
-    # local fixture="$1"
-    local config="$1"
+function run_make_partitions() {
+  local config="$1"
 
-jsonschema /src/schema.json <<< "$(yq -o=json "${config}")"
+    jsonschema --output pretty /src/schema.json <<< "$(yq -o=json "${config}")"
 
-# Set defaults.
-export DEFAULT_TABLESPACE=null
-export DEFAULT_PAST=0
-export DEFAULT_FUTURE=0
-export DEFAULT_RETENTION=null
-export DEFAULT_CREATE_DEFAULT=false
-export DEFAULT_SKIP_OVERLAPPING=false
-export DEFAULT_IDEMPOTENT=false
-export DEFAULT_STORAGE_PARAMETERS=null
-export DEFAULT_TIMEZONE="Etc/UTC"
+    # Set defaults.
+    export DEFAULT_TABLESPACE=null
+    export DEFAULT_PAST=0
+    export DEFAULT_FUTURE=0
+    export DEFAULT_RETENTION=null
+    export DEFAULT_SKIP_OVERLAPPING=false
+    export DEFAULT_IDEMPOTENT=false
+    export DEFAULT_STORAGE_PARAMETERS=null
+    export DEFAULT_TIMEZONE="Etc/UTC"
 
-# Extract global configs.
-GLOBAL_PARTITION_SCHEMA="$(yq '.lifecycle.partition.schema' "${config}")"
-GLOBAL_PARTITION_NAME_TEMPLATE="$(yq '.lifecycle.partition.naming.template' "${config}")"
-GLOBAL_PAST="$(yq '.lifecycle.partition.past // strenv(DEFAULT_PAST)' "${config}")"
-GLOBAL_FUTURE="$(yq '.lifecycle.partition.future // strenv(DEFAULT_FUTURE)' "${config}")"
-GLOBAL_INTERVAL="$(yq '.lifecycle.partition.interval' "${config}")"
-GLOBAL_RETENTION="$(yq '.lifecycle.partition.retention // strenv(DEFAULT_RETENTION)' "${config}")"
-# GLOBAL_CREATE_DEFAULT="$(yq '.lifecycle.partition.create_default // strenv(DEFAULT_CREATE_DEFAULT)' "${config}")"
-GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE="$(yq '.lifecycle.partition.default.naming.template' "${config}")"
-GLOBAL_SKIP_OVERLAPPING="$(yq '.lifecycle.partition.skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")"
-GLOBAL_IDEMPOTENT="$(yq '.lifecycle.partition.idempotent // strenv(DEFAULT_IDEMPOTENT)' "${config}")"
-GLOBAL_PARTITION_TABLESPACE="$(yq '.lifecycle.partition.tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")"
-GLOBAL_INDEX_TABLESPACE="$(yq '.lifecycle.partition.index.tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")"
+    # Extract global configs.
+    GLOBAL_PARTITION_SCHEMA="$(yq '.lifecycle.partition.schema' "${config}")"
+    GLOBAL_PARTITION_NAME_TEMPLATE="$(yq '.lifecycle.partition.naming.template' "${config}")"
+    GLOBAL_PAST="$(yq '.lifecycle.partition.past // strenv(DEFAULT_PAST)' "${config}")"
+    GLOBAL_FUTURE="$(yq '.lifecycle.partition.future // strenv(DEFAULT_FUTURE)' "${config}")"
+    GLOBAL_INTERVAL="$(yq '.lifecycle.partition.interval' "${config}")"
+    GLOBAL_RETENTION="$(yq '.lifecycle.partition.retention // strenv(DEFAULT_RETENTION)' "${config}")"
+    GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE="$(yq '.lifecycle.partition.default.naming.template' "${config}")"
+    GLOBAL_SKIP_OVERLAPPING="$(yq '.lifecycle.partition.skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")"
+    GLOBAL_IDEMPOTENT="$(yq '.lifecycle.partition.idempotent // strenv(DEFAULT_IDEMPOTENT)' "${config}")"
+    GLOBAL_PARTITION_TABLESPACE="$(yq '.lifecycle.partition.tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")"
+    GLOBAL_INDEX_TABLESPACE="$(yq '.lifecycle.partition.index.tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")"
 
-GLOBAL_PARTITION_STORAGE_PARAMETERS="$(yq -o=json '.lifecycle.partition.storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")"
-GLOBAL_INDEX_STORAGE_PARAMETERS="$(yq -o=json '.lifecycle.partition.index.storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")"
+    GLOBAL_PARTITION_STORAGE_PARAMETERS="$(yq -o=json '.lifecycle.partition.storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")"
+    GLOBAL_INDEX_STORAGE_PARAMETERS="$(yq -o=json '.lifecycle.partition.index.storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")"
 
+    export GLOBAL_PARTITION_TABLESPACE GLOBAL_INDEX_TABLESPACE GLOBAL_PARTITION_SCHEMA \
+           GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL GLOBAL_RETENTION \
+           GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE GLOBAL_SKIP_OVERLAPPING GLOBAL_PARTITION_STORAGE_PARAMETERS \
+           GLOBAL_INDEX_STORAGE_PARAMETERS GLOBAL_IDEMPOTENT
 
-export GLOBAL_PARTITION_TABLESPACE GLOBAL_INDEX_TABLESPACE GLOBAL_PARTITION_SCHEMA \
-       GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL GLOBAL_RETENTION \
-       GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE GLOBAL_SKIP_OVERLAPPING GLOBAL_PARTITION_STORAGE_PARAMETERS \
-       GLOBAL_INDEX_STORAGE_PARAMETERS GLOBAL_IDEMPOTENT
+    directory="$(yq '.lifecycle.directory' "${config}")"
+    timezone="$(yq '.lifecycle.partition.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")"
 
-directory="$(yq '.lifecycle.directory' "${config}")"
-timezone="$(yq '.lifecycle.partition.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")"
-# timezone="$(yq '.lifecycle.timezone' // (strenv(DEFAULT_TIMEZONE) "${config}")"
+    # Store failed table names.
+    declare -A failed_tables=()
 
-# Store failed table names.
-declare -A failed_tables=()
+    # Staging area.
+    temp_migration_directory="$(mktemp -d)"
+    temp_error_directory="$(mktemp -d)"
 
-# Staging area.
-temp_migration_directory="$(mktemp -d)"
-temp_error_directory="$(mktemp -d)"
+    trap cleanup EXIT ERR
 
-# Stage current migrations in staging area.
-echo "INFO: Staging current migrations"
-cp -a "${directory}/." "${temp_migration_directory}/"
+    # Stage current migrations in staging area.
+    echo "INFO: Staging current migrations"
+    cp -a "${directory}/." "${temp_migration_directory}/"
 
-# cleanup() {
-#     rm -rf "${temp_migration_directory}"
-#     rm -rf "${temp_error_directory}"
-# }
+    # Setup infrastructure.
+    echo "INFO: Setting up infrastructure"
+    pgp-setup-infrastructure
 
-trap cleanup EXIT ERR
+    # Process each partitioned table.
+    while read -r table; do
+        table_schema="$(yq '.schema' <<< "${table}")"
+        table_name="$(yq '.name' <<< "${table}")"
 
-# Setup infrastructure.
-echo "INFO: Setting up infrastructure"
-pgp-setup-infrastructure
+        output_file_template="$(yq '.output_file_template // "pgpartium_output.sql"' <<< "${table}")"
 
-# Process each partitioned table.
-while read -r table; do
-    table_schema="$(yq '.schema' <<< "${table}")"
-    table_name="$(yq '.name' <<< "${table}")"
-    output_file_template="$(yq '.output_file_template // "pgpartium_output.sql"' <<< "${table}")"
-    description="$(yq '.description.make // "Make partitions for {table_schema}_{table_name}"' <<< "${table}")"
-    # Replace table_schema and table_name placeholders in the description.
-    description="${description//\{table_schema\}/$table_schema}"
-    description="${description//\{table_name\}/$table_name}"
+        description="$(yq '.description.make // "Make partitions for {table_schema}_{table_name}"' <<< "${table}")"
+        # Replace table_schema and table_name placeholders in the description.
+        description="${description//\{table_schema\}/$table_schema}"
+        description="${description//\{table_name\}/$table_name}"
 
-    partition_schema="$(yq '.partition.partition_schema // strenv(GLOBAL_PARTITION_SCHEMA)' <<< "${table}")"
-    # If no schema is provided either in the partition config or in the global config, default to table schema.
-    if [[ "${partition_schema}" == "null" ]]; then
-        echo "INFO: Partition schema not provided. Defaulting to table schema '${table_schema}'."
-        partition_schema="${table_schema}"
-    fi
+        partition_schema="$(yq '.partition.partition_schema // strenv(GLOBAL_PARTITION_SCHEMA)' <<< "${table}")"
+        # If no schema is provided either in the partition config or in the global config, default to table schema.
+        if [[ "${partition_schema}" == "null" ]]; then
+            echo "INFO: Partition schema not provided. Defaulting to table schema '${table_schema}'."
+            partition_schema="${table_schema}"
+        fi
 
-    partition_name_template="$(yq '.partition.naming.template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)' <<< "${table}")"
+        partition_name_template="$(yq '.partition.naming.template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)' <<< "${table}")"
 
-    if [[ "${partition_name_template}" == "null" ]]; then
-        echo "ERROR: Partition name template is required." >&2
-        echo "HINT: Please provide a name template for partitions in the config file either in the table level config or in the global config." >&2
-        exit 1
-    fi
-    echo "INFO: Partition name template: ${partition_name_template}"
+        if [[ "${partition_name_template}" == "null" ]]; then
+            echo "ERROR: Partition name template is required." >&2
+            echo "HINT: Please provide a name template for partitions in the config file either in the table level config or in the global config." >&2
+            exit 1
+        fi
 
-    partition_tablespace="$(yq '.partition.partition_tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' <<< "${table}")"
-    index_tablespace="$(yq '.partition.index_tablespace // strenv(GLOBAL_INDEX_TABLESPACE)' <<< "${table}")"
-    # if index tablespace is not set and partition tablespace is set, default to partition tablespace
-    if [[ "${index_tablespace}" == "null" && "${partition_tablespace}" != "null" ]]; then
-        echo "INFO: Index tablespace not provided. Defaulting to partition tablespace ${partition_tablespace}."
-        index_tablespace="${partition_tablespace}"
-    fi
+        partition_interval="$(yq '.partition.interval // strenv(GLOBAL_INTERVAL)' <<< "${table}")"
 
-    partition_interval="$(yq '.partition.interval // strenv(GLOBAL_INTERVAL)' <<< "${table}")"
-    if [[ "${partition_interval}" == "null" ]]; then
-        echo "ERROR: Partition interval is required." >&2
-        echo "HINT: Please provide a partition interval in the config file either in the partition config or in the global config." >&2
-        exit 1
-    fi
+        if [[ "${partition_interval}" == "null" ]]; then
+            echo "ERROR: Partition interval is required." >&2
+            echo "HINT: Please provide a partition interval in the config file either in the partition config or in the global config." >&2
+            exit 1
+        fi
 
-    past_partitions="$(yq '.partition.past // strenv(GLOBAL_PAST)' <<< "${table}")"
-    future_partitions="$(yq '.partition.future // strenv(GLOBAL_FUTURE)' <<< "${table}")"
-    retention="$(yq '.partition.retention // strenv(GLOBAL_RETENTION)' <<< "${table}")"
+        partition_tablespace="$(yq '.partition.tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' <<< "${table}")"
+        index_tablespace="$(yq '.partition.index.tablespace // strenv(GLOBAL_INDEX_TABLESPACE)' <<< "${table}")"
 
-    # Because yq default value operator is used to provide alternative (or default) values
-    # when a particular expression is either null or false, we cannot use it as it would
-    # instead override partition level boolean values such as true, instead we override them if they are not set.
-    skip_overlapping="$(yq '.partition.skip_overlapping' <<< "${table}")"
-    if [[ "${skip_overlapping}" == "null" ]]; then
-        skip_overlapping="${GLOBAL_SKIP_OVERLAPPING}"
-    fi
+        past_partitions="$(yq '.partition.past // strenv(GLOBAL_PAST)' <<< "${table}")"
+        future_partitions="$(yq '.partition.future // strenv(GLOBAL_FUTURE)' <<< "${table}")"
+        retention="$(yq '.partition.retention // strenv(GLOBAL_RETENTION)' <<< "${table}")"
 
-    idempotent_ddl="$(yq '.partition.idempotent_ddl' <<< "${table}")"
-    if [[ "${idempotent_ddl}" == "null" ]]; then
-        idempotent_ddl="${GLOBAL_IDEMPOTENT}"
-    fi
+        # Because yq default value operator is used to provide alternative (or default) values
+        # when a particular expression is either null or false, we cannot use it here as it would
+        # instead override partition level boolean values such as true, instead we override them if they are not set.
+        skip_overlapping="$(yq '.partition.skip_overlapping' <<< "${table}")"
+        if [[ "${skip_overlapping}" == "null" ]]; then
+            skip_overlapping="${GLOBAL_SKIP_OVERLAPPING}"
+        fi
 
-    # create_default="$(yq '.partition.create_default' <<< "${table}")"
-    # if [[ "${create_default}" == "null" ]]; then
-    #     create_default="${GLOBAL_CREATE_DEFAULT}"
-    # fi
-    # If create_default is true, default_partition_name_template is required.
-    default_partition_name_template="$(yq '.partition.default.naming.template // strenv(GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE)' <<< "${table}")"
-    echo "INFO: Default partition name template: ${default_partition_name_template}"
-    # if [[ "${create_default}" == true && "${default_partition_name_template}" == "null" ]]; then
-    #     echo "ERROR: Default partition name template is required when create_default is true." >&2
-    #     echo "HINT: Please provide a name template for default partition in the config file either in the partition config or in the global config." >&2
-    #     exit 1
-    # fi
+        idempotency="$(yq '.partition.idempotency' <<< "${table}")"
+        if [[ "${idempotency}" == "null" ]]; then
+            idempotency="${GLOBAL_IDEMPOTENT}"
+        fi
 
-    partition_storage_parameters="$(yq '.partition.partition_storage_parameters // strenv(GLOBAL_PARTITION_STORAGE_PARAMETERS)' <<< "${table}")"
-    index_storage_parameters="$(yq '.partition.index_storage_parameters // strenv(GLOBAL_INDEX_STORAGE_PARAMETERS)' <<< "${table}")"
+        default_partition_name_template="$(yq '.partition.default.naming.template // strenv(GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE)' <<< "${table}")"
 
-    template_table="$(yq '.template_table' <<< "${table}")"
+        partition_storage_parameters="$(yq '.partition.partition_storage_parameters // strenv(GLOBAL_PARTITION_STORAGE_PARAMETERS)' <<< "${table}")"
+        index_storage_parameters="$(yq '.partition.index_storage_parameters // strenv(GLOBAL_INDEX_STORAGE_PARAMETERS)' <<< "${table}")"
 
-    output_filename="$(pgp-get-migration-filename -t "${output_file_template}" -d "${temp_migration_directory}" -m "${description}")"
-    echo "INFO: Making partitions for ${table_schema}.${table_name}"
+        template_table="$(yq '.template_table' <<< "${table}")"
 
-    if [[ "${template_table}" == "DEFAULT_PARTITION" ]]; then
-        IFS=',' read -r template_table_schema template_table_name < <(
-            PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" \
-            PGDATABASE="${PGP_DATABASE}" PGHOST="${PGP_HOST}" PGPORT="${PGP_PORT}" psql \
-                --tuples-only \
-                --no-align \
-                --quiet \
-                --csv \
-                -v "ON_ERROR_STOP=1" \
-                -v table_schema="${table_schema}" \
-                -v table_name="${table_name}" \
-                <<EOF
+        output_filename="$(pgp-get-migration-filename -t "${output_file_template}" -d "${temp_migration_directory}" -m "${description}")"
+        echo "INFO: Making partitions for ${table_schema}.${table_name}"
+
+        if [[ "${template_table}" == "DEFAULT_PARTITION" ]]; then
+            IFS=',' read -r template_table_schema template_table_name < <(
+                PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" \
+                PGDATABASE="${PGP_DATABASE}" PGHOST="${PGP_HOST}" PGPORT="${PGP_PORT}" psql \
+                    --tuples-only \
+                    --no-align \
+                    --quiet \
+                    --csv \
+                    -v "ON_ERROR_STOP=1" \
+                    -v table_schema="${table_schema}" \
+                    -v table_name="${table_name}" \
+                    <<EOF
 SELECT partition_schema
      , partition_name
   FROM pgpartium.get_default_partition(p_table_schema=>:'table_schema', p_table_name=>:'table_name')
@@ -320,7 +266,7 @@ EOF
         -v retention="${retention}" \
         -v timezone="${timezone}" \
         -v skip_overlapping="${skip_overlapping}" \
-        -v idempotent_ddl="${idempotent_ddl}" \
+        -v idempotency="${idempotency}" \
         --output="${temp_migration_directory}/${output_filename}" \
         2>"${error_file}" \
         <<EOF
@@ -343,7 +289,7 @@ SELECT *
   , p_retention=>NULLIF(:'retention', 'null')::interval
   , p_timezone=>:'timezone'
   , p_skip_overlapping=>:'skip_overlapping'
-  , p_idempotent_ddl=>:'idempotent_ddl'
+  , p_idempotency=>:'idempotency'
 )
 EOF
 
@@ -376,315 +322,16 @@ fi
 
 }
 
-# "${@}"
-# for config in "${@}"; do
-#     run_make_partitions "${config}"
-# done
+if [[ -d "${config_path}" ]]; then
+    echo "INFO: Applying configs from ${config_path}"
 
-if [[ -d "${config_dir}" ]]; then
-    echo "INFO: Applying configs from ${config_dir}"
-
-    find "${config_dir}" -type f \( -iname "*.yaml" -o -iname "*.yml" \) \
+    find "${config_path}" -type f \( -iname "*.yaml" -o -iname "*.yml" \) \
     | sort \
     | while IFS= read -r config; do
-        echo "${config}"
-        case "${config}" in
-            *.yaml | *.yml)
-            run_make_partitions "${config}"
-        esac
+        run_make_partitions "${config}"
     done
 
-    echo "INFO: Applied configs from ""${config_dir}"""
+    echo "INFO: Applied configs from ""${config_path}"""
 else
-    run_make_partitions "${config_dir}"
+    run_make_partitions "${config_path}"
 fi
-
-# Validate schema.
-# jsonschema /src/schema.json <<< "$(yq -o=json "${config}")"
-
-# # Set defaults.
-# export DEFAULT_TABLESPACE=null
-# export DEFAULT_PAST=0
-# export DEFAULT_FUTURE=0
-# export DEFAULT_RETENTION=null
-# export DEFAULT_CREATE_DEFAULT=false
-# export DEFAULT_SKIP_OVERLAPPING=false
-# export DEFAULT_IDEMPOTENT=false
-# export DEFAULT_STORAGE_PARAMETERS=null
-# export DEFAULT_TIMEZONE="Etc/UTC"
-
-# # Extract global configs.
-# GLOBAL_PARTITION_SCHEMA="$(yq '.lifecycle.partition.schema' "${config}")"
-# GLOBAL_PARTITION_NAME_TEMPLATE="$(yq '.lifecycle.partition.naming.template' "${config}")"
-# GLOBAL_PAST="$(yq '.lifecycle.partition.past // strenv(DEFAULT_PAST)' "${config}")"
-# GLOBAL_FUTURE="$(yq '.lifecycle.partition.future // strenv(DEFAULT_FUTURE)' "${config}")"
-# GLOBAL_INTERVAL="$(yq '.lifecycle.partition.interval' "${config}")"
-# GLOBAL_RETENTION="$(yq '.lifecycle.partition.retention // strenv(DEFAULT_RETENTION)' "${config}")"
-# # GLOBAL_CREATE_DEFAULT="$(yq '.lifecycle.partition.create_default // strenv(DEFAULT_CREATE_DEFAULT)' "${config}")"
-# GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE="$(yq '.lifecycle.partition.default.naming.template' "${config}")"
-# GLOBAL_SKIP_OVERLAPPING="$(yq '.lifecycle.partition.skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")"
-# GLOBAL_IDEMPOTENT="$(yq '.lifecycle.partition.idempotent // strenv(DEFAULT_IDEMPOTENT)' "${config}")"
-# GLOBAL_PARTITION_TABLESPACE="$(yq '.lifecycle.partition.tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")"
-# GLOBAL_INDEX_TABLESPACE="$(yq '.lifecycle.partition.index.tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")"
-
-# GLOBAL_PARTITION_STORAGE_PARAMETERS="$(yq -o=json '.lifecycle.partition.storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")"
-# GLOBAL_INDEX_STORAGE_PARAMETERS="$(yq -o=json '.lifecycle.partition.index.storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")"
-
-
-# export GLOBAL_PARTITION_TABLESPACE GLOBAL_INDEX_TABLESPACE GLOBAL_PARTITION_SCHEMA \
-#        GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL GLOBAL_RETENTION \
-#        GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE GLOBAL_SKIP_OVERLAPPING GLOBAL_PARTITION_STORAGE_PARAMETERS \
-#        GLOBAL_INDEX_STORAGE_PARAMETERS GLOBAL_IDEMPOTENT
-
-# directory="$(yq '.lifecycle.directory' "${config}")"
-# timezone="$(yq '.lifecycle.partition.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")"
-# # timezone="$(yq '.lifecycle.timezone' // (strenv(DEFAULT_TIMEZONE) "${config}")"
-
-# # Store failed table names.
-# declare -A failed_tables=()
-
-# # Staging area.
-# temp_migration_directory="$(mktemp -d)"
-# temp_error_directory="$(mktemp -d)"
-
-# # Stage current migrations in staging area.
-# echo "INFO: Staging current migrations"
-# cp -a "${directory}/." "${temp_migration_directory}/"
-
-# cleanup() {
-#     rm -rf "${temp_migration_directory}"
-#     rm -rf "${temp_error_directory}"
-# }
-
-# trap cleanup EXIT ERR
-
-# # Setup infrastructure.
-# echo "INFO: Setting up infrastructure"
-# pgp-setup-infrastructure
-
-# # Process each partitioned table.
-# while read -r table; do
-#     table_schema="$(yq '.schema' <<< "${table}")"
-#     table_name="$(yq '.name' <<< "${table}")"
-#     output_file_template="$(yq '.output_file_template // "pgpartium_output.sql"' <<< "${table}")"
-#     description="$(yq '.description.make // "Make partitions for {table_schema}_{table_name}"' <<< "${table}")"
-#     # Replace table_schema and table_name placeholders in the description.
-#     description="${description//\{table_schema\}/$table_schema}"
-#     description="${description//\{table_name\}/$table_name}"
-
-#     partition_schema="$(yq '.partition.partition_schema // strenv(GLOBAL_PARTITION_SCHEMA)' <<< "${table}")"
-#     # If no schema is provided either in the partition config or in the global config, default to table schema.
-#     if [[ "${partition_schema}" == "null" ]]; then
-#         echo "INFO: Partition schema not provided. Defaulting to table schema '${table_schema}'."
-#         partition_schema="${table_schema}"
-#     fi
-
-#     partition_name_template="$(yq '.partition.naming.template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)' <<< "${table}")"
-
-#     if [[ "${partition_name_template}" == "null" ]]; then
-#         echo "ERROR: Partition name template is required." >&2
-#         echo "HINT: Please provide a name template for partitions in the config file either in the table level config or in the global config." >&2
-#         exit 1
-#     fi
-#     echo "INFO: Partition name template: ${partition_name_template}"
-
-#     partition_tablespace="$(yq '.partition.partition_tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' <<< "${table}")"
-#     index_tablespace="$(yq '.partition.index_tablespace // strenv(GLOBAL_INDEX_TABLESPACE)' <<< "${table}")"
-#     # if index tablespace is not set and partition tablespace is set, default to partition tablespace
-#     if [[ "${index_tablespace}" == "null" && "${partition_tablespace}" != "null" ]]; then
-#         echo "INFO: Index tablespace not provided. Defaulting to partition tablespace ${partition_tablespace}."
-#         index_tablespace="${partition_tablespace}"
-#     fi
-
-#     partition_interval="$(yq '.partition.interval // strenv(GLOBAL_INTERVAL)' <<< "${table}")"
-#     if [[ "${partition_interval}" == "null" ]]; then
-#         echo "ERROR: Partition interval is required." >&2
-#         echo "HINT: Please provide a partition interval in the config file either in the partition config or in the global config." >&2
-#         exit 1
-#     fi
-
-#     past_partitions="$(yq '.partition.past // strenv(GLOBAL_PAST)' <<< "${table}")"
-#     future_partitions="$(yq '.partition.future // strenv(GLOBAL_FUTURE)' <<< "${table}")"
-#     retention="$(yq '.partition.retention // strenv(GLOBAL_RETENTION)' <<< "${table}")"
-
-#     # Because yq default value operator is used to provide alternative (or default) values
-#     # when a particular expression is either null or false, we cannot use it as it would
-#     # instead override partition level boolean values such as true, instead we override them if they are not set.
-#     skip_overlapping="$(yq '.partition.skip_overlapping' <<< "${table}")"
-#     if [[ "${skip_overlapping}" == "null" ]]; then
-#         skip_overlapping="${GLOBAL_SKIP_OVERLAPPING}"
-#     fi
-
-#     idempotent_ddl="$(yq '.partition.idempotent_ddl' <<< "${table}")"
-#     if [[ "${idempotent_ddl}" == "null" ]]; then
-#         idempotent_ddl="${GLOBAL_IDEMPOTENT}"
-#     fi
-
-#     # create_default="$(yq '.partition.create_default' <<< "${table}")"
-#     # if [[ "${create_default}" == "null" ]]; then
-#     #     create_default="${GLOBAL_CREATE_DEFAULT}"
-#     # fi
-#     # If create_default is true, default_partition_name_template is required.
-#     default_partition_name_template="$(yq '.partition.default.naming.template // strenv(GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE)' <<< "${table}")"
-#     echo "INFO: Default partition name template: ${default_partition_name_template}"
-#     # if [[ "${create_default}" == true && "${default_partition_name_template}" == "null" ]]; then
-#     #     echo "ERROR: Default partition name template is required when create_default is true." >&2
-#     #     echo "HINT: Please provide a name template for default partition in the config file either in the partition config or in the global config." >&2
-#     #     exit 1
-#     # fi
-
-#     partition_storage_parameters="$(yq '.partition.partition_storage_parameters // strenv(GLOBAL_PARTITION_STORAGE_PARAMETERS)' <<< "${table}")"
-#     index_storage_parameters="$(yq '.partition.index_storage_parameters // strenv(GLOBAL_INDEX_STORAGE_PARAMETERS)' <<< "${table}")"
-
-#     template_table="$(yq '.template_table' <<< "${table}")"
-
-#     output_filename="$(pgp-get-migration-filename -t "${output_file_template}" -d "${temp_migration_directory}" -m "${description}")"
-#     echo "INFO: Making partitions for ${table_schema}.${table_name}"
-
-#     if [[ "${template_table}" == "DEFAULT_PARTITION" ]]; then
-#         IFS=',' read -r template_table_schema template_table_name < <(
-#             PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" \
-#             PGDATABASE="${PGP_DATABASE}" PGHOST="${PGP_HOST}" PGPORT="${PGP_PORT}" psql \
-#                 --tuples-only \
-#                 --no-align \
-#                 --quiet \
-#                 --csv \
-#                 -v "ON_ERROR_STOP=1" \
-#                 -v table_schema="${table_schema}" \
-#                 -v table_name="${table_name}" \
-#                 <<EOF
-# SELECT partition_schema
-#      , partition_name
-#   FROM pgpartium.get_default_partition(p_table_schema=>:'table_schema', p_table_name=>:'table_name')
-# EOF
-#         ) || {
-#             echo "ERROR: Default partition for table ${table_schema}.${table_name} not found." >&2
-#             exit 1
-#         }
-
-#     elif [[ "${template_table}" == "LATEST_PARTITION" ]]; then
-#         IFS=',' read -r template_table_schema template_table_name < <(
-#             PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" \
-#             PGDATABASE="${PGP_DATABASE}" PGHOST="${PGP_HOST}" PGPORT="${PGP_PORT}" psql \
-#                 --tuples-only \
-#                 --no-align \
-#                 --quiet \
-#                 --csv \
-#                 -v "ON_ERROR_STOP=1" \
-#                 -v table_schema="${table_schema}" \
-#                 -v table_name="${table_name}" \
-#                 <<EOF
-# SELECT partition_schema
-#      , partition_name
-#   FROM pgpartium.get_latest_partition(p_table_schema=>:'table_schema', p_table_name=>:'table_name')
-# EOF
-#         ) || {
-#             echo "ERROR: Latest partition for table ${table_schema}.${table_name} not found." >&2
-#             exit 1
-#         }
-
-#     elif [[ "${template_table}" == "CURRENT_PARTITION" ]]; then
-#         IFS=',' read -r template_table_schema template_table_name < <(
-#             PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" \
-#             PGDATABASE="${PGP_DATABASE}" PGHOST="${PGP_HOST}" PGPORT="${PGP_PORT}" psql \
-#                 --tuples-only \
-#                 --no-align \
-#                 --quiet \
-#                 --csv \
-#                 -v "ON_ERROR_STOP=1" \
-#                 -v table_schema="${table_schema}" \
-#                 -v table_name="${table_name}" \
-#                 <<EOF
-# SELECT partition_schema
-#      , partition_name
-#   FROM pgpartium.get_current_partition(p_table_schema=>:'table_schema', p_table_name=>:'table_name')
-# EOF
-#         ) || {
-#             echo "ERROR: Current partition for table ${table_schema}.${table_name} not found." >&2
-#             exit 1
-#         }
-
-#     else
-#         template_table_schema="$(yq '.table_schema // ""' <<< "${template_table}")"
-#         template_table_name="$(yq '.table_name // ""' <<< "${template_table}")"
-
-#     fi
-
-#     error_file="${temp_error_directory}/${table_schema}.${table_name}.error"
-
-#     if ! PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" \
-#          PGDATABASE="${PGP_DATABASE}" PGHOST="${PGP_HOST}" PGPORT="${PGP_PORT}" psql \
-#         --tuples-only \
-#         --no-align \
-#         --quiet \
-#         -v "ON_ERROR_STOP=1" \
-#         -v table_schema="${table_schema}" \
-#         -v table_name="${table_name}" \
-#         -v partition_name_template="${partition_name_template}" \
-#         -v partition_interval="${partition_interval}" \
-#         -v past_partitions="${past_partitions}" \
-#         -v future_partitions="${future_partitions}" \
-#         -v default_partition_name_template="${default_partition_name_template}" \
-#         -v partition_schema="${partition_schema}" \
-#         -v partition_tablespace="${partition_tablespace}" \
-#         -v index_tablespace="${index_tablespace}" \
-#         -v partition_storage_parameters="${partition_storage_parameters}" \
-#         -v index_storage_parameters="${index_storage_parameters}" \
-#         -v template_table_schema="${template_table_schema}" \
-#         -v template_table_name="${template_table_name}" \
-#         -v retention="${retention}" \
-#         -v timezone="${timezone}" \
-#         -v skip_overlapping="${skip_overlapping}" \
-#         -v idempotent_ddl="${idempotent_ddl}" \
-#         --output="${temp_migration_directory}/${output_filename}" \
-#         2>"${error_file}" \
-#         <<EOF
-# SELECT *
-#   FROM pgpartium.make_partitions(
-#     p_table_schema=>:'table_schema'
-#   , p_table_name=>:'table_name'
-#   , p_partition_name_template=>:'partition_name_template'
-#   , p_interval=>:'partition_interval'
-#   , p_past=>:'past_partitions'
-#   , p_future=>:'future_partitions'
-#   , p_default_partition_name_template=>NULLIF(:'default_partition_name_template', 'null')
-#   , p_partition_schema=>:'partition_schema'
-#   , p_partition_tablespace=>NULLIF(:'partition_tablespace', 'null')
-#   , p_index_tablespace=>NULLIF(:'index_tablespace', 'null')
-#   , p_partition_storage_parameters=>NULLIF(:'partition_storage_parameters', 'null')::jsonb
-#   , p_index_storage_parameters=>NULLIF(:'index_storage_parameters', 'null')::jsonb
-#   , p_template_table_schema=>:'template_table_schema'
-#   , p_template_table_name=>:'template_table_name'
-#   , p_retention=>NULLIF(:'retention', 'null')::interval
-#   , p_timezone=>:'timezone'
-#   , p_skip_overlapping=>:'skip_overlapping'
-#   , p_idempotent_ddl=>:'idempotent_ddl'
-# )
-# EOF
-
-#     then
-#         failed_tables["${table_schema}.${table_name}"]=$(<"${error_file}")
-#         continue
-#     fi
-
-#     if [[ -s "${temp_migration_directory}/${output_filename}" ]]; then
-#         # PSQL adds an empty line at the end, so remove it
-#         sed -i -e '${/^$/d;}' "${temp_migration_directory}/${output_filename}"
-#         echo "INFO: Made partitions for ${table_schema}.${table_name}"
-#         printf "\nMakes partitions for \`%s\`\n\n" "${table_schema}.${table_name}" >> /src/partition_maintenance.log
-#     else
-#         echo "INFO: No partitions made for ${table_schema}.${table_name}"
-#         rm "${temp_migration_directory}/${output_filename}"
-#     fi
-
-# done < <(yq '.lifecycle.tables[] | @json' "${config}")
-
-# if [ "${#failed_tables[@]}" -gt 0 ]; then
-#     echo "ERROR: failed for ${#failed_tables[@]} table(s):" >&2
-#     for table in "${!failed_tables[@]}"; do
-#         echo "  '${table}': ${failed_tables[${table}]}" >&2
-#     done
-#     exit 1
-# else
-#     cp -rf "${temp_migration_directory}/." "${directory}/"
-# fi

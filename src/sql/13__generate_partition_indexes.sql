@@ -9,7 +9,7 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partition_indexes (
   , p_inherit_index_tablespace_from_template_table boolean DEFAULT FALSE
   , p_index_storage_parameters jsonb DEFAULT NULL
   , p_inherit_index_storage_parameters_from_template_table boolean DEFAULT FALSE
-  , p_idempotent_ddl boolean DEFAULT FALSE
+  , p_idempotency boolean DEFAULT FALSE
   , p_index_name_template text DEFAULT NULL
 )
 RETURNS text
@@ -92,7 +92,7 @@ AS $BODY$
                  , format(                                                                              --<1: index_create_statement>
                        E'CREATE %1$s%2$s%3$s\n    ON %4$I.%5$I\n %6$s'
                      , partition_indexes.index_qualifier                                                --<1: index_qualifier>
-                     , CASE p_idempotent_ddl                                                          --<2: if_not_exists>
+                     , CASE p_idempotency                                                          --<2: if_not_exists>
                          WHEN TRUE
                            THEN ' IF NOT EXISTS'
                          ELSE ''

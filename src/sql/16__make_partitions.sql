@@ -23,7 +23,7 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_retention interval DEFAULT NULL
   , p_timezone text DEFAULT 'Etc/UTC'
   , p_skip_overlapping boolean DEFAULT FALSE
-  , p_idempotent_ddl boolean DEFAULT FALSE
+  , p_idempotency boolean DEFAULT FALSE
   , p_constraint_type_map jsonb DEFAULT NULL
   , p_start_timestamp timestamptz DEFAULT NULL
 )
@@ -369,7 +369,7 @@ BEGIN
              , p_partition_schema                                     => v_partition_schema
              , p_partition_name                                       => v_partition.partition_name
              , p_index_name_template                                  => p_index_name_template
-             , p_idempotent_ddl                                       => p_idempotent_ddl
+             , p_idempotency                                       => p_idempotency
              , p_index_tablespace                                     => p_index_tablespace
              , p_inherit_index_tablespace_from_template_table         => p_inherit_index_tablespace_from_template_table
              , p_index_storage_parameters                             => p_index_storage_parameters
@@ -385,7 +385,7 @@ BEGIN
              , p_template_table_name   => p_template_table_name
              , p_partition_schema      => v_partition_schema
              , p_partition_name        => v_partition.partition_name
-             , p_idempotent_ddl        => p_idempotent_ddl
+             , p_idempotency        => p_idempotency
         )
           INTO v_triggers;
 
@@ -396,7 +396,7 @@ BEGIN
 
         v_ddl := v_ddl || format(
             E'CREATE TABLE %1$s%2$I.%3$I\n    PARTITION OF %4$I.%5$I%6$s\n    %7$s%8$s%9$s;\n'
-          , CASE p_idempotent_ddl                                  -- <1>
+          , CASE p_idempotency                                  -- <1>
               WHEN TRUE
                 THEN 'IF NOT EXISTS '
               ELSE ''

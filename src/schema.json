@@ -86,7 +86,7 @@
             "description": "Directory where generated files are written.",
             "default": "."
         },
-        "idempotent": {
+        "idempotency": {
             "description": "Whether to generate idempotent SQL.",
             "type": "boolean",
             "default": false
