@@ -143,7 +143,8 @@
                                 "{parent_schema}__{parent_name}__YYYY_MM_DD"
                             ]
                         }
-                    }                },
+                    }
+                },
                 "schema": {
                     "$ref": "#/definitions/name",
                     "description": "Schema name.",
@@ -166,6 +167,28 @@
                         "(n) weeks",
                         "(n) months",
                         "(n) years"
+                    ]
+                },
+                "start_timestamp": {
+                    "description": "The start timestamp for partition generation. Can also be LATEST_PARTITION to use the most recent partition.",
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "description": "A timestamp in RFC 3339 format (YYYY-MM-DDTHH:MM:SS.ffffff+HH:MM)",
+                            "format": "date-time"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "LATEST_PARTITION",
+                                "NOW",
+                                "TODAY"
+                            ]
+                        }
+                    ],
+                    "examples": [
+                        "2024-01-01T00:00:00Z",
+                        "LATEST_PARTITION"
                     ]
                 },
                 "past": {
@@ -385,11 +408,7 @@
                 }
             },
             "minProperties": 1,
-            "additionalProperties": false,
-            "required": [
-                "naming",
-                "interval"
-            ]
+            "additionalProperties": false
         }
     },
     "properties": {
@@ -487,6 +506,7 @@
             "additionalProperties": false
         }
     },
+
     "required": [
         "lifecycle"
     ],

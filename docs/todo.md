@@ -154,3 +154,10 @@ for i in $(seq 1 100); do
     echo 'INFO: Waiting for database to be ready... (attempt $i/50)' && \
     bats --pretty --timing --show-output-of-passing-tests tests/conftest.sh
 done
+
+partition making is
+incremental, safe, idempotent expansion
+
+support serial partitions
+p_start_partition
+p_start_timestamp

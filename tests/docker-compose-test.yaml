@@ -19,8 +19,17 @@ services:
       PGP_DATABASE: ${PGP_DATABASE:-postgres}
       BATS_CORE_VERSION: "v1.13.0"
       PGP_CLUSTER_NAME: pgpartium
+      PGUSER: ${PGP_USER:-postgres}
+      PGPASSWORD: ${PGP_PASSWORD:-postgres}
+      PGHOST: ${PGP_HOST:-localhost}
+      PGPORT: ${PGP_PORT:-5432}
+      PGDATABASE: ${PGP_DATABASE:-postgres}
+      # For testing time-sensitive logic, we expose a config option <mock.now> which could be used
+      # to set a fixed timestamp that the mock.now() function will return. This allows us to have consistent
+      # and repeatable tests for time-based partitioning logic.
+      PGP_CREATE_OPTIONS: --pgoption mock.now=disabled --pgoption search_path=mock,pg_catalog,public
     command: >
       sh -c "
         pgp-start && \
-        bats --pretty --timing --show-output-of-passing-tests tests/conftest.sh
+        bats --pretty --timing tests/conftest.sh
       "

@@ -17,12 +17,17 @@ COPY src/schema.json schema.json
 # Enable amd64 architecture in case we are running on arm64
 RUN dpkg --add-architecture amd64
 
-# Install dependencies
+# Install dependencies check-jsonschema
 RUN apt-get update \
-    && apt-get install -y wget python3-jsonschema=4.10.3-1 git ca-certificates gnupg2 libc6:amd64 \
+    && apt-get install -y wget pipx python3-jsonschema=4.10.3-1 git ca-certificates gnupg2 libc6:amd64 \
+    && PIPX_BIN_DIR=/usr/local/bin pipx install check-jsonschema==0.37.3 \
     && apt-get clean \
     && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
 
+# RUN python3 -m venv /opt/venv \
+# && /opt/venv/bin/pip install --no-cache-dir check-jsonschema==0.37.3
+
+RUN check-jsonschema --version
 # Install GitHub CLI
 RUN mkdir -p -m 755 /etc/apt/keyrings \
     && wget --quiet -O- https://cli.github.com/packages/githubcli-archive-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \

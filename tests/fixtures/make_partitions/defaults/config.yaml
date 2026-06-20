@@ -1,12 +1,11 @@
 ---
 lifecycle:
-  directory: "tests/fixtures/make_partitions/future"
+  directory: "tests/fixtures/make_partitions/defaults"
   tables:
     - schema: "test"
       name: "transactions"
       partition:
+        interval: "1 mon"
+        start_timestamp: "2025-03-01T00:00:00Z"
         naming:
           template: "{table_schema}__{table_name}__YYYY_MM"
-        interval: "1 mon"
-        start_timestamp: "2025-03-01T00:00:00+00:00"
-        future: 1

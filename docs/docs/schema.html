@@ -263,7 +263,7 @@
         <div class="card-header" id="headinglifecycle_partition_naming">
             <h2 class="mb-0">
                 <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_partition_naming"
-                        aria-expanded="" aria-controls="lifecycle_partition_naming" onclick="setAnchor('#lifecycle_partition_naming')"><span class="property-name">naming</span> <span class="badge badge-warning required-property">Required</span></button>
+                        aria-expanded="" aria-controls="lifecycle_partition_naming" onclick="setAnchor('#lifecycle_partition_naming')"><span class="property-name">naming</span></button>
             </h2>
         </div>
 
@@ -419,7 +419,7 @@
         <div class="card-header" id="headinglifecycle_partition_interval">
             <h2 class="mb-0">
                 <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_partition_interval"
-                        aria-expanded="" aria-controls="lifecycle_partition_interval" onclick="setAnchor('#lifecycle_partition_interval')"><span class="property-name">interval</span> <span class="badge badge-warning required-property">Required</span></button>
+                        aria-expanded="" aria-controls="lifecycle_partition_interval" onclick="setAnchor('#lifecycle_partition_interval')"><span class="property-name">interval</span></button>
             </h2>
         </div>
 
@@ -438,6 +438,78 @@
         <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_partition_interval_minLength">Must be at least <code>1</code> characters long</span></p>
 
         
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionlifecycle_partition_start_timestamp">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_partition_start_timestamp">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_partition_start_timestamp"
+                        aria-expanded="" aria-controls="lifecycle_partition_start_timestamp" onclick="setAnchor('#lifecycle_partition_start_timestamp')"><span class="property-name">start_timestamp</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_partition_start_timestamp"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_partition_start_timestamp"
+             data-parent="#accordionlifecycle_partition_start_timestamp">
+            <div class="card-body pl-5">
+
+    <br/>
+<span class="description">The start timestamp for partition generation. Can also be LATEST_PARTITION to use the most recent partition.</span><div class="one-of-value" id="lifecycle_partition_start_timestamp_oneOf"><h2 class="handle">
+  <label>One of</label>
+</h2><ul class="nav nav-tabs" id="tabslifecycle_partition_start_timestamp_oneOf_oneOf" role="tablist"><li class="nav-item">
+            <a class="nav-link active oneOf-option"
+               id="lifecycle_partition_start_timestamp_oneOf_i0" data-toggle="tab" href="#tab-pane_lifecycle_partition_start_timestamp_oneOf_i0" role="tab"
+               onclick="setAnchor('#lifecycle_partition_start_timestamp_oneOf_i0')"
+            >Option 1</a>
+        </li><li class="nav-item">
+            <a class="nav-link oneOf-option"
+               id="lifecycle_partition_start_timestamp_oneOf_i1" data-toggle="tab" href="#tab-pane_lifecycle_partition_start_timestamp_oneOf_i1" role="tab"
+               onclick="setAnchor('#lifecycle_partition_start_timestamp_oneOf_i1')"
+            >Option 2</a>
+        </li></ul>
+<div class="tab-content card"><div class="tab-pane fade card-body active show"
+             id="tab-pane_lifecycle_partition_start_timestamp_oneOf_i0" role="tabpanel">
+            
+
+    <span class="badge badge-dark value-type">Type: string</span><span class="badge badge-info value-type">Format: date-time</span><br/>
+<span class="description">A timestamp in RFC 3339 format (YYYY-MM-DDTHH:MM:SS.ffffff+HH:MM)</span>
+        
+
+        
+        
+
+        
+        </div><div class="tab-pane fade card-body "
+             id="tab-pane_lifecycle_partition_start_timestamp_oneOf_i1" role="tabpanel">
+            
+
+    <span class="badge badge-dark value-type">Type: enum (of string)</span><br/>
+<div class="enum-value" id="lifecycle_partition_start_timestamp_oneOf_i1_enum">
+            <h4>Must be one of:</h4>
+            <ul class="list-group"><li class="list-group-item enum-item">"LATEST_PARTITION"</li><li class="list-group-item enum-item">"NOW"</li><li class="list-group-item enum-item">"TODAY"</li></ul>
+            </div>
+        
+
+        
+        
+
+        
+        </div></div></div>
+        
+
+        
+        
+
+        <br/>
+<div class="badge badge-secondary">Examples:</div>
+<br/><div id="lifecycle_partition_start_timestamp_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">2024-01-01T00:00:00Z</span>
+</pre></div>
+</div><div id="lifecycle_partition_start_timestamp_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">LATEST_PARTITION</span>
+</pre></div>
+</div>
             </div>
         </div>
     </div>
@@ -1658,7 +1730,7 @@
         <div class="card-header" id="headinglifecycle_tables_items_partition_naming">
             <h2 class="mb-0">
                 <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_partition_naming"
-                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_naming" onclick="setAnchor('#lifecycle_tables_items_partition_naming')"><span class="property-name">naming</span> <span class="badge badge-warning required-property">Required</span></button>
+                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_naming" onclick="setAnchor('#lifecycle_tables_items_partition_naming')"><span class="property-name">naming</span></button>
             </h2>
         </div>
 
@@ -1814,7 +1886,7 @@
         <div class="card-header" id="headinglifecycle_tables_items_partition_interval">
             <h2 class="mb-0">
                 <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_partition_interval"
-                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_interval" onclick="setAnchor('#lifecycle_tables_items_partition_interval')"><span class="property-name">interval</span> <span class="badge badge-warning required-property">Required</span></button>
+                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_interval" onclick="setAnchor('#lifecycle_tables_items_partition_interval')"><span class="property-name">interval</span></button>
             </h2>
         </div>
 
@@ -1833,6 +1905,78 @@
         <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_partition_interval_minLength">Must be at least <code>1</code> characters long</span></p>
 
         
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionlifecycle_tables_items_partition_start_timestamp">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_tables_items_partition_start_timestamp">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_partition_start_timestamp"
+                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_start_timestamp" onclick="setAnchor('#lifecycle_tables_items_partition_start_timestamp')"><span class="property-name">start_timestamp</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_tables_items_partition_start_timestamp"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_partition_start_timestamp"
+             data-parent="#accordionlifecycle_tables_items_partition_start_timestamp">
+            <div class="card-body pl-5">
+
+    <br/>
+<span class="description">The start timestamp for partition generation. Can also be LATEST_PARTITION to use the most recent partition.</span><div class="one-of-value" id="lifecycle_tables_items_partition_start_timestamp_oneOf"><h2 class="handle">
+  <label>One of</label>
+</h2><ul class="nav nav-tabs" id="tabslifecycle_tables_items_partition_start_timestamp_oneOf_oneOf" role="tablist"><li class="nav-item">
+            <a class="nav-link active oneOf-option"
+               id="lifecycle_tables_items_partition_start_timestamp_oneOf_i0" data-toggle="tab" href="#tab-pane_lifecycle_tables_items_partition_start_timestamp_oneOf_i0" role="tab"
+               onclick="setAnchor('#lifecycle_tables_items_partition_start_timestamp_oneOf_i0')"
+            >Option 1</a>
+        </li><li class="nav-item">
+            <a class="nav-link oneOf-option"
+               id="lifecycle_tables_items_partition_start_timestamp_oneOf_i1" data-toggle="tab" href="#tab-pane_lifecycle_tables_items_partition_start_timestamp_oneOf_i1" role="tab"
+               onclick="setAnchor('#lifecycle_tables_items_partition_start_timestamp_oneOf_i1')"
+            >Option 2</a>
+        </li></ul>
+<div class="tab-content card"><div class="tab-pane fade card-body active show"
+             id="tab-pane_lifecycle_tables_items_partition_start_timestamp_oneOf_i0" role="tabpanel">
+            
+
+    <span class="badge badge-dark value-type">Type: string</span><span class="badge badge-info value-type">Format: date-time</span><br/>
+<span class="description">A timestamp in RFC 3339 format (YYYY-MM-DDTHH:MM:SS.ffffff+HH:MM)</span>
+        
+
+        
+        
+
+        
+        </div><div class="tab-pane fade card-body "
+             id="tab-pane_lifecycle_tables_items_partition_start_timestamp_oneOf_i1" role="tabpanel">
+            
+
+    <span class="badge badge-dark value-type">Type: enum (of string)</span><br/>
+<div class="enum-value" id="lifecycle_tables_items_partition_start_timestamp_oneOf_i1_enum">
+            <h4>Must be one of:</h4>
+            <ul class="list-group"><li class="list-group-item enum-item">"LATEST_PARTITION"</li><li class="list-group-item enum-item">"NOW"</li><li class="list-group-item enum-item">"TODAY"</li></ul>
+            </div>
+        
+
+        
+        
+
+        
+        </div></div></div>
+        
+
+        
+        
+
+        <br/>
+<div class="badge badge-secondary">Examples:</div>
+<br/><div id="lifecycle_tables_items_partition_start_timestamp_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">2024-01-01T00:00:00Z</span>
+</pre></div>
+</div><div id="lifecycle_tables_items_partition_start_timestamp_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">LATEST_PARTITION</span>
+</pre></div>
+</div>
             </div>
         </div>
     </div>

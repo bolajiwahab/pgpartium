@@ -1,6 +1,6 @@
 ---
 lifecycle:
-  directory: "tests/fixtures/make_partitions/create_default"
+  directory: "tests/fixtures/make_partitions/past"
   tables:
     - schema: "test"
       name: "transactions"
@@ -9,6 +9,4 @@ lifecycle:
           template: "{table_schema}__{table_name}__YYYY_MM"
         interval: "1 mon"
         start_timestamp: "2025-03-01T00:00:00+00:00"
-        default:
-          naming:
-            template: "{table_schema}__{table_name}__default"
+        past: 1

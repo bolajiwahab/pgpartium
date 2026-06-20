@@ -1,6 +1,6 @@
 #!/bin/bash
 
-usage() {
+function usage() {
     echo "
     ${0##*/}
 
@@ -15,9 +15,13 @@ usage() {
 
 while getopts "h" option; do
     case "${option}" in
-    h | *)
+    h)
         usage
         exit 0
+        ;;
+    ?)
+        usage
+        exit 1
         ;;
     esac
 done

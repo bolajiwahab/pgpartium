@@ -37,7 +37,7 @@ done
 set -euo pipefail
 
 PGP_MIN_POSTGRES_VERSION=14
-PGP_CLUSTER_NAME=${PGP_CLUSTER_NAME:-"pgpartium"}
+# PGP_CLUSTER_NAME=${PGP_CLUSTER_NAME:-"pgpartium"}
 
 pg_major_version=${pg_major_version:-${PGP_PG_MAJOR_VERSION:-}}
 init_dir=${init_dir:-${PGP_INIT_DIR:-}}
@@ -57,8 +57,9 @@ fi
 apt.postgresql.org.sh -i -v "${pg_major_version}"
 
 if [[ -z ${NO_CLUSTER+yes} ]]; then
-    echo "INFO: Creating PostgreSQL cluster"
-    pg_createcluster --start "${pg_major_version}" "${PGP_CLUSTER_NAME}" -- -A trust
+    echo "INFO: Creating PostgreSQL cluster ${PGP_CLUSTER_NAME} for PostgreSQL ${pg_major_version}"
+    # shellcheck disable=SC2086 # Allow word splitting for additional options
+    pg_createcluster --start "${pg_major_version}" "${PGP_CLUSTER_NAME}" --port="${PGPORT:-5432}" ${PGP_CREATE_OPTIONS:-} -- -A trust
 
     # Ensure the provided init directory exists and is a directory
     if [[ -n "${init_dir}" && ! -d "${init_dir}" ]]; then

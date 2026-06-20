@@ -3,6 +3,7 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_table_name text
   , p_partition_name_template text
   , p_interval interval
+  , p_start_timestamp timestamptz
   , p_past integer DEFAULT 0
   , p_future integer DEFAULT 0
 --   , p_create_default boolean DEFAULT FALSE
@@ -25,7 +26,6 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_skip_overlapping boolean DEFAULT FALSE
   , p_idempotency boolean DEFAULT FALSE
   , p_constraint_type_map jsonb DEFAULT NULL
-  , p_start_timestamp timestamptz DEFAULT NULL
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
@@ -38,7 +38,7 @@ DECLARE
     v_constraints              text;
     v_triggers                 text;
     v_partition_schema         text := COALESCE(p_partition_schema, p_table_schema);
-    v_start_timestamp          timestamptz;
+    -- v_start_timestamp          timestamptz;
     v_interval_unit            text;
     v_partition_tablespace     text;
     v_partition_storage_clause text;
@@ -141,15 +141,15 @@ BEGIN
            END
       INTO v_interval_unit;
 
-    SELECT COALESCE(
-               (
-                    SELECT upper_bound
-                      FROM pgpartium.get_latest_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
-               )
-             , p_start_timestamp
-             , now()
-           )
-      INTO v_start_timestamp;
+    -- SELECT COALESCE(
+    --            (
+    --                 SELECT upper_bound
+    --                   FROM pgpartium.get_latest_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
+    --            )
+    --          , p_start_timestamp
+    --          ,
+    --        )now()
+    --   INTO v_start_timestamp;
 
     SELECT COALESCE(
                p_partition_tablespace
@@ -187,7 +187,7 @@ BEGIN
         WITH dateset AS (
             SELECT "date"
               FROM generate_series(
-                       (date_trunc(v_interval_unit, v_start_timestamp) - (p_interval * p_past))
+                       (date_trunc(v_interval_unit, p_start_timestamp) - (p_interval * p_past))
                      , (now() + (p_interval * p_future))
                      , p_interval
                    ) AS "date"
@@ -259,6 +259,10 @@ BEGIN
                  , NULL AS upper_bound
                  , 'DEFAULT' AS partition_clause
              WHERE p_default_partition_name_template IS NOT NULL
+               AND NOT EXISTS (
+                   SELECT NULL
+                     FROM pgpartium.get_default_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
+             )
         )
         , filtered AS (
             SELECT is_default
@@ -282,10 +286,6 @@ BEGIN
                         WHERE p_skip_overlapping
                           AND (current_bounds.lower_bound, current_bounds.upper_bound)
                               OVERLAPS (partitions.lower_bound, partitions.upper_bound)
-               )
-               -- Skip default partition if one already exists.
-               AND NOT EXISTS (
-                    SELECT pgpartium.get_default_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
                )
                -- Retention filtering.
                AND CASE
