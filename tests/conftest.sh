@@ -3,7 +3,7 @@
 shopt -s globstar nullglob
 
 teardown() {
-    psql --no-psqlrc --quiet --tuples-only --variable ON_ERROR_STOP=1 <<SQL
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 <<SQL
 ALTER SYSTEM RESET mock.now;
 SQL
     pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
@@ -17,7 +17,7 @@ function cleanup() {
     echo "INFO: Cleaning up after error" >&2
 
     if [[ -f "${teardown_file}" ]]; then
-        psql --no-psqlrc --quiet --tuples-only --variable ON_ERROR_STOP=1 --file "${teardown_file}"
+        psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${teardown_file}"
     fi
 
     dropdb --if-exists "${test_db}"
@@ -53,7 +53,7 @@ function run_config_file() {
     fi
 
     if [[ -f "${setup_file}" ]]; then
-        psql --no-psqlrc --variable ON_ERROR_STOP=1 --file "${setup_file}"
+        psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${setup_file}"
         pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
     fi
 
@@ -64,12 +64,12 @@ function run_config_file() {
     # Validate generated SQL by executing it against a test database.
     createdb --template="${PGP_DATABASE}" "${test_db}"
 
-    psql --dbname "${test_db}" --no-psqlrc --variable ON_ERROR_STOP=1 --file "${result}"
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --dbname "${test_db}" --file "${result}"
 
     dropdb "${test_db}"
 
     if [[ -f "${teardown_file}" ]]; then
-        psql --no-psqlrc --variable ON_ERROR_STOP=1 --file "${teardown_file}"
+        psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${teardown_file}"
     fi
 
     rm -f "${result}"
@@ -87,7 +87,7 @@ function run_config_directory() {
         "${result}"
 
     createdb --template="${PGP_DATABASE}" pgpartium_test_$$
-    psql --dbname pgpartium_test_$$ --no-psqlrc --variable ON_ERROR_STOP=1 --file "${result}"
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --dbname pgpartium_test_$$ --file "${result}"
     dropdb pgpartium_test_$$
 
     rm -f "${result}"

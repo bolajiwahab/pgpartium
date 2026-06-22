@@ -189,7 +189,8 @@
                     "examples": [
                         "2024-01-01T00:00:00Z",
                         "LATEST_PARTITION"
-                    ]
+                    ],
+                    "default": "NOW"
                 },
                 "past": {
                     "description": "The number of past partitions to make.",

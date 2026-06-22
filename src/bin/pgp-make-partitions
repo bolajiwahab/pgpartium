@@ -1,7 +1,9 @@
 #!/bin/bash
 
+set -euo pipefail
+
 function usage() {
-    echo "
+    cat <<EOF
     ${0##*/}
 
     Make partitions for partitioned tables.
@@ -13,7 +15,7 @@ function usage() {
     SAMPLE USAGE:
         PGP_USER=user PGP_PASSWORD=password PGP_HOST=host PGP_PORT=port PGP_DATABASE=database ${0##*/} -c config.yaml
         PGP_USER=user PGP_PASSWORD=password PGP_HOST=host PGP_PORT=port PGP_DATABASE=database ${0##*/} -c config_directory
-"
+EOF
 }
 
 while getopts "c:h" option; do
@@ -32,9 +34,31 @@ while getopts "c:h" option; do
     esac
 done
 
-set -euo pipefail
+function require_env() {
+    local name="$1"
 
-config_path=${config_path:-.}
+    if [[ -z "${!name:-}" ]]; then
+        printf "\nERROR: required environment variable \`%s\` is not set\n\n" "${name}" >&2
+        usage
+        exit 1
+    fi
+}
+
+require_env PGP_USER
+require_env PGP_PASSWORD
+require_env PGP_DATABASE
+require_env PGP_HOST
+require_env PGP_PORT
+
+# shellcheck disable=SC2153 # Allow indirect reference to environment variables for PostgreSQL connection parameters.
+export \
+  PGUSER="${PGP_USER}" \
+  PGPASSWORD="${PGP_PASSWORD}" \
+  PGDATABASE="${PGP_DATABASE}" \
+  PGHOST="${PGP_HOST}" \
+  PGPORT="${PGP_PORT}"
+
+config_path="${config_path:-.}"
 
 if [[ ! -e "${config_path}" ]]; then
     echo "The provided config path '${config_path}' does not exist" >&2
@@ -54,7 +78,6 @@ function validate_config() {
     #     echo "ERROR: Config file ${config} is invalid" >&2
     #     exit 1
     # fi
-    ls "${config}"
     if ! check-jsonschema --schemafile "${schema}" <(yq -o=json "${config}"); then
         echo "ERROR: Config file ${config} is invalid" >&2
         exit 1
@@ -63,18 +86,20 @@ function validate_config() {
 
 function make_partitions() {
     local config="$1"
+
     validate_config "${config}" /src/schema.json
 
     # Set defaults.
-    export DEFAULT_TABLESPACE=null
-    export DEFAULT_PAST=0
-    export DEFAULT_FUTURE=0
-    export DEFAULT_RETENTION=null
-    export DEFAULT_SKIP_OVERLAPPING=false
-    export DEFAULT_IDEMPOTENT=false
-    export DEFAULT_STORAGE_PARAMETERS=null
-    export DEFAULT_TIMEZONE="Etc/UTC"
-    export DIRECTORY="."
+    export DEFAULT_TABLESPACE=null \
+        DEFAULT_PAST=0 \
+        DEFAULT_FUTURE=0 \
+        DEFAULT_START_TIMESTAMP="NOW" \
+        DEFAULT_RETENTION=null \
+        DEFAULT_SKIP_OVERLAPPING=false \
+        DEFAULT_IDEMPOTENT=false \
+        DEFAULT_STORAGE_PARAMETERS=null \
+        DEFAULT_TIMEZONE="Etc/UTC" \
+        DIRECTORY="."
 
     # Extract global configs.
     GLOBAL_PARTITION_SCHEMA="$(yq '.lifecycle.partition.schema' "${config}")"
@@ -82,7 +107,7 @@ function make_partitions() {
     GLOBAL_PAST="$(yq '.lifecycle.partition.past // strenv(DEFAULT_PAST)' "${config}")"
     GLOBAL_FUTURE="$(yq '.lifecycle.partition.future // strenv(DEFAULT_FUTURE)' "${config}")"
     GLOBAL_INTERVAL="$(yq '.lifecycle.partition.interval' "${config}")"
-    GLOBAL_START_TIMESTAMP="$(yq '.lifecycle.partition.start_timestamp' "${config}")"
+    GLOBAL_START_TIMESTAMP="$(yq '.lifecycle.partition.start_timestamp // strenv(DEFAULT_START_TIMESTAMP)' "${config}")"
     GLOBAL_RETENTION="$(yq '.lifecycle.partition.retention // strenv(DEFAULT_RETENTION)' "${config}")"
     GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE="$(yq '.lifecycle.partition.default.naming.template' "${config}")"
     GLOBAL_SKIP_OVERLAPPING="$(yq '.lifecycle.partition.skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")"
@@ -151,12 +176,11 @@ function make_partitions() {
             exit 1
         fi
 
-        partition_start_timestamp="$(yq '.partition.start_timestamp // strenv(GLOBAL_START_TIMESTAMP)' <<< "${table}")"
-        if [[ "${partition_start_timestamp}" == "null" ]]; then
-            echo "ERROR: Partition start timestamp is required" >&2
-            echo "HINT: Please provide a partition start timestamp in the config file either in the partition config or in the global config" >&2
-            exit 1
-        fi
+        # if [[ "${partition_start_timestamp}" == "null" ]]; then
+        #     echo "ERROR: Partition start timestamp is required" >&2
+        #     echo "HINT: Please provide a partition start timestamp in the config file either in the partition config or in the global config" >&2
+        #     exit 1
+        # fi
 
         partition_tablespace="$(yq '.partition.tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' <<< "${table}")"
         index_tablespace="$(yq '.partition.index.tablespace // strenv(GLOBAL_INDEX_TABLESPACE)' <<< "${table}")"
@@ -172,7 +196,6 @@ function make_partitions() {
         if [[ "${skip_overlapping}" == "null" ]]; then
             skip_overlapping="${GLOBAL_SKIP_OVERLAPPING}"
         fi
-        echo "DEBUG: skip_overlapping value for ${table_schema}.${table_name} is ${skip_overlapping}"
 
         idempotency="$(yq '.partition.idempotency' <<< "${table}")"
         if [[ "${idempotency}" == "null" ]]; then
@@ -190,15 +213,40 @@ function make_partitions() {
 
         echo "INFO: Making partitions for ${table_schema}.${table_name}"
 
-        if [[ "${partition_start_timestamp}" == "LATEST_PARTITION" ]]; then
+        partition_start_timestamp="$(yq '.partition.start_timestamp // strenv(GLOBAL_START_TIMESTAMP)' <<< "${table}")"
+        # TODO: Manage errors from psql commands and fail gracefully with helpful error messages.
+        if [[ "${partition_start_timestamp}" == "NOW" ]]; then
+            partition_start_timestamp="$(
+                psql \
+                    --tuples-only \
+                    --no-align \
+                    --quiet \
+                    --variable "ON_ERROR_STOP=1" \
+                    --variable timezone="${timezone}" \
+                    <<EOF
+SET TIMEZONE TO :'timezone';
+SELECT now();
+EOF
+            )"
+        elif [[ "${partition_start_timestamp}" == "TODAY" ]]; then
+        # TODO: Manage errors from psql commands and fail gracefully with helpful error messages.
+            partition_start_timestamp="$(
+                psql \
+                    --tuples-only \
+                    --no-align \
+                    --quiet \
+                    --variable "ON_ERROR_STOP=1" \
+                    --variable timezone="${timezone}" \
+                    <<EOF
+SET TIMEZONE TO :'timezone';
+SELECT date_trunc('day', now());
+EOF
+            )"
+
+        elif [[ "${partition_start_timestamp}" == "LATEST_PARTITION" ]]; then
             echo "INFO: Using latest partition for partition start timestamp"
 
             if ! partition_start_timestamp="$(
-                PGUSER="${PGP_USER}" \
-                PGPASSWORD="${PGP_PASSWORD}" \
-                PGDATABASE="${PGP_DATABASE}" \
-                PGHOST="${PGP_HOST}" \
-                PGPORT="${PGP_PORT}" \
                 psql \
                     --tuples-only \
                     --no-align \
@@ -222,18 +270,12 @@ EOF
                 echo "ERROR: No latest partition exists for table ${table_schema}.${table_name}" >&2
                 exit 1
             fi
-            echo "INFO: Latest partition upper bound is ${partition_start_timestamp}"
         fi
 
         if [[ "${template_table}" == "DEFAULT_PARTITION" ]]; then
             echo "INFO: Using default partition as template table"
 
             if ! result="$(
-                PGUSER="${PGP_USER}" \
-                PGPASSWORD="${PGP_PASSWORD}" \
-                PGDATABASE="${PGP_DATABASE}" \
-                PGHOST="${PGP_HOST}" \
-                PGPORT="${PGP_PORT}" \
                 psql \
                     --tuples-only \
                     --no-align \
@@ -266,11 +308,6 @@ EOF
             echo "INFO: Using latest partition as template table"
 
             if ! result="$(
-                PGUSER="${PGP_USER}" \
-                PGPASSWORD="${PGP_PASSWORD}" \
-                PGDATABASE="${PGP_DATABASE}" \
-                PGHOST="${PGP_HOST}" \
-                PGPORT="${PGP_PORT}" \
                 psql \
                     --tuples-only \
                     --no-align \
@@ -303,11 +340,6 @@ EOF
             echo "INFO: Using current partition as template table"
 
             if ! result="$(
-                PGUSER="${PGP_USER}" \
-                PGPASSWORD="${PGP_PASSWORD}" \
-                PGDATABASE="${PGP_DATABASE}" \
-                PGHOST="${PGP_HOST}" \
-                PGPORT="${PGP_PORT}" \
                 psql \
                     --tuples-only \
                     --no-align \
@@ -341,19 +373,14 @@ EOF
             template_table_name="$(yq '.name' <<< "${template_table}")"
 
             template_table_exists="$(
-            PGUSER="${PGP_USER}" \
-            PGPASSWORD="${PGP_PASSWORD}" \
-            PGDATABASE="${PGP_DATABASE}" \
-            PGHOST="${PGP_HOST}" \
-            PGPORT="${PGP_PORT}" \
-            psql \
-                --tuples-only \
-                --no-align \
-                --quiet \
-                -v "ON_ERROR_STOP=1" \
-                -v table_schema="${template_table_schema}" \
-                -v table_name="${template_table_name}" \
-                <<EOF
+                psql \
+                    --tuples-only \
+                    --no-align \
+                    --quiet \
+                    -v "ON_ERROR_STOP=1" \
+                    -v table_schema="${template_table_schema}" \
+                    -v table_name="${template_table_name}" \
+                    <<EOF
 SELECT pgpartium.table_exists(p_table_schema => :'table_schema', p_table_name => :'table_name');
 EOF
 )"
@@ -367,9 +394,7 @@ EOF
 
         error_file="${temp_error_directory}/${table_schema}.${table_name}.error"
 
-        if ! PGUSER="${PGP_USER}" PGPASSWORD="${PGP_PASSWORD}" \
-             PGDATABASE="${PGP_DATABASE}" PGHOST="${PGP_HOST}" PGPORT="${PGP_PORT}" \
-             psql \
+        if ! psql \
                  --tuples-only \
                  --no-align \
                  --quiet \

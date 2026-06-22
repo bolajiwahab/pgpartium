@@ -161,3 +161,8 @@ incremental, safe, idempotent expansion
 support serial partitions
 p_start_partition
 p_start_timestamp
+
+hourly → start of current hour
+daily → start of current day
+monthly → start of current month
+yearly → start of current year

@@ -150,6 +150,7 @@ BEGIN
     --          ,
     --        )now()
     --   INTO v_start_timestamp;
+    -- raise warning 'current search_path: %', current_setting('search_path');
 
     SELECT COALESCE(
                p_partition_tablespace
