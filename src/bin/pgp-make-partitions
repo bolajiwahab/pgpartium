@@ -50,7 +50,8 @@ require_env PGP_DATABASE
 require_env PGP_HOST
 require_env PGP_PORT
 
-# shellcheck disable=SC2153 # Allow indirect reference to environment variables for PostgreSQL connection parameters.
+# shellcheck disable=SC2153 # We are already requiring in the above these environment variables,
+# so we can be sure they are set.
 export \
   PGUSER="${PGP_USER}" \
   PGPASSWORD="${PGP_PASSWORD}" \
