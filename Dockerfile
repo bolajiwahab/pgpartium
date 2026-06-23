@@ -52,6 +52,20 @@ COPY tests tests
 
 COPY .shellspec .shellspec
 
+# Install kcov run-time dependencies and bats.
+RUN apt-get update && \
+    apt-get install --yes --no-install-suggests --no-install-recommends \
+      libbfd-dev \
+      libcurl4 \
+      libdw1 \
+      zlib1g \
+      bats \
+      && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=kcov/kcov:latest /usr/local/bin/kcov* /usr/local/bin/
+
 CMD ["/bin/bash"]
 
 FROM build AS final

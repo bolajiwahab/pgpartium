@@ -44,6 +44,7 @@ function require_env() {
     fi
 }
 
+# Needs to be converted into reusable function as it is also needed in other scripts.
 require_env PGP_USER
 require_env PGP_PASSWORD
 require_env PGP_DATABASE
@@ -156,7 +157,7 @@ function make_partitions() {
         description="${description//\{table_schema\}/$table_schema}"
         description="${description//\{table_name\}/$table_name}"
 
-        partition_schema="$(yq '.partition.partition_schema // strenv(GLOBAL_PARTITION_SCHEMA)' <<< "${table}")"
+        partition_schema="$(yq '.partition.schema // strenv(GLOBAL_PARTITION_SCHEMA)' <<< "${table}")"
         # If no schema is provided either in the partition config or in the global config, default to table schema.
         if [[ "${partition_schema}" == "null" ]]; then
             echo "INFO: Partition schema not provided. Defaulting to table schema '${table_schema}'"
@@ -176,12 +177,6 @@ function make_partitions() {
             echo "HINT: Please provide a partition interval in the config file either in the partition config or in the global config" >&2
             exit 1
         fi
-
-        # if [[ "${partition_start_timestamp}" == "null" ]]; then
-        #     echo "ERROR: Partition start timestamp is required" >&2
-        #     echo "HINT: Please provide a partition start timestamp in the config file either in the partition config or in the global config" >&2
-        #     exit 1
-        # fi
 
         partition_tablespace="$(yq '.partition.tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' <<< "${table}")"
         index_tablespace="$(yq '.partition.index.tablespace // strenv(GLOBAL_INDEX_TABLESPACE)' <<< "${table}")"
@@ -205,7 +200,7 @@ function make_partitions() {
 
         default_partition_name_template="$(yq '.partition.default.naming.template // strenv(GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE)' <<< "${table}")"
 
-        partition_storage_parameters="$(yq '.partition.partition_storage_parameters // strenv(GLOBAL_PARTITION_STORAGE_PARAMETERS)' <<< "${table}")"
+        partition_storage_parameters="$(yq '.partition.storage_parameters // strenv(GLOBAL_PARTITION_STORAGE_PARAMETERS)' <<< "${table}")"
         index_storage_parameters="$(yq '.partition.index_storage_parameters // strenv(GLOBAL_INDEX_STORAGE_PARAMETERS)' <<< "${table}")"
 
         template_table="$(yq '.template_table' <<< "${table}")"

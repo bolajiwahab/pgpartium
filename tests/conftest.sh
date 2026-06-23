@@ -75,6 +75,13 @@ function run_config_file() {
     rm -f "${result}"
 }
 
+# kcov --report-only \
+#      --clean \
+#      --bash-dont-parse-binary-dir \
+#      --include-pattern=.sh \
+#      --exclude-pattern=tests \
+#      --include-path=. ./coverage/ bats ./tests
+
 function run_config_directory() {
     local fixture="$1"
     local expected="${fixture}/expected.sql"
