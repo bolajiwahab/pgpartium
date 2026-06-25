@@ -9,7 +9,8 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_default_partition_name_template text DEFAULT NULL
   , p_partition_schema text DEFAULT NULL
   , p_partition_tablespace text DEFAULT NULL
-  , p_partition_storage_mode text DEFAULT 'inherit'
+  , p_inherit_table_tablespace_from_template_table boolean DEFAULT FALSE
+  , p_partition_storage_mode text DEFAULT 'merge'
   , p_partition_storage_parameters jsonb DEFAULT NULL
   , p_index_name_template text DEFAULT NULL
   , p_index_tablespace text DEFAULT NULL
@@ -38,7 +39,6 @@ DECLARE
     v_partition_schema         text := COALESCE(p_partition_schema, p_table_schema);
     v_start_timestamp          timestamptz;
     v_interval_unit            text;
-    v_partition_tablespace     text;
     v_partition_storage_clause text;
 
     v_template_table_tablespace text;
@@ -417,8 +417,8 @@ BEGIN
           , v_partition.partition_clause                           -- <7>
           , E'\n' || NULLIF(v_partition_storage_clause, '')        -- <8>
           , CASE                                                   -- <9>
-              WHEN v_partition_tablespace IS NOT NULL
-                THEN format(E'\nTABLESPACE %1$I', v_partition_tablespace)
+              WHEN p_partition_tablespace IS NOT NULL
+                THEN format(E'\nTABLESPACE %1$I', p_partition_tablespace)
               ELSE ''
             END
         );

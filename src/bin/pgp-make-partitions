@@ -100,7 +100,7 @@ function make_partitions() {
         DEFAULT_SKIP_OVERLAPPING=false \
         DEFAULT_IDEMPOTENT=false \
         DEFAULT_STORAGE_PARAMETERS=null \
-        DEFAULT_STORAGE_MODE="inherit" \
+        DEFAULT_STORAGE_MODE="merge" \
         DEFAULT_TIMEZONE="Etc/UTC" \
         DIRECTORY="."
 
