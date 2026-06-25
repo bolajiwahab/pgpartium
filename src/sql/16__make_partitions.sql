@@ -6,13 +6,11 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_start_timestamp timestamptz
   , p_past integer DEFAULT 0
   , p_future integer DEFAULT 0
---   , p_create_default boolean DEFAULT FALSE
   , p_default_partition_name_template text DEFAULT NULL
   , p_partition_schema text DEFAULT NULL
   , p_partition_tablespace text DEFAULT NULL
-  , p_inherit_table_tablespace_from_template_table boolean DEFAULT FALSE
+  , p_partition_storage_mode text DEFAULT 'inherit'
   , p_partition_storage_parameters jsonb DEFAULT NULL
-  , p_inherit_table_storage_parameters_from_template_table boolean DEFAULT FALSE
   , p_index_name_template text DEFAULT NULL
   , p_index_tablespace text DEFAULT NULL
   , p_inherit_index_tablespace_from_template_table boolean DEFAULT FALSE
@@ -38,11 +36,13 @@ DECLARE
     v_constraints              text;
     v_triggers                 text;
     v_partition_schema         text := COALESCE(p_partition_schema, p_table_schema);
-    -- v_start_timestamp          timestamptz;
+    v_start_timestamp          timestamptz;
     v_interval_unit            text;
     v_partition_tablespace     text;
     v_partition_storage_clause text;
+
     v_template_table_tablespace text;
+    v_supported_storage_modes   text[] := ARRAY['inherit', 'override', 'merge'];
 
 BEGIN
 
@@ -56,6 +56,19 @@ BEGIN
     IF COALESCE(p_partition_name_template, '') = '' THEN
         RAISE 'partition name template is required'
         USING ERRCODE = 'invalid_parameter_value';
+    END IF;
+
+    IF p_start_timestamp IS NULL THEN
+        RAISE 'start timestamp is required'
+        USING ERRCODE = 'invalid_parameter_value';
+    END IF;
+
+    IF NOT (p_partition_storage_mode = ANY(v_supported_storage_modes)) THEN
+        RAISE 'partition storage mode "%" is not supported', p_partition_storage_mode
+        USING ERRCODE = 'invalid_parameter_value',
+                 HINT = format(
+                            'supported values are: %s', array_to_string(v_supported_storage_modes, ', ')
+              );
     END IF;
 
     v_partitioning_details := pgpartium.get_partitioning_details(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
@@ -88,11 +101,6 @@ BEGIN
                DETAIL = format('table "%1$I"."%2$I" is partitioned on a data type that is not supported', p_table_schema, p_table_name),
                  HINT = 'supported data types are: date, timestamp with time zone, timestamp without time zone, integer, bigint, and uuid';
     END IF;
-
-    -- IF p_create_default AND COALESCE(p_default_partition_name_template, '') = '' THEN
-    --     RAISE 'creating default partition requires default partition name template'
-    --     USING ERRCODE = 'invalid_parameter_value';
-    -- END IF;
 
     IF p_partition_schema IS NOT NULL
     AND NOT EXISTS (
@@ -141,29 +149,36 @@ BEGIN
            END
       INTO v_interval_unit;
 
-    -- SELECT COALESCE(
-    --            (
-    --                 SELECT upper_bound
-    --                   FROM pgpartium.get_latest_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
-    --            )
-    --          , p_start_timestamp
-    --          ,
-    --        )now()
-    --   INTO v_start_timestamp;
-    -- raise warning 'current search_path: %', current_setting('search_path');
-
     SELECT COALESCE(
-               p_partition_tablespace
-             , CASE p_inherit_table_tablespace_from_template_table
-                 WHEN TRUE
-                   THEN pgpartium.get_relation_tablespace(p_relation_schema=>p_template_table_schema, p_relation_name=>p_template_table_name)
-                 ELSE NULL
-               END
+               (
+                    SELECT upper_bound
+                      FROM pgpartium.get_latest_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
+               )
+             , p_start_timestamp
            )
-      INTO v_partition_tablespace;
+      INTO v_start_timestamp;
 
-    SELECT CASE p_inherit_table_storage_parameters_from_template_table
-             WHEN TRUE
+    SELECT CASE p_partition_storage_mode
+             WHEN 'inherit'
+               THEN COALESCE(
+                        pgpartium.render_storage_parameters(
+                            p_relation_schema=>p_template_table_schema
+                          , p_relation_name=>p_template_table_name
+                          , p_user_config=>NULL
+                          , p_pretty=>TRUE
+                        )
+                      , ''
+                    )
+             WHEN 'override'
+               THEN COALESCE(pgpartium.render_storage_parameters(
+                            p_relation_schema=>NULL
+                          , p_relation_name=>NULL
+                          , p_user_config=>p_partition_storage_parameters
+                          , p_pretty=>TRUE
+                        )
+                      , ''
+                    )
+             WHEN 'merge'
                THEN COALESCE(
                         pgpartium.render_storage_parameters(
                             p_relation_schema=>p_template_table_schema
@@ -173,14 +188,6 @@ BEGIN
                         )
                       , ''
                     )
-           ELSE COALESCE(pgpartium.render_storage_parameters(
-                    p_relation_schema=>NULL
-                  , p_relation_name=>NULL
-                  , p_user_config=>p_partition_storage_parameters
-                  , p_pretty=>TRUE
-                )
-              , ''
-           )
            END
       INTO v_partition_storage_clause;
 
@@ -188,7 +195,7 @@ BEGIN
         WITH dateset AS (
             SELECT "date"
               FROM generate_series(
-                       (date_trunc(v_interval_unit, p_start_timestamp) - (p_interval * p_past))
+                       (date_trunc(v_interval_unit, v_start_timestamp) - (p_interval * p_past))
                      , (now() + (p_interval * p_future))
                      , p_interval
                    ) AS "date"
@@ -370,7 +377,7 @@ BEGIN
              , p_partition_schema                                     => v_partition_schema
              , p_partition_name                                       => v_partition.partition_name
              , p_index_name_template                                  => p_index_name_template
-             , p_idempotency                                       => p_idempotency
+             , p_idempotency                                          => p_idempotency
              , p_index_tablespace                                     => p_index_tablespace
              , p_inherit_index_tablespace_from_template_table         => p_inherit_index_tablespace_from_template_table
              , p_index_storage_parameters                             => p_index_storage_parameters

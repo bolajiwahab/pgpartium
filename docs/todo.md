@@ -166,3 +166,114 @@ hourly → start of current hour
 daily → start of current day
 monthly → start of current month
 yearly → start of current year
+
+Now = 2025-04-15
+Interval = 1 month
+Future = 3
+
+Create:
+2025-04
+2025-05
+2025-06
+2025-07
+
+For serial partitioning, future and past are relative to start_value, which is the anchor.
+
+This scales nicely because:
+
+deterministic
+no sequence assumptions
+no table scans
+no ambiguity
+
+in serial,
+Meaning of future
+“how many partitions to ensure exist ahead of the current highest known partition”
+
+if no partitions:
+    current = start_value
+else:
+    current = max(existing partition boundary)
+
+You do NOT want serial to behave like:
+
+“relative to start_value every time”
+
+You want serial to behave like:
+
+“relative to the evolving partition frontier”
+
+NOW/TODAY are runtime conveniences; your system is a declarative state generator — mixing them creates hidden temporal ambiguity.
+
+You’re moving from a “time-anchored generator” to a “frontier-extending system,” and that’s the correct model for progressive partitioning.
+
+One possible compromise
+
+If you're worried about future flexibility, you could document the algorithm as:
+
+anchor_resolution_strategy:
+  1. latest existing partition
+  2. configured start_*
+
+without exposing it as configuration.
+
+You can always make it configurable later without breaking users.
+
+Personally, unless you already have a concrete user story that cannot be solved by:
+
+skipping existing partitions, or
+a future reconcile mode,
+
+I would keep it simple:
+
+if latest partition exists:
+    use it
+else:
+    use start_timestamp/start_value
+
+and avoid adding another flag today.
+
+future = number of partitions beyond the current partition
+
+For time-based partitioning, future specifies the number of partitions to maintain beyond the partition containing the current timestamp.
+
+For serial-based partitioning, future specifies the number of partitions to maintain beyond the latest existing partition.
+
+I think that's the cleanest and most practical definition.
+
+start_timestamp is only used for bootstrapping when no partitions exist. Once partitions have been generated, subsequent runs resume from the latest partition and do not attempt to recreate historical partitions that are missing due to retention or manual deletion.
+
+No partitions exist → use configured start_timestamp (which may resolve to now()).
+Partitions exist → resume from latest partition.
+Future horizon → relative to now().
+
+The model remains internally consistent.
+
+start_timestamp:
+  - timestamp         # exact bootstrap point
+  - now               # evaluate at generation time
+  - latest_partition  # adopt existing partition state
+
+start_timestamp is only used when no partitions exist. Once partitions exist, generation resumes from the latest existing partition.
+
+A. Template (structure)
+columns
+constraints
+indexes
+maybe storage parameters (logical tuning)
+
+👉 portable, reusable, environment-agnostic
+
+B. Storage parameters (behavior)
+fillfactor
+autovacuum settings
+reloptions
+
+👉 logical, safe to inherit, consistent across environments
+
+C. Tablespace (placement)
+physical location
+must exist beforehand
+depends on cluster topology / infra / ops decisions
+
+👉 environment-specific, not template-derived

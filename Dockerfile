@@ -10,24 +10,19 @@ COPY src/bin/* /usr/local/bin/
 
 WORKDIR /src
 
-COPY /src/sql sql
+COPY src/sql sql
 
 COPY src/schema.json schema.json
 
-# Enable amd64 architecture in case we are running on arm64
-RUN dpkg --add-architecture amd64
-
 # Install dependencies check-jsonschema
-RUN apt-get update \
-    && apt-get install -y wget pipx python3-jsonschema=4.10.3-1 git ca-certificates gnupg2 libc6:amd64 \
-    && PIPX_BIN_DIR=/usr/local/bin pipx install check-jsonschema==0.37.3 \
-    && apt-get clean \
-    && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
+# Enable amd64 architecture in case we are running on arm64
+RUN dpkg --add-architecture amd64 && \
+    apt-get update \
+        && apt-get install -y wget pipx ca-certificates gnupg2 libc6:amd64 \
+        && PIPX_BIN_DIR=/usr/local/bin pipx install check-jsonschema==0.37.3 \
+        && apt-get clean \
+        && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
 
-# RUN python3 -m venv /opt/venv \
-# && /opt/venv/bin/pip install --no-cache-dir check-jsonschema==0.37.3
-
-RUN check-jsonschema --version
 # Install GitHub CLI
 RUN mkdir -p -m 755 /etc/apt/keyrings \
     && wget --quiet -O- https://cli.github.com/packages/githubcli-archive-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
@@ -49,8 +44,6 @@ RUN wget --quiet https://github.com/mikefarah/yq/releases/download/v4.45.1/yq_li
 FROM build AS test
 
 COPY tests tests
-
-COPY .shellspec .shellspec
 
 # Install kcov run-time dependencies and bats.
 RUN apt-get update && \

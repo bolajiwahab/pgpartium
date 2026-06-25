@@ -378,12 +378,65 @@
         </div>
     </div>
 </div>
+<div class="accordion" id="accordionlifecycle_partition_storage">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_partition_storage">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_partition_storage"
+                        aria-expanded="" aria-controls="lifecycle_partition_storage" onclick="setAnchor('#lifecycle_partition_storage')"><span class="property-name">storage</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_partition_storage"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_partition_storage"
+             data-parent="#accordionlifecycle_partition_storage">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+<span class="description">Storage parameters for partitions.</span>
+
+     <span class="badge badge-info no-additional">No Additional Properties</span>
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordionlifecycle_partition_storage_mode">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_partition_storage_mode">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_partition_storage_mode"
+                        aria-expanded="" aria-controls="lifecycle_partition_storage_mode" onclick="setAnchor('#lifecycle_partition_storage_mode')"><span class="property-name">mode</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_partition_storage_mode"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_partition_storage_mode"
+             data-parent="#accordionlifecycle_partition_storage_mode">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: enum (of string)</span> <span class="badge badge-success default-value">Default: "merge"</span><br/>
+<span class="description">Mode for storage parameters.</span><div class="enum-value" id="lifecycle_partition_storage_mode_enum">
+            <h4>Must be one of:</h4>
+            <ul class="list-group"><li class="list-group-item enum-item">"inherit"</li><li class="list-group-item enum-item">"override"</li><li class="list-group-item enum-item">"merge"</li></ul>
+            </div>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
 <div class="accordion" id="accordionlifecycle_partition_storage_parameters">
     <div class="card">
         <div class="card-header" id="headinglifecycle_partition_storage_parameters">
             <h2 class="mb-0">
                 <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_partition_storage_parameters"
-                        aria-expanded="" aria-controls="lifecycle_partition_storage_parameters" onclick="setAnchor('#lifecycle_partition_storage_parameters')"><span class="property-name">storage_parameters</span></button>
+                        aria-expanded="" aria-controls="lifecycle_partition_storage_parameters" onclick="setAnchor('#lifecycle_partition_storage_parameters')"><span class="property-name">parameters</span></button>
             </h2>
         </div>
 
@@ -393,22 +446,21 @@
             <div class="card-body pl-5">
 
     <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
-<span class="description">Storage parameters for partitions.</span>
-
-    
+<span class="description">Storage parameters to apply.</span>
         
 
         
         
 
         <br/>
-<div class="badge badge-secondary">Examples:</div>
-<br/><div id="lifecycle_partition_storage_parameters_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="nt">fillfactor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90</span>
+<div class="badge badge-secondary">Example:</div>
+<br/><div id="lifecycle_partition_storage_parameters_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="nt">fillfactor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="nt">autovacuum_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </pre></div>
-</div><div id="lifecycle_partition_storage_parameters_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="nt">fillfactor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
-<span class="nt">toast.fillfactor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90</span>
-</pre></div>
+</div>
+            </div>
+        </div>
+    </div>
 </div>
             </div>
         </div>
@@ -489,7 +541,7 @@
     <span class="badge badge-dark value-type">Type: enum (of string)</span><br/>
 <div class="enum-value" id="lifecycle_partition_start_timestamp_oneOf_i1_enum">
             <h4>Must be one of:</h4>
-            <ul class="list-group"><li class="list-group-item enum-item">"LATEST_PARTITION"</li><li class="list-group-item enum-item">"NOW"</li><li class="list-group-item enum-item">"TODAY"</li></ul>
+            <ul class="list-group"><li class="list-group-item enum-item">"LATEST_PARTITION"</li><li class="list-group-item enum-item">"NOW"</li></ul>
             </div>
         
 
@@ -508,6 +560,8 @@
 <br/><div id="lifecycle_partition_start_timestamp_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">2024-01-01T00:00:00Z</span>
 </pre></div>
 </div><div id="lifecycle_partition_start_timestamp_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">LATEST_PARTITION</span>
+</pre></div>
+</div><div id="lifecycle_partition_start_timestamp_ex3" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">NOW</span>
 </pre></div>
 </div>
             </div>
@@ -1252,12 +1306,70 @@
         </div>
     </div>
 </div>
+<div class="accordion" id="accordionlifecycle_partition_index_storage">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_partition_index_storage">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_partition_index_storage"
+                        aria-expanded="" aria-controls="lifecycle_partition_index_storage" onclick="setAnchor('#lifecycle_partition_index_storage')"><span class="property-name">storage</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_partition_index_storage"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_partition_index_storage"
+             data-parent="#accordionlifecycle_partition_index_storage">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+<span class="description">Storage parameters for indexes.</span>
+
+     <span class="badge badge-info no-additional">No Additional Properties</span>
+        
+
+        
+        
+
+        <br/>
+<div class="badge badge-secondary">Example:</div>
+<br/><div id="lifecycle_partition_index_storage_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="nt">fillfactor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="nt">deduplicate_items</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<div class="accordion" id="accordionlifecycle_partition_index_storage_mode">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_partition_index_storage_mode">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_partition_index_storage_mode"
+                        aria-expanded="" aria-controls="lifecycle_partition_index_storage_mode" onclick="setAnchor('#lifecycle_partition_index_storage_mode')"><span class="property-name">mode</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_partition_index_storage_mode"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_partition_index_storage_mode"
+             data-parent="#accordionlifecycle_partition_index_storage_mode">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: enum (of string)</span> <span class="badge badge-success default-value">Default: "merge"</span><br/>
+<span class="description">Mode for storage parameters.</span><div class="enum-value" id="lifecycle_partition_index_storage_mode_enum">
+            <h4>Must be one of:</h4>
+            <ul class="list-group"><li class="list-group-item enum-item">"inherit"</li><li class="list-group-item enum-item">"override"</li><li class="list-group-item enum-item">"merge"</li></ul>
+            </div>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
 <div class="accordion" id="accordionlifecycle_partition_index_storage_parameters">
     <div class="card">
         <div class="card-header" id="headinglifecycle_partition_index_storage_parameters">
             <h2 class="mb-0">
                 <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_partition_index_storage_parameters"
-                        aria-expanded="" aria-controls="lifecycle_partition_index_storage_parameters" onclick="setAnchor('#lifecycle_partition_index_storage_parameters')"><span class="property-name">storage_parameters</span></button>
+                        aria-expanded="" aria-controls="lifecycle_partition_index_storage_parameters" onclick="setAnchor('#lifecycle_partition_index_storage_parameters')"><span class="property-name">parameters</span></button>
             </h2>
         </div>
 
@@ -1267,9 +1379,7 @@
             <div class="card-body pl-5">
 
     <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
-<span class="description">Storage parameters for indexes.</span>
-
-    
+<span class="description">Storage parameters to apply.</span>
         
 
         
@@ -1278,8 +1388,12 @@
         <br/>
 <div class="badge badge-secondary">Example:</div>
 <br/><div id="lifecycle_partition_index_storage_parameters_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="nt">fillfactor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="nt">deduplicate_items</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="nt">autovacuum_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </pre></div>
+</div>
+            </div>
+        </div>
+    </div>
 </div>
             </div>
         </div>
@@ -1845,12 +1959,65 @@
         </div>
     </div>
 </div>
+<div class="accordion" id="accordionlifecycle_tables_items_partition_storage">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_tables_items_partition_storage">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_partition_storage"
+                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_storage" onclick="setAnchor('#lifecycle_tables_items_partition_storage')"><span class="property-name">storage</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_tables_items_partition_storage"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_partition_storage"
+             data-parent="#accordionlifecycle_tables_items_partition_storage">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+<span class="description">Storage parameters for partitions.</span>
+
+     <span class="badge badge-info no-additional">No Additional Properties</span>
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordionlifecycle_tables_items_partition_storage_mode">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_tables_items_partition_storage_mode">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_partition_storage_mode"
+                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_storage_mode" onclick="setAnchor('#lifecycle_tables_items_partition_storage_mode')"><span class="property-name">mode</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_tables_items_partition_storage_mode"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_partition_storage_mode"
+             data-parent="#accordionlifecycle_tables_items_partition_storage_mode">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: enum (of string)</span> <span class="badge badge-success default-value">Default: "merge"</span><br/>
+<span class="description">Mode for storage parameters.</span><div class="enum-value" id="lifecycle_tables_items_partition_storage_mode_enum">
+            <h4>Must be one of:</h4>
+            <ul class="list-group"><li class="list-group-item enum-item">"inherit"</li><li class="list-group-item enum-item">"override"</li><li class="list-group-item enum-item">"merge"</li></ul>
+            </div>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
 <div class="accordion" id="accordionlifecycle_tables_items_partition_storage_parameters">
     <div class="card">
         <div class="card-header" id="headinglifecycle_tables_items_partition_storage_parameters">
             <h2 class="mb-0">
                 <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_partition_storage_parameters"
-                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_storage_parameters" onclick="setAnchor('#lifecycle_tables_items_partition_storage_parameters')"><span class="property-name">storage_parameters</span></button>
+                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_storage_parameters" onclick="setAnchor('#lifecycle_tables_items_partition_storage_parameters')"><span class="property-name">parameters</span></button>
             </h2>
         </div>
 
@@ -1860,22 +2027,21 @@
             <div class="card-body pl-5">
 
     <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
-<span class="description">Storage parameters for partitions.</span>
-
-    
+<span class="description">Storage parameters to apply.</span>
         
 
         
         
 
         <br/>
-<div class="badge badge-secondary">Examples:</div>
-<br/><div id="lifecycle_tables_items_partition_storage_parameters_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="nt">fillfactor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90</span>
+<div class="badge badge-secondary">Example:</div>
+<br/><div id="lifecycle_tables_items_partition_storage_parameters_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="nt">fillfactor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="nt">autovacuum_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </pre></div>
-</div><div id="lifecycle_tables_items_partition_storage_parameters_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="nt">fillfactor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
-<span class="nt">toast.fillfactor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90</span>
-</pre></div>
+</div>
+            </div>
+        </div>
+    </div>
 </div>
             </div>
         </div>
@@ -1956,7 +2122,7 @@
     <span class="badge badge-dark value-type">Type: enum (of string)</span><br/>
 <div class="enum-value" id="lifecycle_tables_items_partition_start_timestamp_oneOf_i1_enum">
             <h4>Must be one of:</h4>
-            <ul class="list-group"><li class="list-group-item enum-item">"LATEST_PARTITION"</li><li class="list-group-item enum-item">"NOW"</li><li class="list-group-item enum-item">"TODAY"</li></ul>
+            <ul class="list-group"><li class="list-group-item enum-item">"LATEST_PARTITION"</li><li class="list-group-item enum-item">"NOW"</li></ul>
             </div>
         
 
@@ -1975,6 +2141,8 @@
 <br/><div id="lifecycle_tables_items_partition_start_timestamp_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">2024-01-01T00:00:00Z</span>
 </pre></div>
 </div><div id="lifecycle_tables_items_partition_start_timestamp_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">LATEST_PARTITION</span>
+</pre></div>
+</div><div id="lifecycle_tables_items_partition_start_timestamp_ex3" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">NOW</span>
 </pre></div>
 </div>
             </div>
@@ -2719,12 +2887,70 @@
         </div>
     </div>
 </div>
+<div class="accordion" id="accordionlifecycle_tables_items_partition_index_storage">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_tables_items_partition_index_storage">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_partition_index_storage"
+                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_index_storage" onclick="setAnchor('#lifecycle_tables_items_partition_index_storage')"><span class="property-name">storage</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_tables_items_partition_index_storage"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_partition_index_storage"
+             data-parent="#accordionlifecycle_tables_items_partition_index_storage">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+<span class="description">Storage parameters for indexes.</span>
+
+     <span class="badge badge-info no-additional">No Additional Properties</span>
+        
+
+        
+        
+
+        <br/>
+<div class="badge badge-secondary">Example:</div>
+<br/><div id="lifecycle_tables_items_partition_index_storage_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="nt">fillfactor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="nt">deduplicate_items</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<div class="accordion" id="accordionlifecycle_tables_items_partition_index_storage_mode">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_tables_items_partition_index_storage_mode">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_partition_index_storage_mode"
+                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_index_storage_mode" onclick="setAnchor('#lifecycle_tables_items_partition_index_storage_mode')"><span class="property-name">mode</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_tables_items_partition_index_storage_mode"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_partition_index_storage_mode"
+             data-parent="#accordionlifecycle_tables_items_partition_index_storage_mode">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: enum (of string)</span> <span class="badge badge-success default-value">Default: "merge"</span><br/>
+<span class="description">Mode for storage parameters.</span><div class="enum-value" id="lifecycle_tables_items_partition_index_storage_mode_enum">
+            <h4>Must be one of:</h4>
+            <ul class="list-group"><li class="list-group-item enum-item">"inherit"</li><li class="list-group-item enum-item">"override"</li><li class="list-group-item enum-item">"merge"</li></ul>
+            </div>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
 <div class="accordion" id="accordionlifecycle_tables_items_partition_index_storage_parameters">
     <div class="card">
         <div class="card-header" id="headinglifecycle_tables_items_partition_index_storage_parameters">
             <h2 class="mb-0">
                 <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_partition_index_storage_parameters"
-                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_index_storage_parameters" onclick="setAnchor('#lifecycle_tables_items_partition_index_storage_parameters')"><span class="property-name">storage_parameters</span></button>
+                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_index_storage_parameters" onclick="setAnchor('#lifecycle_tables_items_partition_index_storage_parameters')"><span class="property-name">parameters</span></button>
             </h2>
         </div>
 
@@ -2734,9 +2960,7 @@
             <div class="card-body pl-5">
 
     <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
-<span class="description">Storage parameters for indexes.</span>
-
-    
+<span class="description">Storage parameters to apply.</span>
         
 
         
@@ -2745,8 +2969,12 @@
         <br/>
 <div class="badge badge-secondary">Example:</div>
 <br/><div id="lifecycle_tables_items_partition_index_storage_parameters_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="nt">fillfactor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="nt">deduplicate_items</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="nt">autovacuum_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </pre></div>
+</div>
+            </div>
+        </div>
+    </div>
 </div>
             </div>
         </div>
@@ -2954,40 +3182,40 @@
         </div>
     </div>
 </div>
-<div class="accordion" id="accordionlifecycle_tables_items_template_table">
+<div class="accordion" id="accordionlifecycle_tables_items_template">
     <div class="card">
-        <div class="card-header" id="headinglifecycle_tables_items_template_table">
+        <div class="card-header" id="headinglifecycle_tables_items_template">
             <h2 class="mb-0">
-                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_template_table"
-                        aria-expanded="" aria-controls="lifecycle_tables_items_template_table" onclick="setAnchor('#lifecycle_tables_items_template_table')"><span class="property-name">template_table</span></button>
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_template"
+                        aria-expanded="" aria-controls="lifecycle_tables_items_template" onclick="setAnchor('#lifecycle_tables_items_template')"><span class="property-name">template</span></button>
             </h2>
         </div>
 
-        <div id="lifecycle_tables_items_template_table"
-             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_template_table"
-             data-parent="#accordionlifecycle_tables_items_template_table">
+        <div id="lifecycle_tables_items_template"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_template"
+             data-parent="#accordionlifecycle_tables_items_template">
             <div class="card-body pl-5">
 
     <br/>
-<span class="description">The template table to replicate objects such as constraints, indexes, triggers from.</span><div class="one-of-value" id="lifecycle_tables_items_template_table_oneOf"><h2 class="handle">
+<span class="description">The template table to replicate objects such as constraints, indexes, triggers from.</span><div class="one-of-value" id="lifecycle_tables_items_template_oneOf"><h2 class="handle">
   <label>One of</label>
-</h2><ul class="nav nav-tabs" id="tabslifecycle_tables_items_template_table_oneOf_oneOf" role="tablist"><li class="nav-item">
+</h2><ul class="nav nav-tabs" id="tabslifecycle_tables_items_template_oneOf_oneOf" role="tablist"><li class="nav-item">
             <a class="nav-link active oneOf-option"
-               id="lifecycle_tables_items_template_table_oneOf_i0" data-toggle="tab" href="#tab-pane_lifecycle_tables_items_template_table_oneOf_i0" role="tab"
-               onclick="setAnchor('#lifecycle_tables_items_template_table_oneOf_i0')"
+               id="lifecycle_tables_items_template_oneOf_i0" data-toggle="tab" href="#tab-pane_lifecycle_tables_items_template_oneOf_i0" role="tab"
+               onclick="setAnchor('#lifecycle_tables_items_template_oneOf_i0')"
             >Option 1</a>
         </li><li class="nav-item">
             <a class="nav-link oneOf-option"
-               id="lifecycle_tables_items_template_table_oneOf_i1" data-toggle="tab" href="#tab-pane_lifecycle_tables_items_template_table_oneOf_i1" role="tab"
-               onclick="setAnchor('#lifecycle_tables_items_template_table_oneOf_i1')"
+               id="lifecycle_tables_items_template_oneOf_i1" data-toggle="tab" href="#tab-pane_lifecycle_tables_items_template_oneOf_i1" role="tab"
+               onclick="setAnchor('#lifecycle_tables_items_template_oneOf_i1')"
             >Option 2</a>
         </li></ul>
 <div class="tab-content card"><div class="tab-pane fade card-body active show"
-             id="tab-pane_lifecycle_tables_items_template_table_oneOf_i0" role="tabpanel">
+             id="tab-pane_lifecycle_tables_items_template_oneOf_i0" role="tabpanel">
             
 
     <span class="badge badge-dark value-type">Type: enum (of string)</span><br/>
-<span class="description">Must be one of the predefined options.</span><div class="enum-value" id="lifecycle_tables_items_template_table_oneOf_i0_enum">
+<span class="description">Must be one of the predefined options.</span><div class="enum-value" id="lifecycle_tables_items_template_oneOf_i0_enum">
             <h4>Must be one of:</h4>
             <ul class="list-group"><li class="list-group-item enum-item">"DEFAULT_PARTITION"</li><li class="list-group-item enum-item">"LATEST_PARTITION"</li><li class="list-group-item enum-item">"CURRENT_PARTITION"</li></ul>
             </div>
@@ -2998,7 +3226,7 @@
 
         
         </div><div class="tab-pane fade card-body "
-             id="tab-pane_lifecycle_tables_items_template_table_oneOf_i1" role="tabpanel">
+             id="tab-pane_lifecycle_tables_items_template_oneOf_i1" role="tabpanel">
             
 
     <span class="badge badge-dark value-type">Type: object</span><br/>
@@ -3009,56 +3237,56 @@
         
 
         
-<div class="accordion" id="accordionlifecycle_tables_items_template_table_oneOf_i1_schema">
+<div class="accordion" id="accordionlifecycle_tables_items_template_oneOf_i1_schema">
     <div class="card">
-        <div class="card-header" id="headinglifecycle_tables_items_template_table_oneOf_i1_schema">
+        <div class="card-header" id="headinglifecycle_tables_items_template_oneOf_i1_schema">
             <h2 class="mb-0">
-                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_template_table_oneOf_i1_schema"
-                        aria-expanded="" aria-controls="lifecycle_tables_items_template_table_oneOf_i1_schema" onclick="setAnchor('#lifecycle_tables_items_template_table_oneOf_i1_schema')"><span class="property-name">schema</span> <span class="badge badge-warning required-property">Required</span></button>
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_template_oneOf_i1_schema"
+                        aria-expanded="" aria-controls="lifecycle_tables_items_template_oneOf_i1_schema" onclick="setAnchor('#lifecycle_tables_items_template_oneOf_i1_schema')"><span class="property-name">schema</span> <span class="badge badge-warning required-property">Required</span></button>
             </h2>
         </div>
 
-        <div id="lifecycle_tables_items_template_table_oneOf_i1_schema"
-             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_template_table_oneOf_i1_schema"
-             data-parent="#accordionlifecycle_tables_items_template_table_oneOf_i1_schema">
+        <div id="lifecycle_tables_items_template_oneOf_i1_schema"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_template_oneOf_i1_schema"
+             data-parent="#accordionlifecycle_tables_items_template_oneOf_i1_schema">
             <div class="card-body pl-5">
 
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">Name of a thing.</span>
 
-    <span class="pattern-value" id="lifecycle_tables_items_template_table_oneOf_i1_schema_pattern">Must match regular expression: <code>^\S+$</code></span>
+    <span class="pattern-value" id="lifecycle_tables_items_template_oneOf_i1_schema_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_template_table_oneOf_i1_schema_minLength">Must be at least <code>1</code> characters long</span></p>
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_template_oneOf_i1_schema_minLength">Must be at least <code>1</code> characters long</span></p>
 
         
             </div>
         </div>
     </div>
 </div>
-<div class="accordion" id="accordionlifecycle_tables_items_template_table_oneOf_i1_name">
+<div class="accordion" id="accordionlifecycle_tables_items_template_oneOf_i1_name">
     <div class="card">
-        <div class="card-header" id="headinglifecycle_tables_items_template_table_oneOf_i1_name">
+        <div class="card-header" id="headinglifecycle_tables_items_template_oneOf_i1_name">
             <h2 class="mb-0">
-                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_template_table_oneOf_i1_name"
-                        aria-expanded="" aria-controls="lifecycle_tables_items_template_table_oneOf_i1_name" onclick="setAnchor('#lifecycle_tables_items_template_table_oneOf_i1_name')"><span class="property-name">name</span> <span class="badge badge-warning required-property">Required</span></button>
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_template_oneOf_i1_name"
+                        aria-expanded="" aria-controls="lifecycle_tables_items_template_oneOf_i1_name" onclick="setAnchor('#lifecycle_tables_items_template_oneOf_i1_name')"><span class="property-name">name</span> <span class="badge badge-warning required-property">Required</span></button>
             </h2>
         </div>
 
-        <div id="lifecycle_tables_items_template_table_oneOf_i1_name"
-             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_template_table_oneOf_i1_name"
-             data-parent="#accordionlifecycle_tables_items_template_table_oneOf_i1_name">
+        <div id="lifecycle_tables_items_template_oneOf_i1_name"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_template_oneOf_i1_name"
+             data-parent="#accordionlifecycle_tables_items_template_oneOf_i1_name">
             <div class="card-body pl-5">
 
     <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">Name of a thing.</span>
 
-    <span class="pattern-value" id="lifecycle_tables_items_template_table_oneOf_i1_name_pattern">Must match regular expression: <code>^\S+$</code></span>
+    <span class="pattern-value" id="lifecycle_tables_items_template_oneOf_i1_name_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_template_table_oneOf_i1_name_minLength">Must be at least <code>1</code> characters long</span></p>
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_template_oneOf_i1_name_minLength">Must be at least <code>1</code> characters long</span></p>
 
         
             </div>

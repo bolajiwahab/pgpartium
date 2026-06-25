@@ -30,8 +30,5 @@ services:
       # to set a fixed timestamp that the mock.now() function will return. This allows us to have consistent
       # and repeatable tests for time-based partitioning logic.
       PGP_CREATE_OPTIONS: --pgoption mock.now=disabled --pgoption search_path=mock,pg_catalog,public
-    command: >
-      sh -c "
-        pgp-start && \
-        kcov --clean --dump-summary --include-pattern=pgp- --include-path=/usr/local/bin/ ./coverage/ bats tests/conftest.sh
-      "
+      MIN_COVERAGE: "30"
+    command: ["bash", "tests/run-coverage.sh"]

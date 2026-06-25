@@ -41,7 +41,7 @@ AS $BODY$
                           , p_user_config=>p_index_storage_parameters
                           , p_pretty=>TRUE
                         )
-               ELSE pgpartium.render_storage_parameters(
+                 ELSE pgpartium.render_storage_parameters(
                         p_relation_schema=>NULL
                       , p_relation_name=>NULL
                       , p_user_config=>p_index_storage_parameters
@@ -108,7 +108,7 @@ AS $BODY$
                      , p_partition_name                                                               --<5: table_name>
                      , partition_indexes.index_definition_excluding_storage_parameters_and_predicate  --<6: index_definition_excluding_storage_parameters_and_predicate>
                    )
-                 ,  COALESCE(E'\n  ' || partition_indexes.rendered_storage_parameters, '')                --<2: storage_parameters>
+                 , COALESCE(E'\n  ' || partition_indexes.rendered_storage_parameters, '')               --<2: storage_parameters>
                  , CASE                                                                                 --<3: index_tablespace>
                      WHEN index_tablespace IS NOT NULL
                        THEN format(E'\nTABLESPACE %1$I', index_tablespace)

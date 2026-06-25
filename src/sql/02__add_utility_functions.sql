@@ -190,7 +190,7 @@ AS $BODY$
         SELECT 2 AS source_order
              , 'toast' AS source_kind
              , parameter_position
-             , 'toast.' || split_part(o.parameter, '=', 1) AS parameter_key
+             , format('%1$I.%2$I', 'toast', split_part(o.parameter, '=', 1)) AS parameter_key
              , split_part(o.parameter, '=', 2) AS parameter_value
           FROM pg_catalog.pg_namespace AS n
           JOIN pg_catalog.pg_class AS c
@@ -270,8 +270,8 @@ AS $BODY$
                format(
                    CASE p_pretty
                      WHEN TRUE
-                       THEN '%1$I = %2$L'
-                     ELSE '%1$I=%2$L'
+                       THEN '%1$s = %2$s'
+                     ELSE '%1$s=%2$s'
                    END
                  , parameter_key
                  , parameter_value

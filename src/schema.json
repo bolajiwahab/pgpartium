@@ -62,24 +62,39 @@
             "description": "IANA timezone identifier defining the logical time context for all time-based operations (generation, expiry), independent of the execution environment (e.g. Europe/Berlin, UTC).",
             "default": "Etc/UTC"
         },
-        "storage_parameters": {
+        "storage": {
             "description": "Storage parameters for relations (tables and indexes).",
             "type": [
                 "object",
                 "null"
             ],
-            "default": null,
-            "examples": [
-                {
-                    "fillfactor": 90,
-                    "autovacuum_enabled": false
+            "properties": {
+                "mode": {
+                    "description": "Mode for storage parameters.",
+                    "type": "string",
+                    "enum": [
+                        "inherit",
+                        "override",
+                        "merge"
+                    ],
+                    "default": "merge"
                 },
-                {
-                    "fillfactor": 80,
-                    "toast.fillfactor": 90
+                "parameters": {
+                    "description": "Storage parameters to apply.",
+                    "type": ["object", "null"],
+                    "default": null,
+                    "minProperties": 1,
+                    "examples": [
+                        {
+                            "fillfactor": true,
+                            "autovacuum_enabled": false
+                        }
+                    ]
                 }
-            ],
-            "minProperties": 1
+            },
+            "default": null,
+            "minProperties": 1,
+            "additionalProperties": false
         },
         "directory": {
             "$ref": "#/definitions/name",
@@ -124,11 +139,6 @@
                 "template"
             ]
         },
-        "extendable_naming": {
-            "$ref": "#/definitions/naming",
-            "description": "Extendable Naming configuration.",
-            "additionalProperties": true
-        },
         "partition": {
             "type": "object",
             "description": "Partition configuration.",
@@ -154,8 +164,8 @@
                     "$ref": "#/definitions/nullable_name",
                     "description": "Tablespace name."
                 },
-                "storage_parameters": {
-                    "$ref": "#/definitions/storage_parameters",
+                "storage": {
+                    "$ref": "#/definitions/storage",
                     "description": "Storage parameters for partitions."
                 },
                 "interval": {
@@ -181,14 +191,14 @@
                             "type": "string",
                             "enum": [
                                 "LATEST_PARTITION",
-                                "NOW",
-                                "TODAY"
+                                "NOW"
                             ]
                         }
                     ],
                     "examples": [
                         "2024-01-01T00:00:00Z",
-                        "LATEST_PARTITION"
+                        "LATEST_PARTITION",
+                        "NOW"
                     ],
                     "default": "NOW"
                 },
@@ -354,8 +364,8 @@
                             "$ref": "#/definitions/nullable_name",
                             "description": "Tablespace for indexes."
                         },
-                        "storage_parameters": {
-                            "$ref": "#/definitions/storage_parameters",
+                        "storage": {
+                            "$ref": "#/definitions/storage",
                             "description": "Storage parameters for indexes.",
                             "examples": [
                                 {
@@ -457,7 +467,7 @@
                                 "$ref": "#/definitions/partition",
                                 "description": "The partition configuration for the table."
                             },
-                            "template_table": {
+                            "template": {
                                 "description": "The template table to replicate objects such as constraints, indexes, triggers from.",
                                 "type": [
                                     "object",

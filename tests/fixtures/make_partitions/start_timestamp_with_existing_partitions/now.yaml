@@ -1,0 +1,11 @@
+---
+lifecycle:
+  directory: tests/fixtures/make_partitions/start_timestamp_with_existing_partitions
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        naming:
+          template: "{table_schema}__{table_name}__YYYY_MM_DD"
+        interval: 1 day
+        start_timestamp: NOW
