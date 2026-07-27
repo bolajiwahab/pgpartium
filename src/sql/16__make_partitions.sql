@@ -9,14 +9,10 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_default_partition_name_template text DEFAULT NULL
   , p_partition_schema text DEFAULT NULL
   , p_partition_tablespace text DEFAULT NULL
-  , p_inherit_table_tablespace_from_template_table boolean DEFAULT FALSE
   , p_partition_storage_mode text DEFAULT 'merge'
   , p_partition_storage_parameters jsonb DEFAULT NULL
   , p_index_name_template text DEFAULT NULL
   , p_index_tablespace text DEFAULT NULL
-  , p_inherit_index_tablespace_from_template_table boolean DEFAULT FALSE
-  , p_index_storage_parameters jsonb DEFAULT NULL
-  , p_inherit_index_storage_parameters_from_template_table boolean DEFAULT FALSE
   , p_constraint_name_template text DEFAULT '{partition_name}_{constraint_keys}_{constraint_type_name}{ordinal}'
   , p_template_table_schema text DEFAULT NULL
   , p_template_table_name text DEFAULT NULL
@@ -42,7 +38,10 @@ DECLARE
     v_partition_storage_clause text;
 
     v_template_table_tablespace text;
-    v_supported_storage_modes   text[] := ARRAY['inherit', 'override', 'merge'];
+
+    v_supported_storage_modes        text[] := ARRAY['inherit', 'override', 'merge'];
+    v_supported_partition_strategies text[] := ARRAY['RANGE'];
+    v_supported_partition_data_types text[] := ARRAY['date', 'timestamptz', 'timestamp', 'int4', 'int8', 'uuid'];
 
 BEGIN
 
@@ -83,7 +82,7 @@ BEGIN
         USING ERRCODE = 'undefined_table';
     END IF;
 
-    IF v_partitioning_details.strategy != 'RANGE' THEN
+    IF NOT (v_partitioning_details.strategy = ANY(v_supported_partition_strategies)) THEN
         RAISE '"%" partitioning is not supported', v_partitioning_details.strategy
         USING ERRCODE = 'feature_not_supported',
                  HINT = format('table "%1$I"."%2$I" must be partitioned by range', p_table_schema, p_table_name);
@@ -95,7 +94,7 @@ BEGIN
                  HINT = format('table "%1$I"."%2$I" is partitioned on more than one column', p_table_schema, p_table_name);
     END IF;
 
-    IF v_partitioning_details.keys_data_types NOT IN ('date', 'timestamptz', 'timestamp', 'int4', 'int8', 'uuid') THEN
+    IF NOT (v_partitioning_details.keys_data_types = ANY(v_supported_partition_data_types)) THEN
         RAISE 'partitioning on data type "%" is not supported', v_partitioning_details.keys_data_types
         USING ERRCODE = 'feature_not_supported',
                DETAIL = format('table "%1$I"."%2$I" is partitioned on a data type that is not supported', p_table_schema, p_table_name),
@@ -165,7 +164,7 @@ BEGIN
                             p_relation_schema=>p_template_table_schema
                           , p_relation_name=>p_template_table_name
                           , p_user_config=>NULL
-                          , p_pretty=>TRUE
+                          , p_format=>'%1$s = %2$s'
                         )
                       , ''
                     )
@@ -174,7 +173,7 @@ BEGIN
                             p_relation_schema=>NULL
                           , p_relation_name=>NULL
                           , p_user_config=>p_partition_storage_parameters
-                          , p_pretty=>TRUE
+                          , p_format=>'%1$s = %2$s'
                         )
                       , ''
                     )
@@ -184,7 +183,7 @@ BEGIN
                             p_relation_schema=>p_template_table_schema
                           , p_relation_name=>p_template_table_name
                           , p_user_config=>p_partition_storage_parameters
-                          , p_pretty=>TRUE
+                          , p_format=>'%1$s = %2$s'
                         )
                       , ''
                     )
@@ -379,9 +378,6 @@ BEGIN
              , p_index_name_template                                  => p_index_name_template
              , p_idempotency                                          => p_idempotency
              , p_index_tablespace                                     => p_index_tablespace
-             , p_inherit_index_tablespace_from_template_table         => p_inherit_index_tablespace_from_template_table
-             , p_index_storage_parameters                             => p_index_storage_parameters
-             , p_inherit_index_storage_parameters_from_template_table => p_inherit_index_storage_parameters_from_template_table
         )
           INTO v_indexes;
 

@@ -121,12 +121,10 @@ function make_partitions() {
     GLOBAL_PARTITION_STORAGE_MODE="$(yq '.lifecycle.partition.storage.mode // strenv(DEFAULT_STORAGE_MODE)' "${config}")"
     GLOBAL_PARTITION_STORAGE_PARAMETERS="$(yq -o=json '.lifecycle.partition.storage.parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")"
 
-    GLOBAL_INDEX_STORAGE_PARAMETERS="$(yq -o=json '.lifecycle.partition.index.storage_parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")"
-
     export GLOBAL_PARTITION_TABLESPACE GLOBAL_INDEX_TABLESPACE GLOBAL_PARTITION_SCHEMA \
            GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL GLOBAL_START_TIMESTAMP GLOBAL_RETENTION \
            GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE GLOBAL_SKIP_OVERLAPPING GLOBAL_PARTITION_STORAGE_PARAMETERS \
-           GLOBAL_PARTITION_STORAGE_MODE GLOBAL_INDEX_STORAGE_PARAMETERS GLOBAL_IDEMPOTENT
+           GLOBAL_PARTITION_STORAGE_MODE GLOBAL_IDEMPOTENT
 
     directory="$(yq '.lifecycle.directory // strenv(DIRECTORY)' "${config}")"
     timezone="$(yq '.lifecycle.partition.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")"
@@ -205,9 +203,6 @@ function make_partitions() {
 
         partition_storage_mode="$(yq '.partition.storage.mode // strenv(GLOBAL_PARTITION_STORAGE_MODE)' <<< "${table}")"
         partition_storage_parameters="$(yq '.partition.storage.parameters // strenv(GLOBAL_PARTITION_STORAGE_PARAMETERS)' <<< "${table}")"
-
-        # index_storage_mode="$(yq '.partition.index.storage_mode // strenv(GLOBAL_INDEX_STORAGE_MODE)' <<< "${table}")"
-        index_storage_parameters="$(yq '.partition.index_storage_parameters // strenv(GLOBAL_INDEX_STORAGE_PARAMETERS)' <<< "${table}")"
 
         template_table="$(yq '.template' <<< "${table}")"
 
@@ -412,7 +407,6 @@ EOF
                  --variable index_tablespace="${index_tablespace}" \
                  --variable partition_storage_mode="${partition_storage_mode}" \
                  --variable partition_storage_parameters="${partition_storage_parameters}" \
-                 --variable index_storage_parameters="${index_storage_parameters}" \
                  --variable template_table_schema="${template_table_schema}" \
                  --variable template_table_name="${template_table_name}" \
                  --variable retention="${retention}" \
@@ -437,7 +431,6 @@ SELECT *
   , p_index_tablespace=>NULLIF(:'index_tablespace', 'null')
   , p_partition_storage_mode=>:'partition_storage_mode'
   , p_partition_storage_parameters=>NULLIF(:'partition_storage_parameters', 'null')::jsonb
-  , p_index_storage_parameters=>NULLIF(:'index_storage_parameters', 'null')::jsonb
   , p_template_table_schema=>NULLIF(:'template_table_schema', 'null')
   , p_template_table_name=>NULLIF(:'template_table_name', 'null')
   , p_retention=>NULLIF(:'retention', 'null')::interval

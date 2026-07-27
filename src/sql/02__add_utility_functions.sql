@@ -222,7 +222,8 @@ CREATE OR REPLACE FUNCTION pgpartium.render_storage_parameters (
     p_relation_schema text
   , p_relation_name text
   , p_user_config jsonb DEFAULT NULL
-  , p_pretty boolean DEFAULT TRUE
+  , p_format text DEFAULT '%1$s = %2$s'
+--   , p_pretty boolean DEFAULT TRUE
 )
 RETURNS text
 LANGUAGE SQL
@@ -268,11 +269,7 @@ AS $BODY$
            ||
            string_agg(
                format(
-                   CASE p_pretty
-                     WHEN TRUE
-                       THEN '%1$s = %2$s'
-                     ELSE '%1$s=%2$s'
-                   END
+                   p_format
                  , parameter_key
                  , parameter_value
                )

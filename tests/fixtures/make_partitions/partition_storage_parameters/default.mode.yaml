@@ -1,6 +1,6 @@
 ---
 lifecycle:
-  directory: tests/fixtures/make_partitions/storage_parameters
+  directory: tests/fixtures/make_partitions/partition_storage_parameters
   tables:
     - schema: test
       name: transactions
@@ -10,7 +10,6 @@ lifecycle:
         interval: 1 mon
         start_timestamp: 2025-04-01T00:00:00+00:00
         storage:
-          mode: override
           parameters:
             fillfactor: 70
             autovacuum_enabled: true

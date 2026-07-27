@@ -1,6 +1,6 @@
 ---
 lifecycle:
-  directory: tests/fixtures/make_partitions/storage_parameters
+  directory: tests/fixtures/make_partitions/partition_storage_parameters
   tables:
     - schema: test
       name: transactions

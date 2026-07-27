@@ -63,7 +63,7 @@
             "default": "Etc/UTC"
         },
         "storage": {
-            "description": "Storage parameters for relations (tables and indexes).",
+            "description": "Storage parameters for relations.",
             "type": [
                 "object",
                 "null"
@@ -354,7 +354,7 @@
                                     "description": "Template for naming indexes.",
                                     "examples": [
                                         "{partition_name}_{index_keys}_idx",
-                                        "{partition_name}_{index_keys}_idx{ordinal}"
+                                        "{partition_name}_{index_keys}_{index_type}_idx{ordinal}"
                                     ],
                                     "default": "{partition_name}_{index_keys}_idx{ordinal}"
                                 }
@@ -363,16 +363,6 @@
                         "tablespace": {
                             "$ref": "#/definitions/nullable_name",
                             "description": "Tablespace for indexes."
-                        },
-                        "storage": {
-                            "$ref": "#/definitions/storage",
-                            "description": "Storage parameters for indexes.",
-                            "examples": [
-                                {
-                                    "fillfactor": true,
-                                    "deduplicate_items": true
-                                }
-                            ]
                         }
                     },
                     "minProperties": 1,
