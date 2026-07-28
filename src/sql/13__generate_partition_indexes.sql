@@ -20,14 +20,6 @@ AS $BODY$
              , index_keys
              , ordinal::text AS ordinal
              , index_definition
-            --  , index_definition_excluding_storage_parameters_and_predicate
-            --  , index_predicate
-            -- , pgpartium.render_storage_parameters(
-            --       p_relation_schema=>p_template_table_schema
-            --     , p_relation_name=>index_name
-            --     , p_user_config=>NULL
-            --     , p_format=>'%1$s = %2$s'
-            --   ) AS rendered_storage_parameters
           FROM pgpartium.get_indexes(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name)
     )
     , parent_indexes AS (
@@ -57,6 +49,7 @@ AS $BODY$
                  ELSE 'INDEX'
                END AS index_qualifier
              , template_indexes.is_unique_index
+             , template_indexes.index_definition
             --  , template_indexes.index_definition_excluding_storage_parameters_and_predicate
             --  , template_indexes.index_predicate
             --  , template_indexes.rendered_storage_parameters
@@ -67,7 +60,7 @@ AS $BODY$
     )
     SELECT string_agg(
                format(
-                   E'%1$s%2$s%3$s%4$s;\n'
+                   E'%1$s%2$s;\n'
                  , format(                                                                              --<1: index_create_statement>
                        E'CREATE %1$s%2$s%3$s\n    ON %4$I.%5$I\n %6$s'
                      , partition_indexes.index_qualifier                                                --<1: index_qualifier>
@@ -85,19 +78,14 @@ AS $BODY$
                         END
                      , p_partition_schema                                                             --<4: table_schema>
                      , p_partition_name                                                               --<5: table_name>
-                    --  , partition_indexes.index_definition_excluding_storage_parameters_and_predicate  --<6: index_definition_excluding_storage_parameters_and_predicate>
+                     , partition_indexes.index_definition  --<6: index_definition_excluding_storage_parameters_and_predicate>
                    )
                 --  , COALESCE(E'\n  ' || partition_indexes.rendered_storage_parameters, '')               --<2: storage_parameters>
-                 , CASE                                                                                 --<3: index_tablespace>
+                 , CASE                                                                                 --<2: index_tablespace>
                      WHEN p_index_tablespace IS NOT NULL
                        THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)
                      ELSE ''
                    END
-                --  , CASE                                                                                 --<4: index_predicate>
-                --      WHEN partition_indexes.index_predicate <> ''
-                --        THEN E'\n ' || partition_indexes.index_predicate
-                --        ELSE partition_indexes.index_predicate
-                --    END
                )
              , E'\n'
                ORDER BY CASE partition_indexes.is_unique_index

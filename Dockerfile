@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim@sha256:b1a741487078b369e78119849663d7f1a5341ef2768798f7b7406c4240f86aef AS build
+FROM python:3.12-slim-bookworm@sha256:c18c7a910432dde3311fc54d02e5d5220f3ebe26fec43ff15745982863dd7b3b AS build
 
 ADD https://salsa.debian.org/postgresql/postgresql-common/-/raw/master/pgdg/apt.postgresql.org.sh /usr/local/bin/
 
@@ -12,14 +12,14 @@ WORKDIR /src
 
 COPY src/sql sql
 
-COPY src/schema.json schema.json
+COPY src/sql src/schema.json src/requirements.txt ./
 
-# Install dependencies check-jsonschema
+# Install dependencies check-jsonschema, pgrubic, and GitHub CLI
 # Enable amd64 architecture in case we are running on arm64
-RUN dpkg --add-architecture amd64 && \
-    apt-get update \
-        && apt-get install -y wget pipx ca-certificates gnupg2 libc6:amd64 \
-        && PIPX_BIN_DIR=/usr/local/bin pipx install check-jsonschema==0.37.3 \
+RUN dpkg --add-architecture amd64 \
+        && apt-get update \
+        && apt-get install -y wget ca-certificates gnupg2 libc6:amd64 \
+        && pip install --no-cache-dir --upgrade pip -r requirements.txt \
         && apt-get clean \
         && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
 

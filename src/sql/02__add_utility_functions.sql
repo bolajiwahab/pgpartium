@@ -47,23 +47,23 @@ AS $BODY$
                         NULLIF(c.reltablespace, 0),
                         d.dattablespace
                     )
-    WHERE d.datname = current_database()
+    WHERE d.datname = pg_catalog.current_database()
       AND n.nspname = p_relation_schema
       AND c.relname = p_relation_name;
 $BODY$;
 
-CREATE OR REPLACE FUNCTION pgpartium.merge_configs (
-    p_base_config jsonb
-  , p_override jsonb
-)
-RETURNS jsonb
-LANGUAGE SQL
-IMMUTABLE
-AS $BODY$
+-- CREATE OR REPLACE FUNCTION pgpartium.merge_configs (
+--     p_base_config jsonb
+--   , p_override jsonb
+-- )
+-- RETURNS jsonb
+-- LANGUAGE SQL
+-- IMMUTABLE
+-- AS $BODY$
 
-    SELECT COALESCE(p_base_config, '{}'::jsonb) || COALESCE(p_override, '{}'::jsonb);
+--     SELECT COALESCE(p_base_config, '{}'::jsonb) || COALESCE(p_override, '{}'::jsonb);
 
-$BODY$;
+-- $BODY$;
 
 CREATE OR REPLACE FUNCTION pgpartium.render_template (
     p_template text,

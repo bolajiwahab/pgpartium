@@ -446,8 +446,10 @@ EOF
         fi
 
         if [[ -s "${temp_migration_directory}/${output_filename}" ]]; then
+            # format the output file with pgrubic
+            pgrubic format "${temp_migration_directory}/${output_filename}"
             # PSQL adds an empty line at the end, so remove it
-            sed -i -e '${/^$/d;}' "${temp_migration_directory}/${output_filename}"
+            # sed -i -e '${/^$/d;}' "${temp_migration_directory}/${output_filename}"
             echo "INFO: Made partitions for ${table_schema}.${table_name}"
             printf "\nMakes partitions for \`%s\`\n\n" "${table_schema}.${table_name}" >> /src/partition_maintenance.log
         else
