@@ -9,10 +9,11 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_default_partition_name_template text DEFAULT NULL
   , p_partition_schema text DEFAULT NULL
   , p_partition_tablespace text DEFAULT NULL
-  , p_partition_storage_mode text DEFAULT 'merge'
+  , p_partition_storage_mode text DEFAULT 'override'
   , p_partition_storage_parameters jsonb DEFAULT NULL
   , p_index_name_template text DEFAULT NULL
   , p_index_tablespace text DEFAULT NULL
+  -- to be changed to object mapping constraint type to template table constraint name, e.g. {"check": "template_check_constraint_name", "unique": "template_unique_constraint_name"}
   , p_constraint_name_template text DEFAULT '{partition_name}_{constraint_keys}_{constraint_type_name}{ordinal}'
   , p_template_table_schema text DEFAULT NULL
   , p_template_table_name text DEFAULT NULL

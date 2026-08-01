@@ -76,10 +76,6 @@ function validate_config() {
     local config="$1"
     local schema="$2"
 
-    # if ! jsonschema "${schema}" <<< "$(yq -o=json "${config}")"; then
-    #     echo "ERROR: Config file ${config} is invalid" >&2
-    #     exit 1
-    # fi
     if ! check-jsonschema --schemafile "${schema}" <(yq -o=json "${config}"); then
         echo "ERROR: Config file ${config} is invalid" >&2
         exit 1
@@ -100,7 +96,7 @@ function make_partitions() {
         DEFAULT_SKIP_OVERLAPPING=false \
         DEFAULT_IDEMPOTENT=false \
         DEFAULT_STORAGE_PARAMETERS=null \
-        DEFAULT_STORAGE_MODE="merge" \
+        DEFAULT_STORAGE_MODE="override" \
         DEFAULT_TIMEZONE="Etc/UTC" \
         DIRECTORY="."
 

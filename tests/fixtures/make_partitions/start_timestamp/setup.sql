@@ -6,4 +6,4 @@ CREATE TABLE test.transactions (
 )
 PARTITION BY RANGE (created_at);
 
-ALTER SYSTEM SET mock.now = '2025-04-01 08:30:00+00';
+ALTER SYSTEM SET mock.now = '2025-05-01 08:30:00+00';
