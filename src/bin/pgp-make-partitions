@@ -78,7 +78,7 @@ function make_partitions() {
         DEFAULT_IDEMPOTENT=false \
         DEFAULT_STORAGE_PARAMETERS=null \
         DEFAULT_STORAGE_MODE="override" \
-        DEFAULT_DESCRIPTION_MAKE="Make partitions for {table_schema}.{table_name}" \
+        DEFAULT_DESCRIPTION_MAKE="Make partitions for {parent_table_schema}.{parent_table_name}" \
         DEFAULT_OUTPUT_FILE_TEMPLATE="pgpartium_output.sql" \
         DEFAULT_INDEX_NAME_TEMPLATE=null \
         DEFAULT_CONSTRAINT_NAME_TEMPLATE="{partition_name}_{constraint_keys}_{constraint_suffix}" \
@@ -160,9 +160,9 @@ function make_partitions() {
         output_file_template="$(yq '.output_file_template // strenv(GLOBAL_OUTPUT_FILE_TEMPLATE)' <<< "${table}")"
 
         description="$(yq '.description.make // strenv(GLOBAL_DESCRIPTION_MAKE)' <<< "${table}")"
-        # Replace table_schema and table_name placeholders in the description.
-        description="${description//\{table_schema\}/$table_schema}"
-        description="${description//\{table_name\}/$table_name}"
+        # Replace parent_table_schema and parent_table_name placeholders in the description.
+        description="${description//\{parent_table_schema\}/$table_schema}"
+        description="${description//\{parent_table_name\}/$table_name}"
 
         partition_schema="$(yq '.partition.schema // strenv(GLOBAL_PARTITION_SCHEMA)' <<< "${table}")"
         # If no schema is provided either in the partition config or in the global config, default to table schema.

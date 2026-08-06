@@ -3,7 +3,7 @@ lifecycle:
   directory: tests/fixtures/expire_partitions/global_config
   timezone: Etc/UTC
   description:
-    expire: "Expire global {table_schema}_{table_name}"
+    expire: "Expire global {parent_table_schema}_{parent_table_name}"
   output_file_template: "{description}.sql"
   idempotent: true
   partition:
@@ -17,7 +17,7 @@ lifecycle:
     - schema: test
       name: overridden_events
       description:
-        expire: "Detach override {table_schema}_{table_name}"
+        expire: "Detach override {parent_table_schema}_{parent_table_name}"
       idempotent: false
       partition:
         retention:

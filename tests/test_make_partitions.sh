@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+bats_require_minimum_version 1.5.0
+
 # shellcheck source=tests/conftest.sh
 source "${BATS_TEST_DIRNAME}/conftest.sh"
 
@@ -155,7 +157,7 @@ lifecycle:
       name: transactions
       partition:
         naming:
-          template: "{table_schema}__{table_name}__YYYY_MM"
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
         interval: 1 mon
         past: -1
 YAML
@@ -178,7 +180,7 @@ lifecycle:
       name: transactions
       partition:
         naming:
-          template: "{table_schema}__{table_name}__YYYY_MM"
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
         interval: 1 mon
         future: -1
 YAML
@@ -244,7 +246,7 @@ lifecycle:
       name: transactions
       partition:
         naming:
-          template: "{table_schema}__{table_name}__YYYY_MM"
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
 YAML
 
     run pgp-make-partitions -c "${config}"
@@ -277,7 +279,7 @@ lifecycle:
       name: transactions
       partition:
         naming:
-          template: "{table_schema}__{table_name}__YYYY_MM"
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
         interval: 1 mon
       template:
         schema: test
@@ -306,7 +308,7 @@ lifecycle:
       name: missing_parent
       partition:
         naming:
-          template: "{table_schema}__{table_name}__YYYY_MM"
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
         interval: 1 mon
 YAML
 

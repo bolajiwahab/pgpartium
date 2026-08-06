@@ -6,6 +6,6 @@ lifecycle:
       name: transactions
       partition:
         naming:
-          template: "{table_schema}__{table_name}__YYYY_MM"
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
         interval: 1 month
         start_timestamp: 2025-03-01T00:00:00+00:00

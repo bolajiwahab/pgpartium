@@ -14,7 +14,7 @@ lifecycle:
       name: transactions
       partition:
         naming:
-          template: "test__{table_name}__YYYY_MM"
+          template: "test__{parent_table_name}__YYYY_MM"
         interval: 1 mon
         start_timestamp: NOW
       template:

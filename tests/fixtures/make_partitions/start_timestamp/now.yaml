@@ -6,6 +6,6 @@ lifecycle:
       name: transactions
       partition:
         naming:
-          template: "{table_schema}__{table_name}__YYYY_MM_DD"
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM_DD"
         interval: 1 day
         start_timestamp: NOW

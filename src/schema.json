@@ -41,12 +41,12 @@
                 "make": {
                     "$ref": "#/definitions/trimmed_non_blank_string",
                     "description": "A description for making of partitions.",
-                    "default": "Make partitions for {table_schema}.{table_name}"
+                    "default": "Make partitions for {parent_table_schema}.{parent_table_name}"
                 },
                 "expire": {
                     "$ref": "#/definitions/trimmed_non_blank_string",
                     "description": "A description for expiration of partitions.",
-                    "default": "Expire partitions for {table_schema}.{table_name}"
+                    "default": "Expire partitions for {parent_table_schema}.{parent_table_name}"
                 }
             },
             "minProperties": 1,

@@ -73,7 +73,7 @@ export DEFAULT_RETENTION=NULL \
        DEFAULT_DETACH_CONCURRENTLY=false \
        DEFAULT_IDEMPOTENT=false \
        DEFAULT_TIMEZONE="Etc/UTC" \
-       DEFAULT_DESCRIPTION_EXPIRE="Expire partitions for {table_schema}.{table_name}" \
+       DEFAULT_DESCRIPTION_EXPIRE="Expire partitions for {parent_table_schema}.{parent_table_name}" \
        DEFAULT_OUTPUT_FILE_TEMPLATE="pgpartium_output.sql"
 
 # Extract global configs
@@ -120,8 +120,8 @@ while read -r table; do
     file_name_template=$(yq '.output_file_template // strenv(GLOBAL_OUTPUT_FILE_TEMPLATE)' <<< "${table}")
     description=$(yq '.description.expire // strenv(GLOBAL_DESCRIPTION_EXPIRE)' <<< "${table}")
     # Replace table_schema and table_name placeholders in the description
-    description="${description//\{table_schema\}/$table_schema}"
-    description="${description//\{table_name\}/$table_name}"
+    description="${description//\{parent_table_schema\}/$table_schema}"
+    description="${description//\{parent_table_name\}/$table_name}"
 
     output_filename=$(pgp-get-migration-filename -t "${file_name_template}" -d "${directory}" -m "${description}")
     echo "INFO: Expiring partitions for ${table_schema}.${table_name}"

@@ -3,7 +3,7 @@ lifecycle:
   directory: tests/fixtures/make_partitions/shared_output_file
   partition:
     naming:
-      template: "{table_name}_YYYY_MM"
+      template: "{parent_table_name}_YYYY_MM"
     interval: 1 mon
     start_timestamp: NOW
   tables:

@@ -15,7 +15,7 @@ lifecycle:
   directory: migrations/partitions
   partition:
     naming:
-      template: "{table_schema}__{table_name}__YYYY_MM"
+      template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
     interval: 1 month
     retention:
       interval: 12 months
@@ -62,8 +62,8 @@ Overrides are resolved per field, including explicit `false` values. In the exam
 | --- | --- | --- | --- | --- |
 | `lifecycle.directory` | string | `.` | Global | Existing directory where migration files are published. |
 | `lifecycle.timezone` | IANA timezone | `Etc/UTC` | Global | Time context used for partition bounds and expiration calculations. |
-| `lifecycle.description.make` | string | `Make partitions for {table_schema}.{table_name}` | Global or table | Description used when naming creation migrations and composing the PR body. |
-| `lifecycle.description.expire` | string | `Expire partitions for {table_schema}.{table_name}` | Global or table | Description used when naming expiration migrations and composing the PR body. |
+| `lifecycle.description.make` | string | `Make partitions for {parent_table_schema}.{parent_table_name}` | Global or table | Description used when naming creation migrations and composing the PR body. |
+| `lifecycle.description.expire` | string | `Expire partitions for {parent_table_schema}.{parent_table_name}` | Global or table | Description used when naming expiration migrations and composing the PR body. |
 | `lifecycle.output_file_template` | string | `pgpartium_output.sql` | Global or table | Template for the generated migration filename. |
 | `lifecycle.idempotent` | boolean | `false` | Global or table | Add supported `IF NOT EXISTS`, `CREATE OR REPLACE` to generated DDL. |
 | `lifecycle.partition` | object | none | Global or table | Creation, replication, storage, and expiration behavior. |
@@ -99,12 +99,12 @@ Overrides are resolved per field, including explicit `false` values. In the exam
 | `{hour}` | Two-digit UTC hour. |
 | `{direction}` | Migration direction; currently always `up`. |
 
-The descriptions themselves support `{table_schema}` and `{table_name}`. These are resolved before the description is inserted into the filename.
+The descriptions themselves support `{parent_table_schema}` and `{parent_table_name}`. These are resolved before the description is inserted into the filename.
 
 ```yaml
 lifecycle:
   description:
-    make: "Make partitions for {table_schema}_{table_name}"
+    make: "Make partitions for {parent_table_schema}_{parent_table_name}"
   output_file_template: "V{integer:4}__{description}.{direction}.sql"
 ```
 
@@ -133,17 +133,17 @@ These options are consumed primarily by `pgp-make-partitions`.
 
 ### Partition naming
 
-Partition names support `{table_schema}`, `{table_name}`, and PostgreSQL `to_char` date/time patterns. Common patterns include:
+Partition names support `{parent_table_schema}`, `{parent_table_name}`, and PostgreSQL `to_char` date/time patterns. Common patterns include:
 
 | Cadence | Example template | Example name |
 | --- | --- | --- |
-| Year | `{table_schema}__{table_name}__YYYY` | `public__events__2025` |
-| Month | `{table_schema}__{table_name}__YYYY_MM` | `public__events__2025_04` |
-| ISO week | `{table_schema}__{table_name}__IYYY_IW` | `public__events__2025_14` |
-| Day | `{table_schema}__{table_name}__YYYY_MM_DD` | `public__events__2025_04_01` |
-| Hour | `{table_schema}__{table_name}__YYYY_MM_DD_HH24` | `public__events__2025_04_01_13` |
-| Minute | `{table_schema}__{table_name}__YYYY_MM_DD_HH24_MI` | `public__events__2025_04_01_13_30` |
-| Second | `{table_schema}__{table_name}__YYYY_MM_DD_HH24_MI_SS` | `public__events__2025_04_01_13_30_00` |
+| Year | `{parent_table_schema}__{parent_table_name}__YYYY` | `public__events__2025` |
+| Month | `{parent_table_schema}__{parent_table_name}__YYYY_MM` | `public__events__2025_04` |
+| ISO week | `{parent_table_schema}__{parent_table_name}__IYYY_IW` | `public__events__2025_14` |
+| Day | `{parent_table_schema}__{parent_table_name}__YYYY_MM_DD` | `public__events__2025_04_01` |
+| Hour | `{parent_table_schema}__{parent_table_name}__YYYY_MM_DD_HH24` | `public__events__2025_04_01_13` |
+| Minute | `{parent_table_schema}__{parent_table_name}__YYYY_MM_DD_HH24_MI` | `public__events__2025_04_01_13_30` |
+| Second | `{parent_table_schema}__{parent_table_name}__YYYY_MM_DD_HH24_MI_SS` | `public__events__2025_04_01_13_30_00` |
 
 Use a naming pattern whose precision distinguishes every configured interval. A monthly interval with only `YYYY`, for example, would produce duplicate names.
 

@@ -322,10 +322,10 @@ BEGIN
                                THEN name_template
                              ELSE to_char(lower_bound, name_template)
                            END
-                         , '{table_name}'
+                         , '{parent_table_name}'
                          , p_table_name
                        )
-                     , '{table_schema}'
+                     , '{parent_table_schema}'
                      , p_table_schema
                    ) AS partition_name
                  , partition_clause

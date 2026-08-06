@@ -8,11 +8,11 @@ lifecycle:
   # Used consistently when calculating partition bounds and retention.
   timezone: Etc/UTC
 
-  # {table_schema} and {table_name} are resolved before {description} is used
+  # {parent_table_schema} and {parent_table_name} are resolved before {description} is used
   # by output_file_template.
   description:
-    make: "Make partitions for {table_schema}.{table_name}"
-    expire: "Expire partitions for {table_schema}.{table_name}"
+    make: "Make partitions for {parent_table_schema}.{parent_table_name}"
+    expire: "Expire partitions for {parent_table_schema}.{parent_table_name}"
 
   # Supported placeholders include {integer}, {integer:N}, {description},
   # {timestamp}, {epoch}, {date}, {year}, {month}, {day}, {hour}, and
@@ -23,11 +23,11 @@ lifecycle:
   idempotent: true
 
   partition:
-    # Partition names support {table_schema}, {table_name}, and PostgreSQL
+    # Partition names support {parent_table_schema}, {parent_table_name}, and PostgreSQL
     # to_char patterns such as YYYY, MM, DD, HH24, MI, SS, IYYY, and IW
     #https://www.postgresql.org/docs/current/functions-formatting.html#:~:text=Table%C2%A09.27.%C2%A0Template%20Patterns%20for%20Date/Time%20Formatting.
     naming:
-      template: "{table_schema}__{table_name}__YYYY_MM"
+      template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
 
     # Defaults to the parent table's schema when omitted. The schema and tablespace must already exist in the database.
     schema: partitions
@@ -42,7 +42,7 @@ lifecycle:
     # Create a default partition when the parent does not already have one.
     default:
       naming:
-        template: "{table_schema}__{table_name}__default"
+        template: "{parent_table_schema}__{parent_table_name}__default"
 
     # Prevent generation of partitions older than this interval and generate
     # expiration DDL for partitions whose upper bound is at least this old.
@@ -113,11 +113,11 @@ lifecycle:
       # Table-level values override lifecycle defaults.
       idempotent: false
       description:
-        make: "Make weekly partitions for {table_schema}_{table_name}"
-        expire: "Expire weekly partitions for {table_schema}_{table_name}"
+        make: "Make weekly partitions for {parent_table_schema}_{parent_table_name}"
+        expire: "Expire weekly partitions for {parent_table_schema}_{parent_table_name}"
       partition:
         naming:
-          template: "{table_schema}__{table_name}__IYYY_IW"
+          template: "{parent_table_schema}__{parent_table_name}__IYYY_IW"
         interval: 1 week
         future: 4
         retention:
