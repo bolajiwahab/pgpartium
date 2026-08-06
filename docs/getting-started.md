@@ -1,6 +1,6 @@
 # Getting started
 
-pgpartium inspects a PostgreSQL catalog and writes migration files for missing and expired partitions. It does not apply those lifecycle migrations to the source database. The intended output is a repository change reviewed and deployed through the application's existing migration process.
+pgpartium inspects a PostgreSQL database and writes migration files for missing and expired partitions. It does not apply those lifecycle migrations to the source database. The intended output is a repository change reviewed and deployed through the application's existing migration process.
 
 ## Requirements
 
@@ -8,7 +8,7 @@ pgpartium inspects a PostgreSQL catalog and writes migration files for missing a
 - A single-column `RANGE`-partitioned parent table.
 - A supported partition key: `date`, `timestamp`, `timestamptz`, `integer`, `bigint`, or UUIDv7-compatible `uuid`.
 - An existing directory for generated migration files.
-- A database catalog containing the parent tables and any configured schemas, tablespaces, or template tables.
+- A database containing the parent tables and any configured schemas, tablespaces, or template tables.
 
 The packaged container supplies PostgreSQL setup utilities, the pgpartium CLIs, pgrubic, Git, and GitHub CLI.
 
@@ -48,13 +48,13 @@ docker run --rm --user root \
   '
 ```
 
-`pgp-start` defaults to PostgreSQL 14 and supplies the local cluster connection settings. `PGP_INIT_DIR` is the only database setup input here and loads the example schema. `--workdir /repository` makes repository-relative configuration and output paths resolve inside the mounted host directory; without it, the image uses `/src`. The generated migration appears at `examples/quick-start/migrations/pgpartium_output.sql` on the host.
+`pgp-start` defaults to PostgreSQL 14 and supplies the local cluster connection settings. `PGP_INIT_DIR` is the only database setup input here and loads the example schema. `--workdir /repository` makes repository-relative configuration and output paths resolve inside the mounted host directory. The generated migration appears at `examples/quick-start/migrations/pgpartium_output.sql` on the host.
 
-To adapt the example, copy its configuration and initialization layout into the application repository. Change `lifecycle.directory`, the configured tables, and the initialization SQL or scripts to match the application. The output directory must already exist. For all available options, inheritance rules, and naming placeholders, use the [configuration reference](configuration.md) and [annotated sample](../config.sample.yaml).
+To adapt the example, copy its configuration and initialization layout into the application repository. Change `lifecycle.directory`, the configured tables, and the initialization SQL or scripts to match the application's schema migration setup. The output directory must already exist. For all available options, inheritance rules, and naming placeholders, use the [configuration reference](configuration.md) and [annotated sample](../config.sample.yaml).
 
-## Choose a catalog source
+## Choose a database source
 
-pgpartium needs an accurate PostgreSQL catalog. It supports two practical approaches.
+pgpartium needs an accurate PostgreSQL database. It supports two practical approaches.
 
 ### Ephemeral PostgreSQL from repository migrations
 
@@ -97,9 +97,9 @@ docker run --rm --user root \
 
 The generated SQL appears in `migrations/partitions` on the host.
 
-### Existing external catalog
+### Existing external database
 
-Use an existing non-production catalog when it is the authoritative representation of the schema. Install only the PostgreSQL client runtime, then supply connection settings:
+Use an existing non-production database when it is the authoritative representation of the schema. Install only the PostgreSQL client runtime, then supply connection settings:
 
 ```bash
 docker run --rm --user root \
@@ -120,11 +120,11 @@ docker run --rm --user root \
   '
 ```
 
-The connection role must be able to inspect the application catalog and create or replace helper objects in the `pgpartium` schema. Prefer a non-production database and restrict network and credential access appropriately.
+The connection role must be able to inspect the application catalog, creates a dedicated schema `pgpartium` for the helper objects, and create or replace helper objects in the `pgpartium` schema. Prefer a non-production database and restrict network and credential access appropriately.
 
 ## Review the output
 
-`pgp-make-partitions` produces DDL for missing desired ranges. `pgp-expire-partitions` produces detach and/or drop DDL for ranges outside retention.
+`pgp-make-partitions` produces DDL for missing desired ranges. `pgp-expire-partitions` produces detach and/or drop DDL for ranges outside the retention period.
 
 Before applying generated migrations:
 

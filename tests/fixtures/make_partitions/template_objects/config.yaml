@@ -8,6 +8,10 @@ lifecycle:
         naming:
           template: "{table_schema}__{table_name}__YYYY_MM"
         interval: 1 mon
+        start_timestamp: NOW
+        trigger:
+          naming:
+            template: "{partition_name}_{trigger_function_name}{ordinal}"
       template:
         schema: test
         name: transactions_template

@@ -1,9 +1,10 @@
 ---
 lifecycle:
   directory: "tests/fixtures/expire_partitions/config_directory"
+  idempotent: true
   partition:
-    retention: "1 month"
-    idempotent: true
+    retention:
+      interval: "1 month"
   tables:
     - schema: "test"
       name: "events"

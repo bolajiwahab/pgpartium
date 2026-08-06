@@ -14,9 +14,9 @@ The pgpartium image contains commands for preparing PostgreSQL and generating li
 | `PGP_PORT` | `5432` | PostgreSQL port. |
 | `PGP_DATABASE` | `postgres` | Database containing the partitioned schema. |
 
-These defaults target the disposable local cluster created by `pgp-start`, so local-cluster users do not need to provide credentials or endpoints. They are not recommended production credentials. When connecting to an external catalog, override all five explicitly.
+These defaults target the disposable local cluster created by `pgp-start`, so local-cluster users do not need to provide credentials or endpoints. They are not recommended credentials for external databases. When connecting to an external database, override all five explicitly.
 
-External catalog example:
+External database example:
 
 ```bash
 export PGP_USER=partition_catalog_reader
@@ -28,7 +28,7 @@ export PGP_DATABASE=application_catalog
 
 ## `pgp-start`
 
-Installs a PostgreSQL major version and its client. Unless `NO_CLUSTER=1` is set, it creates and starts a local cluster and optionally applies an initialization directory.
+Installs a PostgreSQL major version and psql client. Unless `NO_CLUSTER=1` is set, it creates and starts a local cluster and optionally applies an initialization directory.
 
 ```text
 OPTIONS:

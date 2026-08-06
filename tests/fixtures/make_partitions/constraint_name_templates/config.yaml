@@ -8,6 +8,7 @@ lifecycle:
         naming:
           template: "{table_schema}__{table_name}__YYYY_MM"
         interval: 1 mon
+        start_timestamp: NOW
         constraint:
           naming:
             template: "{partition_name}_generic_{constraint_keys}_{constraint_suffix}"

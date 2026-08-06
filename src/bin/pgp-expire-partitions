@@ -77,11 +77,11 @@ export DEFAULT_RETENTION=NULL \
        DEFAULT_OUTPUT_FILE_TEMPLATE="pgpartium_output.sql"
 
 # Extract global configs
-GLOBAL_RETENTION=$(yq '.lifecycle.partition.retention // strenv(DEFAULT_RETENTION)' "${config}")
-GLOBAL_DETACH_ONLY=$(yq '.lifecycle.partition.detach_only // strenv(DEFAULT_DETACH_ONLY)' "${config}")
-GLOBAL_DETACH_FIRST=$(yq '.lifecycle.partition.detach_first // strenv(DEFAULT_DETACH_FIRST)' "${config}")
-GLOBAL_DETACH_CONCURRENTLY=$(yq '.lifecycle.partition.detach_concurrently // strenv(DEFAULT_DETACH_CONCURRENTLY)' "${config}")
-GLOBAL_IDEMPOTENT=$(yq '.lifecycle.partition.idempotent // strenv(DEFAULT_IDEMPOTENT)' "${config}")
+GLOBAL_RETENTION=$(yq '.lifecycle.partition.retention.interval // strenv(DEFAULT_RETENTION)' "${config}")
+GLOBAL_DETACH_ONLY=$(yq '.lifecycle.partition.retention.detach_only // strenv(DEFAULT_DETACH_ONLY)' "${config}")
+GLOBAL_DETACH_FIRST=$(yq '.lifecycle.partition.retention.detach_first // strenv(DEFAULT_DETACH_FIRST)' "${config}")
+GLOBAL_DETACH_CONCURRENTLY=$(yq '.lifecycle.partition.retention.detach_concurrently // strenv(DEFAULT_DETACH_CONCURRENTLY)' "${config}")
+GLOBAL_IDEMPOTENT=$(yq '.lifecycle.idempotent // strenv(DEFAULT_IDEMPOTENT)' "${config}")
 GLOBAL_TIMEZONE=$(yq '.lifecycle.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
 GLOBAL_DESCRIPTION_EXPIRE=$(yq '.lifecycle.description.expire // strenv(DEFAULT_DESCRIPTION_EXPIRE)' "${config}")
 GLOBAL_OUTPUT_FILE_TEMPLATE=$(yq '.lifecycle.output_file_template // strenv(DEFAULT_OUTPUT_FILE_TEMPLATE)' "${config}")
@@ -127,27 +127,27 @@ while read -r table; do
     echo "INFO: Expiring partitions for ${table_schema}.${table_name}"
 
     timezone="${GLOBAL_TIMEZONE}"
-    retention=$(yq '.partition.retention // strenv(GLOBAL_RETENTION)' <<< "${table}")
+    retention=$(yq '.partition.retention.interval // strenv(GLOBAL_RETENTION)' <<< "${table}")
 
     # Because yq default value operator is used to provide alternative (or default) values
     # when a particular expression is either null or false, we cannot use it as it would
     # instead override partition level boolean values, instead we override them if they are not set.
-    detach_only=$(yq '.partition.detach_only' <<< "${table}")
+    detach_only=$(yq '.partition.retention.detach_only' <<< "${table}")
     if [[ "${detach_only}" == "null" ]]; then
         detach_only="${GLOBAL_DETACH_ONLY}"
     fi
 
-    detach_first=$(yq '.partition.detach_first' <<< "${table}")
+    detach_first=$(yq '.partition.retention.detach_first' <<< "${table}")
     if [[ "${detach_first}" == "null" ]]; then
         detach_first="${GLOBAL_DETACH_FIRST}"
     fi
 
-    detach_concurrently=$(yq '.partition.detach_concurrently' <<< "${table}")
+    detach_concurrently=$(yq '.partition.retention.detach_concurrently' <<< "${table}")
     if [[ "${detach_concurrently}" == "null" ]]; then
         detach_concurrently="${GLOBAL_DETACH_CONCURRENTLY}"
     fi
 
-    idempotent=$(yq '.partition.idempotent' <<< "${table}")
+    idempotent=$(yq '.idempotent' <<< "${table}")
     if [[ "${idempotent}" == "null" ]]; then
         idempotent="${GLOBAL_IDEMPOTENT}"
     fi

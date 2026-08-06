@@ -1336,7 +1336,7 @@
              data-parent="#accordionlifecycle_partition_trigger_naming_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{event_timing}_{trigger_event}_{function_name}{ordinal}"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}"</span><br/>
 <span class="description">Template for naming triggers.</span>
 
     <span class="pattern-value" id="lifecycle_partition_trigger_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
@@ -1347,7 +1347,7 @@
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
-<br/><div id="lifecycle_partition_trigger_naming_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">partition_name</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">_{event_timing}_{trigger_event}_{function_name}{ordinal}</span>
+<br/><div id="lifecycle_partition_trigger_naming_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">partition_name</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}</span>
 </pre></div>
 </div>
             </div>
@@ -1504,84 +1504,6 @@
         </div>
     </div>
 </div>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="accordion" id="accordionlifecycle_partition_detach_first">
-    <div class="card">
-        <div class="card-header" id="headinglifecycle_partition_detach_first">
-            <h2 class="mb-0">
-                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_partition_detach_first"
-                        aria-expanded="" aria-controls="lifecycle_partition_detach_first" onclick="setAnchor('#lifecycle_partition_detach_first')"><span class="property-name">detach_first</span></button>
-            </h2>
-        </div>
-
-        <div id="lifecycle_partition_detach_first"
-             class="collapse property-definition-div" aria-labelledby="headinglifecycle_partition_detach_first"
-             data-parent="#accordionlifecycle_partition_detach_first">
-            <div class="card-body pl-5">
-
-    <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
-<span class="description">Whether to detach the expired partitions first before dropping them.</span>
-        
-
-        
-        
-
-        
-            </div>
-        </div>
-    </div>
-</div>
-<div class="accordion" id="accordionlifecycle_partition_detach_only">
-    <div class="card">
-        <div class="card-header" id="headinglifecycle_partition_detach_only">
-            <h2 class="mb-0">
-                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_partition_detach_only"
-                        aria-expanded="" aria-controls="lifecycle_partition_detach_only" onclick="setAnchor('#lifecycle_partition_detach_only')"><span class="property-name">detach_only</span></button>
-            </h2>
-        </div>
-
-        <div id="lifecycle_partition_detach_only"
-             class="collapse property-definition-div" aria-labelledby="headinglifecycle_partition_detach_only"
-             data-parent="#accordionlifecycle_partition_detach_only">
-            <div class="card-body pl-5">
-
-    <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
-<span class="description">Whether to only detach the expired partitions.</span>
-        
-
-        
-        
-
-        
-            </div>
-        </div>
-    </div>
-</div>
-<div class="accordion" id="accordionlifecycle_partition_detach_concurrently">
-    <div class="card">
-        <div class="card-header" id="headinglifecycle_partition_detach_concurrently">
-            <h2 class="mb-0">
-                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_partition_detach_concurrently"
-                        aria-expanded="" aria-controls="lifecycle_partition_detach_concurrently" onclick="setAnchor('#lifecycle_partition_detach_concurrently')"><span class="property-name">detach_concurrently</span></button>
-            </h2>
-        </div>
-
-        <div id="lifecycle_partition_detach_concurrently"
-             class="collapse property-definition-div" aria-labelledby="headinglifecycle_partition_detach_concurrently"
-             data-parent="#accordionlifecycle_partition_detach_concurrently">
-            <div class="card-body pl-5">
-
-    <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
-<span class="description">Whether to detach the expired partitions concurrently.</span>
-        
-
-        
-        
-
-        
             </div>
         </div>
     </div>
@@ -2906,7 +2828,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_trigger_naming_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{event_timing}_{trigger_event}_{function_name}{ordinal}"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}"</span><br/>
 <span class="description">Template for naming triggers.</span>
 
     <span class="pattern-value" id="lifecycle_tables_items_partition_trigger_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
@@ -2917,7 +2839,7 @@
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
-<br/><div id="lifecycle_tables_items_partition_trigger_naming_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">partition_name</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">_{event_timing}_{trigger_event}_{function_name}{ordinal}</span>
+<br/><div id="lifecycle_tables_items_partition_trigger_naming_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">partition_name</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}</span>
 </pre></div>
 </div>
             </div>
@@ -3074,84 +2996,6 @@
         </div>
     </div>
 </div>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="accordion" id="accordionlifecycle_tables_items_partition_detach_first">
-    <div class="card">
-        <div class="card-header" id="headinglifecycle_tables_items_partition_detach_first">
-            <h2 class="mb-0">
-                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_partition_detach_first"
-                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_detach_first" onclick="setAnchor('#lifecycle_tables_items_partition_detach_first')"><span class="property-name">detach_first</span></button>
-            </h2>
-        </div>
-
-        <div id="lifecycle_tables_items_partition_detach_first"
-             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_partition_detach_first"
-             data-parent="#accordionlifecycle_tables_items_partition_detach_first">
-            <div class="card-body pl-5">
-
-    <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
-<span class="description">Whether to detach the expired partitions first before dropping them.</span>
-        
-
-        
-        
-
-        
-            </div>
-        </div>
-    </div>
-</div>
-<div class="accordion" id="accordionlifecycle_tables_items_partition_detach_only">
-    <div class="card">
-        <div class="card-header" id="headinglifecycle_tables_items_partition_detach_only">
-            <h2 class="mb-0">
-                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_partition_detach_only"
-                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_detach_only" onclick="setAnchor('#lifecycle_tables_items_partition_detach_only')"><span class="property-name">detach_only</span></button>
-            </h2>
-        </div>
-
-        <div id="lifecycle_tables_items_partition_detach_only"
-             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_partition_detach_only"
-             data-parent="#accordionlifecycle_tables_items_partition_detach_only">
-            <div class="card-body pl-5">
-
-    <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
-<span class="description">Whether to only detach the expired partitions.</span>
-        
-
-        
-        
-
-        
-            </div>
-        </div>
-    </div>
-</div>
-<div class="accordion" id="accordionlifecycle_tables_items_partition_detach_concurrently">
-    <div class="card">
-        <div class="card-header" id="headinglifecycle_tables_items_partition_detach_concurrently">
-            <h2 class="mb-0">
-                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_partition_detach_concurrently"
-                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_detach_concurrently" onclick="setAnchor('#lifecycle_tables_items_partition_detach_concurrently')"><span class="property-name">detach_concurrently</span></button>
-            </h2>
-        </div>
-
-        <div id="lifecycle_tables_items_partition_detach_concurrently"
-             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_partition_detach_concurrently"
-             data-parent="#accordionlifecycle_tables_items_partition_detach_concurrently">
-            <div class="card-body pl-5">
-
-    <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
-<span class="description">Whether to detach the expired partitions concurrently.</span>
-        
-
-        
-        
-
-        
             </div>
         </div>
     </div>

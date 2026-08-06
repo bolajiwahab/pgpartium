@@ -5,6 +5,7 @@ lifecycle:
     naming:
       template: "{table_name}_YYYY_MM"
     interval: 1 mon
+    start_timestamp: NOW
   tables:
     - schema: test
       name: events

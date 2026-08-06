@@ -67,7 +67,6 @@ function make_partitions() {
     validate_config "${config}" /src/schema.json
 
     # Set defaults.
-    # DEFAULT_START_TIMESTAMP="NOW" \
     export DEFAULT_TABLESPACE=null \
         DEFAULT_INTERVAL=null \
         DEFAULT_START_TIMESTAMP=null \
@@ -84,7 +83,7 @@ function make_partitions() {
         DEFAULT_INDEX_NAME_TEMPLATE=null \
         DEFAULT_CONSTRAINT_NAME_TEMPLATE="{partition_name}_{constraint_keys}_{constraint_suffix}" \
         DEFAULT_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE="{partition_name}_pkey" \
-        DEFAULT_TRIGGER_NAME_TEMPLATE="{partition_name}_{event_timing}_{trigger_event}_{function_name}{ordinal}" \
+        DEFAULT_TRIGGER_NAME_TEMPLATE="{partition_name}_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}" \
         DEFAULT_TIMEZONE="Etc/UTC" \
         DIRECTORY="."
 
@@ -172,19 +171,8 @@ function make_partitions() {
             partition_schema="${table_schema}"
         fi
 
-        partition_name_template="$(yq '.partition.naming.template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)' <<< "${table}")"
-        # if [[ "${partition_name_template}" == "null" ]]; then
-        #     echo "ERROR: Partition name template is required" >&2
-        #     echo "HINT: Please provide a name template for partitions in the config file either in the table level config or in the global config" >&2
-        #     exit 1
-        # fi
-
         partition_interval="$(yq '.partition.interval // strenv(GLOBAL_INTERVAL)' <<< "${table}")"
-        # if [[ "${partition_interval}" == "null" ]]; then
-        #     echo "ERROR: Partition interval is required" >&2
-        #     echo "HINT: Please provide a partition interval in the config file either in the partition config or in the global config" >&2
-        #     exit 1
-        # fi
+        partition_name_template="$(yq '.partition.naming.template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)' <<< "${table}")"
 
         partition_tablespace="$(yq '.partition.tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' <<< "${table}")"
         index_name_template="$(yq '.partition.index.naming.template // strenv(GLOBAL_INDEX_NAME_TEMPLATE)' <<< "${table}")"

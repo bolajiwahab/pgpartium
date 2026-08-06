@@ -9,4 +9,5 @@ lifecycle:
           template: "{table_schema}__{table_name}__YYYY_MM"
         interval: 1 mon
         start_timestamp: 2025-01-01T00:00:00+00:00
-        retention: 1 mon
+        retention:
+          interval: 1 mon

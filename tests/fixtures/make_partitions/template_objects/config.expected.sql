@@ -1,5 +1,9 @@
 CREATE TABLE test.test__transactions__2025_04
-    PARTITION OF test.transactions
+    PARTITION OF test.transactions (
+    CONSTRAINT test__transactions__2025_04_pkey PRIMARY KEY (transaction_id, account_id)
+  , CONSTRAINT test__transactions__2025_04_account_id_status_key UNIQUE (account_id, status)
+  , CONSTRAINT test__transactions__2025_04_amount_check CHECK (round(amount, 2) = amount)
+)
     FOR VALUES FROM ('2025-04-01 00:00:00+00') TO ('2025-05-01 00:00:00+00');
 
 CREATE UNIQUE INDEX
@@ -10,17 +14,17 @@ CREATE UNIQUE INDEX
 CREATE INDEX
     ON test.test__transactions__2025_04 ((lower(status)));
 
-CREATE TRIGGER suppress_redundant_updates_trig
+CREATE TRIGGER test__transactions__2025_04_log_change
+  BEFORE UPDATE
+  ON test.test__transactions__2025_04
+  FOR EACH ROW
+    EXECUTE PROCEDURE test.log_change();
+
+ALTER TABLE test.test__transactions__2025_04
+    DISABLE TRIGGER test__transactions__2025_04_log_change;
+
+CREATE TRIGGER test__transactions__2025_04_suppress_redundant_updates_trigger
   BEFORE UPDATE
   ON test.test__transactions__2025_04
   FOR EACH ROW
     EXECUTE PROCEDURE suppress_redundant_updates_trigger('arg');
-
-CREATE TRIGGER suppress_redundant_updates_trig_2
-  BEFORE UPDATE
-  ON test.test__transactions__2025_04
-  FOR EACH ROW
-    EXECUTE PROCEDURE suppress_redundant_updates_trigger();
-
-ALTER TABLE test.test__transactions__2025_04
-    DISABLE TRIGGER suppress_redundant_updates_trig_2;

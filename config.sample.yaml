@@ -2,7 +2,7 @@
 # Values under lifecycle are defaults for every table. A table may override
 # description, output_file_template, and any partition option.
 lifecycle:
-  # This directory must already exist. Generated migrations are written here.
+  # The directory should already exist. Generated migrations are written here.
   directory: migrations/partitions
 
   # Used consistently when calculating partition bounds and retention.
@@ -11,22 +11,25 @@ lifecycle:
   # {table_schema} and {table_name} are resolved before {description} is used
   # by output_file_template.
   description:
-    make: "Make partitions for {table_schema}_{table_name}"
-    expire: "Expire partitions for {table_schema}_{table_name}"
+    make: "Make partitions for {table_schema}.{table_name}"
+    expire: "Expire partitions for {table_schema}.{table_name}"
 
   # Supported placeholders include {integer}, {integer:N}, {description},
   # {timestamp}, {epoch}, {date}, {year}, {month}, {day}, {hour}, and
   # {direction}. The direction is currently "up".
   output_file_template: "V{integer:3}__{description}.sql"
 
+  # Add supported `IF NOT EXISTS`, `CREATE OR REPLACE` to generated DDL.
+  idempotent: true
+
   partition:
     # Partition names support {table_schema}, {table_name}, and PostgreSQL
-    # to_char patterns such as YYYY, MM, DD, HH24, MI, SS, IYYY, and IW.
+    # to_char patterns such as YYYY, MM, DD, HH24, MI, SS, IYYY, and IW
+    #https://www.postgresql.org/docs/current/functions-formatting.html#:~:text=Table%C2%A09.27.%C2%A0Template%20Patterns%20for%20Date/Time%20Formatting.
     naming:
       template: "{table_schema}__{table_name}__YYYY_MM"
 
-    # Defaults to the parent table's schema when omitted. The schema and
-    # tablespaces must already exist.
+    # Defaults to the parent table's schema when omitted. The schema and tablespace must already exist in the database.
     schema: partitions
     tablespace: pg_default
 
@@ -43,15 +46,23 @@ lifecycle:
 
     # Prevent generation of partitions older than this interval and generate
     # expiration DDL for partitions whose upper bound is at least this old.
-    retention: 12 months
+    # With **detach_first** enabled, generated SQL detaches and then drops each
+    # expired partition. **detach_only** takes precedence.
+    retention:
+      interval: 12 months
+      detach_first: true
+      detach_only: false
+      detach_concurrently: true
 
+    # When true, skip partitions whose partition bounds will overlap with another,
+    # useful when the partitioning strategy is being changed e.g. from weekly to monthly,
+    # which could result in overlapping partitions.
     skip_overlapping: false
-    idempotent: true
 
     # Storage modes:
     #   override - use only these parameters (the default)
-    #   inherit  - use parameters from the selected template table
-    #   merge    - inherit from the template, then apply these overrides
+    #   inherit  - use parameters from the provided template table
+    #   merge    - inherit from the template table, then apply these overrides
     storage:
       mode: override
       parameters:
@@ -80,15 +91,14 @@ lifecycle:
         exclusion:
           template: "{partition_name}_{constraint_keys}_excl{ordinal}"
 
-    # Expiration mode. With detach_first enabled, generated SQL detaches and
-    # then drops each expired partition. detach_only takes precedence.
-    detach_first: true
-    detach_only: false
-    detach_concurrently: true
+    trigger:
+      naming:
+        template: "{partition_name}_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}"
 
   tables:
     - schema: public
       name: transactions
+      idempotent: true
 
       # Objects present on this table but absent from the partitioned parent
       # are replicated onto new partitions. This can also be
@@ -101,6 +111,7 @@ lifecycle:
       name: audit_events
 
       # Table-level values override lifecycle defaults.
+      idempotent: false
       description:
         make: "Make weekly partitions for {table_schema}_{table_name}"
         expire: "Expire weekly partitions for {table_schema}_{table_name}"
@@ -109,7 +120,8 @@ lifecycle:
           template: "{table_schema}__{table_name}__IYYY_IW"
         interval: 1 week
         future: 4
-        retention: 26 weeks
-        detach_only: true
-        detach_first: false
-        detach_concurrently: false
+        retention:
+          interval: 26 weeks
+          detach_only: true
+          detach_first: false
+          detach_concurrently: false

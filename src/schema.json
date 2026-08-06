@@ -12,13 +12,13 @@
         "interval": {
             "$ref": "#/definitions/trimmed_non_blank_string",
             "examples": [
-              "2 hours",
-              "7 days",
-              "5 weeks",
-              "3 months",
-              "2 years"
+                "2 hours",
+                "7 days",
+                "5 weeks",
+                "3 months",
+                "2 years"
             ]
-          },
+        },
         "name": {
             "description": "Name of a thing.",
             "type": "string",
@@ -158,7 +158,7 @@
                 "interval": {
                     "$ref": "#/definitions/interval",
                     "description": "The partition interval."
-                  },
+                },
                 "start_timestamp": {
                     "description": "The start timestamp for partition generation. Can also be LATEST_PARTITION to use the most recent partition.",
                     "oneOf": [
@@ -345,54 +345,39 @@
                                 "template": {
                                     "description": "Template for naming triggers.",
                                     "examples": [
-                                        "{partition_name}_{event_timing}_{trigger_event}_{function_name}{ordinal}"
+                                        "{partition_name}_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}"
                                     ],
-                                    "default": "{partition_name}_{event_timing}_{trigger_event}_{function_name}{ordinal}"
+                                    "default": "{partition_name}_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}"
                                 }
                             }
                         }
                     }
                 },
                 "retention": {
-                  "type": "object",
-                  "description": "Configuration for expiring partitions.",
-                  "properties": {
-                    "interval": {
-                      "$ref": "#/definitions/interval",
-                      "description": "Expire partitions older than this interval."
+                    "type": "object",
+                    "description": "Configuration for expiring partitions.",
+                    "properties": {
+                        "interval": {
+                            "$ref": "#/definitions/interval",
+                            "description": "Expire partitions older than this interval."
+                        },
+                        "detach_first": {
+                            "description": "Whether to detach expired partitions before dropping them.",
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "detach_only": {
+                            "description": "Whether to detach expired partitions without dropping them.",
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "detach_concurrently": {
+                            "description": "Whether to detach expired partitions concurrently.",
+                            "type": "boolean",
+                            "default": false
+                        }
                     },
-                    "detach_first": {
-                      "description": "Whether to detach expired partitions before dropping them.",
-                      "type": "boolean",
-                      "default": false
-                    },
-                    "detach_only": {
-                      "description": "Whether to detach expired partitions without dropping them.",
-                      "type": "boolean",
-                      "default": false
-                    },
-                    "detach_concurrently": {
-                      "description": "Whether to detach expired partitions concurrently.",
-                      "type": "boolean",
-                      "default": false
-                    }
-                  },
-                  "additionalProperties": false
-                },
-                "detach_first": {
-                    "description": "Whether to detach the expired partitions first before dropping them.",
-                    "type": "boolean",
-                    "default": false
-                },
-                "detach_only": {
-                    "description": "Whether to only detach the expired partitions.",
-                    "type": "boolean",
-                    "default": false
-                },
-                "detach_concurrently": {
-                    "description": "Whether to detach the expired partitions concurrently.",
-                    "type": "boolean",
-                    "default": false
+                    "additionalProperties": false
                 }
             },
             "minProperties": 1,
@@ -500,7 +485,6 @@
             "additionalProperties": false
         }
     },
-
     "required": [
         "lifecycle"
     ],

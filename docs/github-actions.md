@@ -41,8 +41,8 @@ Recommended registration settings:
 - Webhooks: disabled; pgpartium does not require inbound events.
 - User authorization: not required.
 - Repository permissions:
-  - **Contents: Read and write**—required for authenticated Git push.
-  - **Pull requests: Read and write**—required to list, create, and edit PRs.
+  - **Contents: Read and write**-required for authenticated Git push.
+  - **Pull requests: Read and write**-required to list, create, and edit PRs.
 - Organization and account permissions: none.
 
 Do not grant **Workflows** permission unless the configured migration directory intentionally contains `.github/workflows` files. GitHub recommends selecting the minimum permissions required and documents that HTTP Git access requires the Contents permission in [Choosing permissions for a GitHub App](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/choosing-permissions-for-a-github-app).
@@ -160,7 +160,7 @@ Pin action references to commit SHAs if that is required by your supply-chain po
 
 ## Why generation uses `continue-on-error`
 
-pgpartium handles tables independently. If nine tables generate correctly and one fails catalog validation, the nine valid outputs are published and the CLI exits `1` with the failed table's PostgreSQL error.
+pgpartium handles tables independently. If nine tables generate correctly and one fails, the nine valid outputs are published and the CLI exits `1` with the failed table's PostgreSQL error.
 
 Without `continue-on-error`, GitHub Actions would stop before `gh-create-pr`, throwing away the practical value of that partial result. The workflow therefore:
 
@@ -172,7 +172,7 @@ The PR remains useful, while alerts and branch-protection checks still show that
 
 ## Loading the schema in CI
 
-pgpartium needs a PostgreSQL catalog that represents the schema being maintained. There are two supported operating patterns.
+pgpartium needs a PostgreSQL database that represents the schema being maintained. There are two supported operating patterns.
 
 ### Ephemeral cluster from repository migrations
 
@@ -186,13 +186,13 @@ The init directory should build the same parent tables, schemas, tablespaces, fu
 
 This mode has the smallest security surface because GitHub Actions does not connect to a long-lived database.
 
-### External database catalog
+### External database
 
 When an authoritative non-production catalog is already available, install the PostgreSQL client without creating a local cluster, then connect using encrypted Actions secrets:
 
 ```yaml
     env:
-      PGP_PG_MAJOR_VERSION: "17"
+      PGP_PG_MAJOR_VERSION: 17
       PGP_USER: ${{ secrets.PGPARTIUM_DATABASE_USER }}
       PGP_PASSWORD: ${{ secrets.PGPARTIUM_DATABASE_PASSWORD }}
       PGP_HOST: ${{ secrets.PGPARTIUM_DATABASE_HOST }}

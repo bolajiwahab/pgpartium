@@ -1,10 +1,11 @@
 ---
 lifecycle:
   directory: tests/fixtures/expire_partitions/defaults
+  idempotent: true
   partition:
-    retention: 1 month
-    detach_only: true
-    idempotent: true
+    retention:
+      interval: 1 month
+      detach_only: true
   tables:
     - schema: test
       name: notifications

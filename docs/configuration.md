@@ -5,7 +5,7 @@ pgpartium reads one YAML file or every `.yaml` and `.yml` file in a directory. T
 - `pgp-make-partitions` generates DDL for partitions that should exist.
 - `pgp-expire-partitions` generates DDL for partitions whose upper bounds have passed the retention window.
 
-Neither command applies the generated lifecycle migration to the source database. They inspect the live PostgreSQL catalog and write reviewable SQL files for the repository's normal migration process.
+Neither command applies the generated lifecycle migration to the source database. They inspect the PostgreSQL database and write reviewable SQL files for the repository's normal migration process.
 
 ## Minimal configuration
 
@@ -17,15 +17,16 @@ lifecycle:
     naming:
       template: "{table_schema}__{table_name}__YYYY_MM"
     interval: 1 month
-    retention: 12 months
+    retention:
+      interval: 12 months
   tables:
     - schema: public
       name: transactions
 ```
 
-`lifecycle.tables` is required. For partition creation, `partition.naming.template` and `partition.interval` must be present globally or on every table. Expiration produces no SQL when `retention` is omitted or `null`.
+`lifecycle.tables` is required. Partition creation is skipped for a table when `partition.interval` is omitted; when `partition.interval` is present, `partition.naming.template` must also be present, globally or on that table. Expiration produces no SQL when `retention.interval` is omitted or `null`.
 
-The output directory must exist before the command runs. The partitioned parent tables, configured schemas, tablespaces, and optional template tables must also exist in the database being inspected.
+The output directory must exist before the command runs. The partitioned tables, configured schemas, tablespaces, and optional template tables must also exist in the database being inspected.
 
 ## Inheritance and overrides
 
@@ -35,9 +36,10 @@ Options under `lifecycle` apply to all tables. A table can override `description
 lifecycle:
   partition:
     interval: 1 month
-    retention: 12 months
-    detach_first: true
-    detach_concurrently: true
+    retention:
+      interval: 12 months
+      detach_first: true
+      detach_concurrently: true
   tables:
     - schema: public
       name: transactions
@@ -45,10 +47,11 @@ lifecycle:
       name: audit_events
       partition:
         interval: 1 week
-        retention: 26 weeks
-        detach_only: true
-        detach_first: false
-        detach_concurrently: false
+        retention:
+          interval: 26 weeks
+          detach_only: true
+          detach_first: false
+          detach_concurrently: false
 ```
 
 Overrides are resolved per field, including explicit `false` values. In the example, `audit_events` inherits unrelated defaults but disables the global detach settings.
@@ -59,9 +62,10 @@ Overrides are resolved per field, including explicit `false` values. In the exam
 | --- | --- | --- | --- | --- |
 | `lifecycle.directory` | string | `.` | Global | Existing directory where migration files are published. |
 | `lifecycle.timezone` | IANA timezone | `Etc/UTC` | Global | Time context used for partition bounds and expiration calculations. |
-| `lifecycle.description.make` | string | `Make partitions for {table_schema}_{table_name}` | Global or table | Description used when naming creation migrations and composing the PR body. |
-| `lifecycle.description.expire` | string | `Expire partitions for {table_schema}_{table_name}` | Global or table | Description used when naming expiration migrations and composing the PR body. |
+| `lifecycle.description.make` | string | `Make partitions for {table_schema}.{table_name}` | Global or table | Description used when naming creation migrations and composing the PR body. |
+| `lifecycle.description.expire` | string | `Expire partitions for {table_schema}.{table_name}` | Global or table | Description used when naming expiration migrations and composing the PR body. |
 | `lifecycle.output_file_template` | string | `pgpartium_output.sql` | Global or table | Template for the generated migration filename. |
+| `lifecycle.idempotent` | boolean | `false` | Global or table | Add supported `IF NOT EXISTS`, `CREATE OR REPLACE` to generated DDL. |
 | `lifecycle.partition` | object | none | Global or table | Creation, replication, storage, and expiration behavior. |
 | `lifecycle.tables` | array | required | Global | Parent tables whose lifecycle should be evaluated. |
 
@@ -69,10 +73,11 @@ Overrides are resolved per field, including explicit `false` values. In the exam
 
 | Option | Required | Description |
 | --- | --- | --- |
-| `schema` | Yes | Schema of the partitioned parent table. |
-| `name` | Yes | Name of the partitioned parent table. |
+| `schema` | Yes | Schema of the partitioned table. |
+| `name` | Yes | Name of the partitioned table. |
 | `description` | No | Per-table `make` and/or `expire` descriptions. |
 | `output_file_template` | No | Per-table migration filename template. |
+| `idempotent` | No | Per-table override for `lifecycle.idempotent`. |
 | `partition` | No | Per-table overrides for partition options. |
 | `template` | No | Object or symbolic source used to replicate constraints, indexes, and triggers. |
 
@@ -83,7 +88,7 @@ Overrides are resolved per field, including explicit `false` values. In the exam
 | Placeholder | Meaning |
 | --- | --- |
 | `{description}` | Resolved lifecycle description, lowercased with whitespace replaced by underscores. |
-| `{integer}` | Next unpadded integer based on matching files already in the output directory. |
+| `{integer}` | Next unpadded integer based on matching files already in the output (migration) directory. |
 | `{integer:N}` | Next integer padded to `N` digits, for example `{integer:3}` becomes `001`. |
 | `{timestamp}` | Execution timestamp formatted as `YYYYMMDDHHMMSS`. |
 | `{epoch}` | Unix epoch at execution time. |
@@ -103,7 +108,7 @@ lifecycle:
   output_file_template: "V{integer:4}__{description}.{direction}.sql"
 ```
 
-Multiple successful tables may target one filename. pgpartium formats each table's SQL independently and appends the successful results in configuration order. A failed table does not discard successful output and does not contribute partial SQL. The command still exits nonzero and reports every failed table so automation remains visibly unhealthy.
+Multiple successful tables may target one filename, depending on the provided `output_file_template`. pgpartium formats each table's SQL independently and appends the successful results in configuration order. A failed table does not discard successful output and does not contribute partial SQL. The command still exits nonzero and reports every failed table so automation remains visibly unhealthy.
 
 ## Partition creation options
 
@@ -111,17 +116,20 @@ These options are consumed primarily by `pgp-make-partitions`.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `partition.naming.template` | string | required for creation | Name template for range partitions. |
+| `partition.naming.template` | string | required when `partition.interval` is set | Name template for time-based partitions. |
 | `partition.schema` | string | parent schema | Schema in which new partitions are created. |
-| `partition.tablespace` | string or `null` | `null` | Tablespace for new partitions. |
-| `partition.interval` | PostgreSQL interval | required for creation | Positive interval between lower and upper bounds. |
-| `partition.start_timestamp` | RFC 3339 timestamp, `NOW`, or `LATEST_PARTITION` | `NOW` | Initial point used to generate the series of desired partitions. |
+| `partition.tablespace` | string | `null` | Tablespace for new partitions. |
+| `partition.interval` | positive PostgreSQL interval | `null` | Interval between lower and upper bounds. Generation is skipped for a table when this is omitted, globally and on the table. |
+| `partition.start_timestamp` | RFC 3339 timestamp, `NOW`, or `LATEST_PARTITION` | `null` | Initial point used to generate the series of desired partitions. |
 | `partition.past` | nonnegative integer | `0` | Number of intervals before the resolved start point to include. |
 | `partition.future` | nonnegative integer | `0` | Number of intervals beyond the current time to include. |
-| `partition.default.naming.template` | string | none | Creates a default partition with this name when one does not exist. |
-| `partition.retention` | interval or `null` | `null` | Filters creation candidates whose upper bounds fall outside the retention window. Also drives expiration. |
-| `partition.skip_overlapping` | boolean | `false` | Skip candidate bounds that overlap existing partitions instead of generating conflicting DDL. |
-| `partition.idempotent` | boolean | `false` | Add supported `IF EXISTS`, `IF NOT EXISTS`, or replacement forms to generated DDL. |
+| `partition.default.naming.template` | string | `null` | Creates a default partition with this name when one does not exist. |
+| `partition.retention.interval` | interval | `null` | Filters creation candidates whose upper bounds fall outside the retention window. Also drives expiration. |
+| `partition.skip_overlapping` | boolean | `false` | Skip partitions whose bounds will overlap existing partitions instead of generating conflicting DDL. |
+
+- Setting `partition.interval` without a resolvable `partition.naming.template` fails with `partition name template is required when partition interval is specified`.
+- A zero interval fails with `interval cannot be zero`.
+- `partition.past` and `partition.future` must be nonnegative.
 
 ### Partition naming
 
@@ -251,7 +259,25 @@ Available placeholders are:
 
 The supported type keys are `primary_key`, `unique_key`, `foreign_key`, `check`, and `exclusion`.
 
-`partition.trigger.naming` is currently reserved by the schema. Trigger names are presently derived by replacing the template table name in the original trigger name with the partition name.
+## Trigger naming
+
+```yaml
+partition:
+  trigger:
+    naming:
+      template: "{partition_name}_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}"
+```
+
+When `partition.trigger.naming.template` is `null`, it defaults to `{partition_name}_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}`. A custom template supports:
+
+- `{parent_table_schema}` and `{parent_table_name}`;
+- `{partition_schema}` and `{partition_name}`;
+- `{event_timing}`, such as `BEFORE`, `AFTER`, or `INSTEAD OF`;
+- `{trigger_event}`, such as `INSERT` or `UPDATE OR DELETE`;
+- `{trigger_function_schema}` and `{trigger_function_name}`;
+- `{ordinal}`, empty for the first trigger sharing the same timing, event, and body, and numbered for additional ones.
+
+Trigger enabled/disabled state is preserved regardless of naming.
 
 ## Expiration options
 
@@ -259,11 +285,11 @@ These options are consumed by `pgp-expire-partitions`.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `partition.retention` | PostgreSQL interval or `null` | `null` | A partition expires when its upper bound is at least this old. |
-| `partition.detach_only` | boolean | `false` | Generate `ALTER TABLE ... DETACH PARTITION` without dropping the partition. |
-| `partition.detach_first` | boolean | `false` | Detach each expired partition and then drop it. |
-| `partition.detach_concurrently` | boolean | `false` | Add `CONCURRENTLY` to generated detach statements. |
-| `partition.idempotent` | boolean | `false` | Add supported existence guards to generated DDL. |
+| `partition.retention.interval` | interval | `null` | A partition expires when its upper bound is at least this old. |
+| `partition.retention.detach_only` | boolean | `false` | Generate `ALTER TABLE ... DETACH PARTITION` without dropping the partition. |
+| `partition.retention.detach_first` | boolean | `false` | Detach each expired partition and then drop it. |
+| `partition.retention.detach_concurrently` | boolean | `false` | Add `CONCURRENTLY` to generated detach statements. |
+| `lifecycle.idempotent` / `idempotent` | boolean | `false` | Add supported existence guards to generated DDL. |
 
 Mode precedence is:
 
@@ -285,15 +311,15 @@ Both lifecycle commands read:
 | `PGP_PASSWORD` | PostgreSQL password. |
 | `PGP_HOST` | PostgreSQL host. |
 | `PGP_PORT` | PostgreSQL port. |
-| `PGP_DATABASE` | Database containing the partitioned schema. |
+| `PGP_DATABASE` | Database containing the partitioned tables. |
 
-The commands default these values to `postgres`, `postgres`, `localhost`, `5432`, and `postgres` respectively for the disposable local cluster. Local-cluster users do not need to define them. External catalogs must override every value explicitly; see [Database environment](cli-reference.md#database-environment).
+The commands default these values to `postgres`, `postgres`, `localhost`, `5432`, and `postgres` respectively for the disposable local cluster. Local-cluster users do not need to define them. External databases must override every value explicitly; see [Database environment](cli-reference.md#database-environment).
 
 Pass a directory to `-c` to process multiple configuration files in sorted filename order.
 
 ## Failure and publication behavior
 
-Each table is generated and formatted independently in a staging directory. At the end of a configuration:
+Each table is generated and formatted independently in a staging directory. At the end of a run:
 
 - SQL from successful tables is published, including successful tables sharing one output file;
 - failed and partially formatted table output is discarded;
@@ -305,4 +331,4 @@ This gives local and automated runs useful partial progress without disguising f
 
 ## Complete example
 
-See [`config.sample.yaml`](../config.sample.yaml) for a current, annotated configuration containing global defaults, table overrides, naming templates, storage behavior, template replication, and expiration modes. The generated JSON Schema reference is available in [`docs/schema.html`](docs/schema.html).
+See [`config.sample.yaml`](../config.sample.yaml) for a current, annotated configuration containing global defaults, table overrides, naming templates, storage behavior, template replication, and expiration modes. The schema is available at [schema](https://bolajiwahab.github.io/pgpartium/schema.html).

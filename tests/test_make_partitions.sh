@@ -144,8 +144,63 @@ function run_config_directory() {
     grep -Fq "is invalid" <<< "${output}"
 }
 
-@test "pgp-make-partitions requires a partition naming template" {
+@test "pgp-make-partitions rejects a negative past partition count" {
+    local config="${BATS_TEST_TMPDIR}/negative-past.yaml"
+    cat > "${config}" <<YAML
+---
+lifecycle:
+  directory: ${BATS_TEST_TMPDIR}
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        naming:
+          template: "{table_schema}__{table_name}__YYYY_MM"
+        interval: 1 mon
+        past: -1
+YAML
+
+    run pgp-make-partitions -c "${config}"
+
+    [ "${status}" -eq 1 ]
+    grep -Fq "is invalid" <<< "${output}"
+    grep -Fq "past" <<< "${output}"
+}
+
+@test "pgp-make-partitions rejects a negative future partition count" {
+    local config="${BATS_TEST_TMPDIR}/negative-future.yaml"
+    cat > "${config}" <<YAML
+---
+lifecycle:
+  directory: ${BATS_TEST_TMPDIR}
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        naming:
+          template: "{table_schema}__{table_name}__YYYY_MM"
+        interval: 1 mon
+        future: -1
+YAML
+
+    run pgp-make-partitions -c "${config}"
+
+    [ "${status}" -eq 1 ]
+    grep -Fq "is invalid" <<< "${output}"
+    grep -Fq "future" <<< "${output}"
+}
+
+@test "pgp-make-partitions requires a partition naming template when an interval is specified" {
     local config="${BATS_TEST_TMPDIR}/missing-name-template.yaml"
+    local result="${BATS_TEST_TMPDIR}/pgpartium_output.sql"
+
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 <<SQL
+CREATE TABLE test.transactions (
+    created_at timestamptz NOT NULL
+)
+PARTITION BY RANGE (created_at);
+SQL
+
     cat > "${config}" <<YAML
 ---
 lifecycle:
@@ -159,12 +214,27 @@ YAML
 
     run pgp-make-partitions -c "${config}"
 
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 <<SQL
+DROP TABLE test.transactions;
+SQL
+
     [ "${status}" -eq 1 ]
-    grep -Fq "Partition name template is required" <<< "${output}"
+    grep -Fq "failed for 1 table(s)" <<< "${output}"
+    grep -Fq "partition name template is required when partition interval is specified" <<< "${output}"
+    [ ! -e "${result}" ]
 }
 
-@test "pgp-make-partitions requires a partition interval" {
+@test "pgp-make-partitions skips generation when no partition interval is configured" {
     local config="${BATS_TEST_TMPDIR}/missing-interval.yaml"
+    local result="${BATS_TEST_TMPDIR}/pgpartium_output.sql"
+
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 <<SQL
+CREATE TABLE test.transactions (
+    created_at timestamptz NOT NULL
+)
+PARTITION BY RANGE (created_at);
+SQL
+
     cat > "${config}" <<YAML
 ---
 lifecycle:
@@ -179,8 +249,13 @@ YAML
 
     run pgp-make-partitions -c "${config}"
 
-    [ "${status}" -eq 1 ]
-    grep -Fq "Partition interval is required" <<< "${output}"
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 <<SQL
+DROP TABLE test.transactions;
+SQL
+
+    [ "${status}" -eq 0 ]
+    grep -Fq "No partitions made for test.transactions" <<< "${output}"
+    [ ! -e "${result}" ]
 }
 
 @test "pgp-make-partitions rejects a missing template table" {
@@ -265,7 +340,7 @@ YAML
     grep -Fq 'partition schema "missing_schema" does not exist' <<< "${output}"
     grep -Fq 'partition tablespace "missing_tablespace" does not exist' <<< "${output}"
     grep -Fq 'index tablespace "missing_tablespace" does not exist' <<< "${output}"
-    grep -Fq 'interval must not be zero' <<< "${output}"
+    grep -Fq 'interval cannot be zero' <<< "${output}"
     run ! grep -Fq "Traceback" <<< "${output}"
     diff -u "${expected}" "${result}"
     rm -f "${result}"
