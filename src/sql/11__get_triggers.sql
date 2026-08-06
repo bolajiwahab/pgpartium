@@ -77,9 +77,9 @@ AS $BODY$
             ON t.oid = tg.tgrelid
            AND NOT tg.tgisinternal
          INNER JOIN pg_catalog.pg_proc AS p
+            ON p.oid = tg.tgfoid
          INNER JOIN pg_catalog.pg_namespace AS pn
             ON pn.oid = p.pronamespace
-            ON tg.tgfoid = p.oid
          WHERE n.nspname = p_table_schema
            AND t.relname = p_table_name
     )
@@ -97,9 +97,3 @@ AS $BODY$
          , trigger_body
       FROM triggers;
 $BODY$;
-
--- CREATE TRIGGER checkout_trig BEFORE DELETE ON jail_app.on_duty
---    FOR EACH ROW EXECUTE PROCEDURE jail_app.checkout_trig();
-
--- CREATE TRIGGER checkout_trig1 BEFORE DELETE ON jail_app.on_duty
---    FOR EACH ROW EXECUTE PROCEDURE jail_app.checkout_trig();

@@ -20,7 +20,7 @@ COPY src/sql src/schema.json src/requirements.txt ./
 # Enable amd64 architecture in case we are running on arm64
 RUN dpkg --add-architecture amd64 \
         && apt-get update \
-        && apt-get install -y wget ca-certificates gnupg2 libc6:amd64 \
+        && apt-get install -y wget git ca-certificates gnupg2 libc6:amd64 \
         && pip install --no-cache-dir --upgrade pip -r requirements.txt \
         && apt-get clean \
         && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
