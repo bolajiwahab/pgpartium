@@ -1,0 +1,12 @@
+---
+lifecycle:
+  directory: tests/fixtures/make_partitions/shared_output_file
+  partition:
+    naming:
+      template: "{table_name}_YYYY_MM"
+    interval: 1 mon
+  tables:
+    - schema: test
+      name: events
+    - schema: test
+      name: measurements

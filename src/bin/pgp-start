@@ -1,21 +1,26 @@
 #!/bin/bash
 
+# shellcheck source=src/bin/pgp-shell-helpers
+source "$(dirname "${BASH_SOURCE[0]}")/pgp-shell-helpers"
+
+PGP_MIN_POSTGRES_VERSION=14
+
 usage()
 {
-    echo "
+    cat <<EOF
     ${0##*/}
 
     Installs major PostgreSQL version, psql client, optionally creates a cluster, starts the cluster and applies init directory if provided.
 
     OPTIONS:
-      -v  the postgres version to use (Required, must be at least ${PGP_MIN_POSTGRES_VERSION})
+      -v  the postgres version to use (Default: ${PGP_MIN_POSTGRES_VERSION}, must be at least ${PGP_MIN_POSTGRES_VERSION})
       -i  the init directory to apply (Optional) (supports .sh, .sql and .sql.gz)
       -h  show this help message.
 
     SAMPLE USAGE:
+        ${0##*/} -i initdir
         ${0##*/} -v 17 -i initdir
-        PGP_PG_MAJOR_VERSION=17 PGP_INIT_DIR=initdir ${0##*/}
-"
+EOF
 }
 
 while getopts "v:i:h" option
@@ -36,17 +41,13 @@ done
 
 set -euo pipefail
 
-PGP_MIN_POSTGRES_VERSION=14
-# PGP_CLUSTER_NAME=${PGP_CLUSTER_NAME:-"pgpartium"}
+configure_database_environment
 
-pg_major_version=${pg_major_version:-${PGP_PG_MAJOR_VERSION:-}}
+export PGP_CLUSTER_NAME="${PGP_CLUSTER_NAME:-pgpartium}"
+
+pg_major_version=${pg_major_version:-${PGP_PG_MAJOR_VERSION:-${PGP_MIN_POSTGRES_VERSION}}}
 init_dir=${init_dir:-${PGP_INIT_DIR:-}}
-
-# Ensure postgres version is provided.
-if [[ -z "${pg_major_version}" ]]; then
-    usage
-    exit 1
-fi
+export PGP_PG_MAJOR_VERSION="${pg_major_version}"
 
 if (( pg_major_version < PGP_MIN_POSTGRES_VERSION )); then
   echo "Error: PostgreSQL major version must be at least ${PGP_MIN_POSTGRES_VERSION}" >&2
@@ -58,6 +59,7 @@ apt.postgresql.org.sh -i -v "${pg_major_version}"
 
 if [[ -z ${NO_CLUSTER+yes} ]]; then
     echo "INFO: Creating PostgreSQL cluster ${PGP_CLUSTER_NAME} for PostgreSQL ${pg_major_version}"
+
     # shellcheck disable=SC2086 # Allow word splitting for additional options
     pg_createcluster --start "${pg_major_version}" "${PGP_CLUSTER_NAME}" --port="${PGPORT:-5432}" ${PGP_CREATE_OPTIONS:-} -- -A trust
 
@@ -90,8 +92,8 @@ if [[ -z ${NO_CLUSTER+yes} ]]; then
                         --no-psqlrc -f "${file}"
                     ;;
                 *.sql.gz)
-                    gunzip -c "${file}" |
-                    psql --username=postgres \
+                    gunzip -c "${file}" | psql \
+                        --username=postgres \
                         --dbname=postgres \
                         -v "ON_ERROR_STOP=1" \
                         --quiet \

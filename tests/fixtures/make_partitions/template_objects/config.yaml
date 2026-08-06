@@ -1,0 +1,13 @@
+---
+lifecycle:
+  directory: tests/fixtures/make_partitions/template_objects
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        naming:
+          template: "{table_schema}__{table_name}__YYYY_MM"
+        interval: 1 mon
+      template:
+        schema: test
+        name: transactions_template

@@ -2,9 +2,6 @@
 
 set -euo pipefail
 
-echo "INFO: Installing pgtap extension files and required contrib extensions"
-apt-get install -y postgresql-"${PGP_PG_MAJOR_VERSION}"-pgtap postgresql-contrib-"${PGP_PG_MAJOR_VERSION}"
-
 git clone https://github.com/bats-core/bats-core.git
 cd bats-core
 git checkout --quiet "${BATS_CORE_VERSION}"

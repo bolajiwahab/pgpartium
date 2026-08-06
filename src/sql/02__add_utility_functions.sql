@@ -52,19 +52,6 @@ AS $BODY$
       AND c.relname = p_relation_name;
 $BODY$;
 
--- CREATE OR REPLACE FUNCTION pgpartium.merge_configs (
---     p_base_config jsonb
---   , p_override jsonb
--- )
--- RETURNS jsonb
--- LANGUAGE SQL
--- IMMUTABLE
--- AS $BODY$
-
---     SELECT COALESCE(p_base_config, '{}'::jsonb) || COALESCE(p_override, '{}'::jsonb);
-
--- $BODY$;
-
 CREATE OR REPLACE FUNCTION pgpartium.render_template (
     p_template text,
     p_values jsonb
@@ -223,7 +210,6 @@ CREATE OR REPLACE FUNCTION pgpartium.render_storage_parameters (
   , p_relation_name text
   , p_user_config jsonb DEFAULT NULL
   , p_format text DEFAULT '%1$s = %2$s'
---   , p_pretty boolean DEFAULT TRUE
 )
 RETURNS text
 LANGUAGE SQL

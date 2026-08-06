@@ -1,11 +1,12 @@
-CREATE OR REPLACE FUNCTION pgpartium.generate_trigger_constraints (
+CREATE OR REPLACE FUNCTION pgpartium.generate_partition_triggers (
     p_parent_table_schema text
   , p_parent_table_name text
   , p_partition_schema text
   , p_partition_name text
   , p_template_table_schema text
   , p_template_table_name text
-  , p_idempotency boolean
+  , p_trigger_name_template text DEFAULT NULL
+  , p_idempotent boolean DEFAULT FALSE
 )
 RETURNS text
 LANGUAGE SQL
@@ -15,25 +16,43 @@ AS $BODY$
         SELECT trigger_name
              , is_trigger_enabled
              , is_constraint_trigger
+             , trigger_function_schema
+             , trigger_function_name
              , event_timing
              , trigger_event
+             , ordinal::text AS ordinal
              , trigger_body
-          FROM pgpartium.get_triggers(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name)
+          FROM pgpartium.get_triggers(p_table_schema => p_template_table_schema, p_table_name => p_template_table_name)
     )
     , parent_triggers AS (
         SELECT trigger_name
              , is_trigger_enabled
              , is_constraint_trigger
+             , trigger_function_schema
+             , trigger_function_name
              , event_timing
              , trigger_event
              , trigger_body
-          FROM pgpartium.get_triggers(p_table_schema=>p_parent_table_schema, p_table_name=>p_parent_table_name)
+          FROM pgpartium.get_triggers(p_table_schema => p_parent_table_schema, p_table_name => p_parent_table_name)
     )
     , partition_triggers AS (
-        SELECT replace(
-                   template_triggers.trigger_name
-                 , p_template_table_name
-                 , p_partition_name
+        SELECT pgpartium.render_template(
+                   p_trigger_name_template,
+                   jsonb_build_object(
+                       '{parent_table_schema}', p_parent_table_schema,
+                       '{parent_table_name}',   p_parent_table_name,
+                       '{partition_schema}',    p_partition_schema,
+                       '{partition_name}',      p_partition_name,
+                       '{trigger_event}',       template_triggers.trigger_event,
+                       '{event_timing}',        template_triggers.event_timing,
+                       '{trigger_function_schema}', template_triggers.trigger_function_schema,
+                       '{trigger_function_name}', template_triggers.trigger_function_name,
+                       '{ordinal}',             CASE template_triggers.ordinal
+                                                   WHEN '0'
+                                                     THEN ''
+                                                   ELSE template_triggers.ordinal
+                                                 END
+                       )
                ) AS final_trigger_name
              , CASE
                  WHEN template_triggers.is_constraint_trigger
@@ -47,7 +66,8 @@ AS $BODY$
              , template_triggers.trigger_body
           FROM template_triggers
           LEFT JOIN parent_triggers
-            ON template_triggers.event_timing = parent_triggers.event_timing
+            ON template_triggers.is_constraint_trigger = parent_triggers.is_constraint_trigger
+           AND template_triggers.event_timing = parent_triggers.event_timing
            AND template_triggers.trigger_event = parent_triggers.trigger_event
            AND template_triggers.trigger_body = parent_triggers.trigger_body
          WHERE parent_triggers.trigger_body IS NULL
@@ -55,7 +75,7 @@ AS $BODY$
     SELECT string_agg(
         format(
            E'CREATE %1$s%2$s %3$I %4$s %5$s\n    ON %6$I.%7$I\n   %8$s;\n%9$s'
-         , CASE p_idempotency                                --<1: idempotence>
+         , CASE p_idempotent                                    --<1: idempotence>
              WHEN TRUE
                THEN 'OR REPLACE' || ' '
              ELSE ''

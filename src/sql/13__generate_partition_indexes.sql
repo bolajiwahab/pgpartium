@@ -6,7 +6,7 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partition_indexes (
   , p_template_table_schema text DEFAULT NULL
   , p_template_table_name text DEFAULT NULL
   , p_index_tablespace text DEFAULT NULL
-  , p_idempotency boolean DEFAULT FALSE
+  , p_idempotent boolean DEFAULT FALSE
   , p_index_name_template text DEFAULT NULL
 )
 RETURNS text
@@ -20,11 +20,11 @@ AS $BODY$
              , index_keys
              , ordinal::text AS ordinal
              , index_definition
-          FROM pgpartium.get_indexes(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name)
+          FROM pgpartium.get_indexes(p_table_schema => p_template_table_schema, p_table_name => p_template_table_name)
     )
     , parent_indexes AS (
         SELECT index_definition
-          FROM pgpartium.get_indexes(p_table_schema=>p_parent_table_schema, p_table_name=>p_parent_table_name)
+          FROM pgpartium.get_indexes(p_table_schema => p_parent_table_schema, p_table_name => p_parent_table_name)
     )
     , partition_indexes AS (
         SELECT pgpartium.render_template(
@@ -50,9 +50,6 @@ AS $BODY$
                END AS index_qualifier
              , template_indexes.is_unique_index
              , template_indexes.index_definition
-            --  , template_indexes.index_definition_excluding_storage_parameters_and_predicate
-            --  , template_indexes.index_predicate
-            --  , template_indexes.rendered_storage_parameters
           FROM template_indexes
           LEFT JOIN parent_indexes
             ON template_indexes.index_definition = parent_indexes.index_definition
@@ -63,8 +60,8 @@ AS $BODY$
                    E'%1$s%2$s;\n'
                  , format(                                                                              --<1: index_create_statement>
                        E'CREATE %1$s%2$s%3$s\n    ON %4$I.%5$I\n %6$s'
-                     , partition_indexes.index_qualifier                                                --<1: index_qualifier>
-                     , CASE p_idempotency                                                          --<2: if_not_exists>
+                     , partition_indexes.index_qualifier                                              --<1: index_qualifier>
+                     , CASE p_idempotent                                                              --<2: if_not_exists>
                          WHEN TRUE
                            THEN ' IF NOT EXISTS'
                          ELSE ''
@@ -78,9 +75,8 @@ AS $BODY$
                         END
                      , p_partition_schema                                                             --<4: table_schema>
                      , p_partition_name                                                               --<5: table_name>
-                     , partition_indexes.index_definition  --<6: index_definition_excluding_storage_parameters_and_predicate>
+                     , partition_indexes.index_definition                                             --<6: index_definition>
                    )
-                --  , COALESCE(E'\n  ' || partition_indexes.rendered_storage_parameters, '')               --<2: storage_parameters>
                  , CASE                                                                                 --<2: index_tablespace>
                      WHEN p_index_tablespace IS NOT NULL
                        THEN format(E'\nTABLESPACE %1$I', p_index_tablespace)

@@ -1,0 +1,18 @@
+---
+lifecycle:
+  directory: tests/fixtures/make_partitions/constraint_name_templates
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        naming:
+          template: "{table_schema}__{table_name}__YYYY_MM"
+        interval: 1 mon
+        constraint:
+          naming:
+            template: "{partition_name}_generic_{constraint_keys}_{constraint_suffix}"
+            primary_key:
+              template: "{partition_name}_custom_pkey"
+      template:
+        schema: test
+        name: transactions_template

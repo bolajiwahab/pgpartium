@@ -1,0 +1,37 @@
+---
+lifecycle:
+  directory: tests/fixtures/make_partitions/sql_failures
+  partition:
+    naming:
+      template: "{table_schema}__{table_name}__YYYY_MM"
+    interval: 1 mon
+  tables:
+    - schema: test
+      name: successful_transactions
+      partition:
+        start_timestamp: 2025-04-01T00:00:00Z
+    - schema: test
+      name: not_partitioned
+    - schema: test
+      name: partitioned_by_list
+    - schema: test
+      name: partitioned_by_multiple_columns
+    - schema: test
+      name: partitioned_by_text
+    - schema: test
+      name: invalid_partition_schema
+      partition:
+        schema: missing_schema
+    - schema: test
+      name: invalid_partition_tablespace
+      partition:
+        tablespace: missing_tablespace
+    - schema: test
+      name: invalid_index_tablespace
+      partition:
+        index:
+          tablespace: missing_tablespace
+    - schema: test
+      name: zero_interval
+      partition:
+        interval: 0 mon

@@ -1,9 +1,9 @@
 CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
     p_table_schema text
   , p_table_name text
-  , p_partition_name_template text
-  , p_interval interval
-  , p_start_timestamp timestamptz
+  , p_partition_name_template text DEFAULT NULL
+  , p_interval interval DEFAULT NULL
+  , p_start_timestamp timestamptz DEFAULT NULL
   , p_past integer DEFAULT 0
   , p_future integer DEFAULT 0
   , p_default_partition_name_template text DEFAULT NULL
@@ -13,15 +13,14 @@ CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
   , p_partition_storage_parameters jsonb DEFAULT NULL
   , p_index_name_template text DEFAULT NULL
   , p_index_tablespace text DEFAULT NULL
-  -- to be changed to object mapping constraint type to template table constraint name, e.g. {"check": "template_check_constraint_name", "unique": "template_unique_constraint_name"}
-  , p_constraint_name_template text DEFAULT '{partition_name}_{constraint_keys}_{constraint_type_name}{ordinal}'
+  , p_constraint_name_templates jsonb DEFAULT NULL
+  , p_trigger_name_template text DEFAULT NULL
   , p_template_table_schema text DEFAULT NULL
   , p_template_table_name text DEFAULT NULL
   , p_retention interval DEFAULT NULL
   , p_timezone text DEFAULT 'Etc/UTC'
   , p_skip_overlapping boolean DEFAULT FALSE
-  , p_idempotency boolean DEFAULT FALSE
-  , p_constraint_type_map jsonb DEFAULT NULL
+  , p_idempotent boolean DEFAULT FALSE
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
@@ -49,17 +48,17 @@ BEGIN
     PERFORM set_config('timezone', p_timezone, TRUE);
 
     IF p_interval = interval '0' THEN
-        RAISE 'interval must not be zero'
+        RAISE 'interval cannot be zero'
         USING ERRCODE = 'invalid_parameter_value';
     END IF;
 
-    IF COALESCE(p_partition_name_template, '') = '' THEN
-        RAISE 'partition name template is required'
+    IF p_interval IS NOT NULL AND p_partition_name_template IS NULL THEN
+        RAISE 'partition name template is required when partition interval is specified'
         USING ERRCODE = 'invalid_parameter_value';
     END IF;
 
-    IF p_start_timestamp IS NULL THEN
-        RAISE 'start timestamp is required'
+    IF p_past < 0 OR p_future < 0 THEN
+        RAISE 'past and future partition counts cannot be negative'
         USING ERRCODE = 'invalid_parameter_value';
     END IF;
 
@@ -71,14 +70,14 @@ BEGIN
               );
     END IF;
 
-    v_partitioning_details := pgpartium.get_partitioning_details(p_table_schema=>p_table_schema, p_table_name=>p_table_name);
+    v_partitioning_details := pgpartium.get_partitioning_details(p_table_schema => p_table_schema, p_table_name => p_table_name);
 
-    IF NOT pgpartium.table_exists(p_table_schema=>p_table_schema, p_table_name=>p_table_name) THEN
+    IF NOT pgpartium.table_exists(p_table_schema => p_table_schema, p_table_name => p_table_name) THEN
         RAISE 'table "%"."%" does not exist', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
 
-    IF NOT pgpartium.is_table_partitioned(p_table_schema=>p_table_schema, p_table_name=>p_table_name) THEN
+    IF NOT pgpartium.is_table_partitioned(p_table_schema => p_table_schema, p_table_name => p_table_name) THEN
         RAISE 'table "%"."%" is not partitioned', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
@@ -127,7 +126,7 @@ BEGIN
     END IF;
 
     IF (COALESCE(p_template_table_schema, '') > '' OR COALESCE(p_template_table_name, '') > '')
-    AND NOT pgpartium.table_exists(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name) THEN
+    AND NOT pgpartium.table_exists(p_table_schema => p_template_table_schema, p_table_name => p_template_table_name) THEN
         RAISE 'template table "%"."%" does not exist', p_template_table_schema, p_template_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
@@ -152,7 +151,7 @@ BEGIN
     SELECT COALESCE(
                (
                     SELECT upper_bound
-                      FROM pgpartium.get_latest_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
+                      FROM pgpartium.get_latest_partition(p_table_schema => p_table_schema, p_table_name => p_table_name)
                )
              , p_start_timestamp
            )
@@ -162,29 +161,27 @@ BEGIN
              WHEN 'inherit'
                THEN COALESCE(
                         pgpartium.render_storage_parameters(
-                            p_relation_schema=>p_template_table_schema
-                          , p_relation_name=>p_template_table_name
-                          , p_user_config=>NULL
-                          , p_format=>'%1$s = %2$s'
+                            p_relation_schema => p_template_table_schema
+                          , p_relation_name => p_template_table_name
+                          , p_user_config => NULL
                         )
                       , ''
                     )
              WHEN 'override'
-               THEN COALESCE(pgpartium.render_storage_parameters(
-                            p_relation_schema=>NULL
-                          , p_relation_name=>NULL
-                          , p_user_config=>p_partition_storage_parameters
-                          , p_format=>'%1$s = %2$s'
+               THEN COALESCE(
+                        pgpartium.render_storage_parameters(
+                            p_relation_schema => NULL
+                          , p_relation_name => NULL
+                          , p_user_config => p_partition_storage_parameters
                         )
                       , ''
                     )
              WHEN 'merge'
                THEN COALESCE(
                         pgpartium.render_storage_parameters(
-                            p_relation_schema=>p_template_table_schema
-                          , p_relation_name=>p_template_table_name
-                          , p_user_config=>p_partition_storage_parameters
-                          , p_format=>'%1$s = %2$s'
+                            p_relation_schema => p_template_table_schema
+                          , p_relation_name => p_template_table_name
+                          , p_user_config => p_partition_storage_parameters
                         )
                       , ''
                     )
@@ -203,7 +200,7 @@ BEGIN
         , current_bounds AS (
             SELECT lower_bound
                  , upper_bound
-              FROM pgpartium.get_partition_bounds(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
+              FROM pgpartium.get_partition_bounds(p_table_schema => p_table_schema, p_table_name => p_table_name)
         )
         , partitions AS (
             -- Range partitions
@@ -269,7 +266,7 @@ BEGIN
              WHERE p_default_partition_name_template IS NOT NULL
                AND NOT EXISTS (
                    SELECT NULL
-                     FROM pgpartium.get_default_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
+                     FROM pgpartium.get_default_partition(p_table_schema => p_table_schema, p_table_name => p_table_name)
              )
         )
         , filtered AS (
@@ -313,7 +310,7 @@ BEGIN
               FROM partitions
              WHERE is_default
                AND NOT EXISTS (
-                       SELECT pgpartium.get_default_partition(p_table_schema=>p_table_schema, p_table_name=>p_table_name)
+                       SELECT pgpartium.get_default_partition(p_table_schema => p_table_schema, p_table_name => p_table_name)
                    )
         )
         , resolved AS (
@@ -350,23 +347,9 @@ BEGIN
              , p_template_table_name   => p_template_table_name
              , p_partition_schema      => v_partition_schema
              , p_partition_name        => v_partition.partition_name
-             , p_constraint_name_template => p_constraint_name_template
-             , p_constraint_type_map      => p_constraint_type_map
+             , p_constraint_name_templates => p_constraint_name_templates
         )
           INTO v_constraints;
-
-        -- Get not null constraint definition.
-        -- SELECT pgpartium.generate_not_null_constraints(
-        --        p_parent_table_schema   => p_table_schema
-        --      , p_parent_table_name     => p_table_name
-        --      , p_template_table_schema => p_template_table_schema
-        --      , p_template_table_name   => p_template_table_name
-        --      , p_partition_schema      => v_partition_schema
-        --      , p_partition_name        => v_partition.partition_name
-        --      , p_constraint_name_template => p_constraint_name_template
-        --      , p_constraint_type_map      => p_constraint_type_map
-        -- )
-        --   INTO v_not_null_constraints;
 
         -- Get index create statement.
         SELECT pgpartium.generate_partition_indexes(
@@ -377,20 +360,21 @@ BEGIN
              , p_partition_schema                                     => v_partition_schema
              , p_partition_name                                       => v_partition.partition_name
              , p_index_name_template                                  => p_index_name_template
-             , p_idempotency                                          => p_idempotency
+             , p_idempotent                                           => p_idempotent
              , p_index_tablespace                                     => p_index_tablespace
         )
           INTO v_indexes;
 
         -- Get create trigger statement.
-        SELECT pgpartium.generate_trigger_constraints(
+        SELECT pgpartium.generate_partition_triggers(
                p_parent_table_schema   => p_table_schema
              , p_parent_table_name     => p_table_name
              , p_template_table_schema => p_template_table_schema
              , p_template_table_name   => p_template_table_name
              , p_partition_schema      => v_partition_schema
              , p_partition_name        => v_partition.partition_name
-             , p_idempotency        => p_idempotency
+             , p_trigger_name_template => p_trigger_name_template
+             , p_idempotent            => p_idempotent
         )
           INTO v_triggers;
 
@@ -401,7 +385,7 @@ BEGIN
 
         v_ddl := v_ddl || format(
             E'CREATE TABLE %1$s%2$I.%3$I\n    PARTITION OF %4$I.%5$I%6$s\n    %7$s%8$s%9$s;\n'
-          , CASE p_idempotency                                  -- <1>
+          , CASE p_idempotent                                      -- <1>
               WHEN TRUE
                 THEN 'IF NOT EXISTS '
               ELSE ''

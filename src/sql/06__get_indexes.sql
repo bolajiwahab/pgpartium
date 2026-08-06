@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION pgpartium.get_indexes (
   , p_table_name text
 )
 RETURNS TABLE (
-    index_name name
+    index_name text
   , is_unique_index boolean
   , index_type text
   , index_keys text
@@ -39,8 +39,8 @@ AS $BODY$
                ) AS index_keys
              , substring(pg_catalog.pg_get_indexdef(i.indexrelid, 0, TRUE) FROM 'USING .*') AS index_definition
              , pgpartium.get_relation_tablespace(
-                   p_relation_schema=>inp.nspname
-                 , p_relation_name=>ix.relname
+                   p_relation_schema => inp.nspname
+                 , p_relation_name => ix.relname
                ) AS index_tablespace
           FROM pg_catalog.pg_namespace AS n
          INNER JOIN pg_catalog.pg_class AS r

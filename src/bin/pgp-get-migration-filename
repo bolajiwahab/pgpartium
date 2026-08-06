@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function usage() {
-    echo "
+    cat <<EOF
     ${0##*/}
 
     Helper to generate a migration filename.
@@ -13,11 +13,11 @@ function usage() {
       -h  show this help message.
 
     SAMPLE USAGE:
-        ${0##*/} -t \"V{integer}__{description}.sql\" -d \"migrations\" -m \"Add partitions for sample table\"
-        ${0##*/} -t \"V{integer:03}__{description}.sql\" -d \"migrations\" -m \"Expire partitions for sample table\"
-        ${0##*/} -t \"{timestamp}__{description}.sql\" -d \"migrations\" -m \"Add partitions for sample table\"
-        ${0##*/} -t \"{epoch}_{description}.up.sql\" -d \"migrations\" -m \"Add partitions for sample table\"
-"
+        ${0##*/} -t "V{integer}__{description}.sql" -d "migrations" -m "Add partitions for sample table"
+        ${0##*/} -t "V{integer:03}__{description}.sql" -d "migrations" -m "Expire partitions for sample table"
+        ${0##*/} -t "{timestamp}__{description}.sql" -d "migrations" -m "Add partitions for sample table"
+        ${0##*/} -t "{epoch}_{description}.up.sql" -d "migrations" -m "Add partitions for sample table"
+EOF
 }
 
 while getopts "t:d:m:h" option; do

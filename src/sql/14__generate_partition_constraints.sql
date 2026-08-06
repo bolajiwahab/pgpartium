@@ -5,8 +5,7 @@ CREATE OR REPLACE FUNCTION pgpartium.generate_partition_constraints (
   , p_partition_name text
   , p_template_table_schema text DEFAULT NULL
   , p_template_table_name text DEFAULT NULL
-  , p_constraint_name_template text DEFAULT NULL
-  , p_constraint_type_map jsonb DEFAULT NULL
+  , p_constraint_name_templates jsonb DEFAULT NULL
 )
 RETURNS text
 LANGUAGE SQL
@@ -15,26 +14,36 @@ AS $BODY$
     WITH template_constraints AS (
         SELECT constraint_name
              , constraint_type
-             , constraint_type_name
+             , constraint_name_template
              , constraint_keys
              , ordinal::text AS ordinal
              , constraint_definition
-          FROM pgpartium.get_constraints(p_table_schema=>p_template_table_schema, p_table_name=>p_template_table_name, p_constraint_type_map=>p_constraint_type_map)
+          FROM pgpartium.get_constraints(
+                   p_table_schema => p_template_table_schema
+                 , p_table_name => p_template_table_name
+                 , p_constraint_name_templates => p_constraint_name_templates
+               )
     )
     , parent_constraints AS (
         SELECT constraint_definition
-          FROM pgpartium.get_constraints(p_table_schema=>p_parent_table_schema, p_table_name=>p_parent_table_name)
+          FROM pgpartium.get_constraints(p_table_schema => p_parent_table_schema, p_table_name => p_parent_table_name)
     )
     , partition_constraints AS (
         SELECT pgpartium.render_template(
-                   p_constraint_name_template
+                   template_constraints.constraint_name_template
                  , jsonb_build_object(
                        '{parent_table_schema}', p_parent_table_schema
                      , '{parent_table_name}', p_parent_table_name
                      , '{partition_schema}', p_partition_schema
                      , '{partition_name}', p_partition_name
                      , '{constraint_keys}', template_constraints.constraint_keys
-                     , '{constraint_type_name}', template_constraints.constraint_type_name
+                     , '{constraint_suffix}', CASE template_constraints.constraint_type
+                           WHEN 'p' THEN 'pkey'
+                           WHEN 'u' THEN 'key'
+                           WHEN 'f' THEN 'fkey'
+                           WHEN 'c' THEN 'check'
+                           WHEN 'x' THEN 'excl'
+                       END
                      , '{ordinal}', CASE template_constraints.ordinal
                                       WHEN '0'
                                         THEN ''

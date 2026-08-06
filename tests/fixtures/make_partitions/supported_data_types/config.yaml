@@ -1,0 +1,20 @@
+---
+lifecycle:
+  directory: tests/fixtures/make_partitions/supported_data_types
+  partition:
+    naming:
+      template: "{table_schema}__{table_name}__YYYY_MM"
+    interval: 1 mon
+  tables:
+    - schema: test
+      name: transactions_by_date
+    - schema: test
+      name: transactions_by_timestamptz
+    - schema: test
+      name: transactions_by_timestamp
+    - schema: test
+      name: transactions_by_int4
+    - schema: test
+      name: transactions_by_int8
+    - schema: test
+      name: transactions_by_uuid

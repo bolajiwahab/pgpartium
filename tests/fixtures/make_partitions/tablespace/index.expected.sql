@@ -3,6 +3,5 @@ CREATE TABLE test.test__transactions__2025_04
     FOR VALUES FROM ('2025-04-01 00:00:00+00') TO ('2025-05-01 00:00:00+00');
 
 CREATE INDEX
-    ON test.test__transactions__2025_04
- USING btree (status)
+        ON test.test__transactions__2025_04 (status)
 TABLESPACE pgpartium_fast;

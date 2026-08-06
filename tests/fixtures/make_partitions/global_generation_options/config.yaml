@@ -1,0 +1,21 @@
+---
+lifecycle:
+  directory: tests/fixtures/make_partitions/global_generation_options
+  description:
+    make: "pgpartium output"
+  output_file_template: "{description}.sql"
+  partition:
+    idempotent: true
+    index:
+      naming:
+        template: "{partition_name}_custom_{index_keys}_idx{ordinal}"
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        naming:
+          template: "test__{table_name}__YYYY_MM"
+        interval: 1 mon
+      template:
+        schema: test
+        name: transactions_template

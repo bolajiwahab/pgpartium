@@ -1,0 +1,10 @@
+---
+lifecycle:
+  directory: tests/fixtures/expire_partitions/defaults
+  partition:
+    retention: 1 month
+    detach_first: true
+    detach_concurrently: true
+  tables:
+    - schema: test
+      name: notifications

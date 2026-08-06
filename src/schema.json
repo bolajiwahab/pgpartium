@@ -9,6 +9,16 @@
             "minLength": 1,
             "pattern": "^\\S(?:.*\\S)?$"
         },
+        "interval": {
+            "$ref": "#/definitions/trimmed_non_blank_string",
+            "examples": [
+              "2 hours",
+              "7 days",
+              "5 weeks",
+              "3 months",
+              "2 years"
+            ]
+          },
         "name": {
             "description": "Name of a thing.",
             "type": "string",
@@ -35,12 +45,12 @@
                 "make": {
                     "$ref": "#/definitions/trimmed_non_blank_string",
                     "description": "A description for making of partitions.",
-                    "default": "Make partitions for {table_schema}_{table_name}"
+                    "default": "Make partitions for {table_schema}.{table_name}"
                 },
                 "expire": {
                     "$ref": "#/definitions/trimmed_non_blank_string",
                     "description": "A description for expiration of partitions.",
-                    "default": "Expire partitions for {table_schema}_{table_name}"
+                    "default": "Expire partitions for {table_schema}.{table_name}"
                 }
             },
             "minProperties": 1,
@@ -77,10 +87,10 @@
                         "override",
                         "merge"
                     ],
-                    "default": "merge"
+                    "default": "override"
                 },
                 "parameters": {
-                    "description": "Storage parameters to apply.",
+                    "description": "Storage parameters to apply to partitions.",
                     "type": ["object", "null"],
                     "default": null,
                     "minProperties": 1,
@@ -101,50 +111,33 @@
             "description": "Directory where generated files are written.",
             "default": "."
         },
-        "idempotency": {
+        "idempotent": {
             "description": "Whether to generate idempotent SQL.",
             "type": "boolean",
             "default": false
         },
         "naming": {
             "description": "Naming configuration.",
-            "type": "object",
+            "type": ["object", "null"],
             "properties": {
                 "template": {
-                    "$ref": "#/definitions/name_template",
+                    "$ref": "#/definitions/nullable_name",
                     "description": "Template for naming objects.",
                     "examples": [
                         "{parent_schema}__{parent_name}__{partition_name}"
                     ]
                 }
             },
+            "default": null,
             "minProperties": 1,
             "additionalProperties": false
-        },
-        "required_naming": {
-            "description": "Naming configuration.",
-            "type": "object",
-            "properties": {
-                "template": {
-                    "$ref": "#/definitions/name_template",
-                    "description": "Template for naming objects.",
-                    "examples": [
-                        "{parent_schema}__{parent_name}__{partition_name}"
-                    ]
-                }
-            },
-            "minProperties": 1,
-            "additionalProperties": false,
-            "required": [
-                "template"
-            ]
         },
         "partition": {
             "type": "object",
             "description": "Partition configuration.",
             "properties": {
                 "naming": {
-                    "$ref": "#/definitions/required_naming",
+                    "$ref": "#/definitions/naming",
                     "description": "Partition naming configuration.",
                     "properties": {
                         "template": {
@@ -153,7 +146,8 @@
                                 "{parent_schema}__{parent_name}__YYYY_MM_DD"
                             ]
                         }
-                    }
+                    },
+                    "default": null
                 },
                 "schema": {
                     "$ref": "#/definitions/name",
@@ -169,16 +163,9 @@
                     "description": "Storage parameters for partitions."
                 },
                 "interval": {
-                    "$ref": "#/definitions/trimmed_non_blank_string",
-                    "description": "The partition interval.",
-                    "example": [
-                        "(n) hours",
-                        "(n) days",
-                        "(n) weeks",
-                        "(n) months",
-                        "(n) years"
-                    ]
-                },
+                    "$ref": "#/definitions/interval",
+                    "description": "The partition interval."
+                  },
                 "start_timestamp": {
                     "description": "The start timestamp for partition generation. Can also be LATEST_PARTITION to use the most recent partition.",
                     "oneOf": [
@@ -215,11 +202,11 @@
                     "default": 0
                 },
                 "default": {
-                    "type": "object",
+                    "type": ["object", "null"],
                     "description": "Default partition configuration.",
                     "properties": {
                         "naming": {
-                            "$ref": "#/definitions/required_naming",
+                            "$ref": "#/definitions/naming",
                             "description": "Default partition naming configuration.",
                             "properties": {
                                 "template": {
@@ -231,10 +218,8 @@
                             }
                         }
                     },
-                    "additionalProperties": false,
-                    "required": [
-                        "naming"
-                    ]
+                    "default": null,
+                    "additionalProperties": false
                 },
                 "skip_overlapping": {
                     "description": "Whether to skip overlapping partitions. Useful when switching partition intervals. It allows resolving such overlaps manually",
@@ -250,10 +235,10 @@
                             "description": "Naming configuration for constraints.",
                             "properties": {
                                 "template": {
-                                    "$ref": "#/definitions/name_template",
-                                    "description": "Template for naming constraints.",
+                                    "$ref": "#/definitions/nullable_name",
+                                    "description": "Fallback template for constraint types without a specific naming template.",
                                     "examples": [
-                                        "{parent_schema}__{parent_name}__default"
+                                        "{partition_name}_{constraint_keys}_{constraint_suffix}"
                                     ],
                                     "default": "{partition_name}_{constraint_keys}_{constraint_suffix}"
                                 },
@@ -283,7 +268,7 @@
                                         }
                                     }
                                 },
-                                "unique": {
+                                "unique_key": {
                                     "$ref": "#/definitions/naming",
                                     "description": "Naming configuration for unique constraints.",
                                     "properties": {
@@ -322,21 +307,10 @@
                                         }
                                     },
                                     "additionalProperties": false
-                                },
-                                "constraint_trigger": {
-                                    "$ref": "#/definitions/naming",
-                                    "description": "Naming configuration for constraint triggers.",
-                                    "properties": {
-                                        "template": {
-                                            "description": "Template for naming constraint triggers.",
-                                            "examples": [
-                                                "{partition_name}_{constraint_keys}_trig"
-                                            ],
-                                            "default": "{partition_name}_{constraint_keys}_trig"
-                                        }
-                                    }
                                 }
-                            }
+                            },
+                            "minProperties": 1,
+                            "additionalProperties": false
                         }
                     },
                     "minProperties": 1,
@@ -380,17 +354,40 @@
                                     "$ref": "#/definitions/name_template",
                                     "description": "Template for naming triggers.",
                                     "examples": [
-                                        "{partition_name}_{timing}_{events}_{function_name}"
+                                        "{partition_name}_{event_timing}_{trigger_event}_{function_name}"
                                     ],
-                                    "default": "{partition_name}_{timing}_{events}_{function_name}"
+                                    "default": "{partition_name}_{event_timing}_{trigger_event}_{function_name}"
                                 }
                             }
                         }
                     }
                 },
                 "retention": {
-                    "$ref": "#/definitions/nullable_name",
-                    "description": "The retention time interval to expire partitions older than the given interval."
+                  "type": ["object", "null"],
+                  "description": "Configuration for expiring partitions.",
+                  "properties": {
+                    "interval": {
+                      "$ref": "#/definitions/interval",
+                      "description": "Expire partitions older than this interval."
+                    },
+                    "detach_first": {
+                      "description": "Whether to detach expired partitions before dropping them.",
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "detach_only": {
+                      "description": "Whether to detach expired partitions without dropping them.",
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "detach_concurrently": {
+                      "description": "Whether to detach expired partitions concurrently.",
+                      "type": "boolean",
+                      "default": false
+                    }
+                  },
+                  "additionalProperties": false,
+                  "default": null
                 },
                 "detach_first": {
                     "description": "Whether to detach the expired partitions first before dropping them.",
@@ -429,6 +426,9 @@
                 "output_file_template": {
                     "$ref": "#/definitions/output_file_template"
                 },
+                "idempotent": {
+                    "$ref": "#/definitions/idempotent"
+                },
                 "partition": {
                     "$ref": "#/definitions/partition"
                 },
@@ -452,6 +452,9 @@
                             },
                             "output_file_template": {
                                 "$ref": "#/definitions/output_file_template"
+                            },
+                            "idempotent": {
+                                "$ref": "#/definitions/idempotent"
                             },
                             "partition": {
                                 "$ref": "#/definitions/partition",

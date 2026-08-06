@@ -1,0 +1,24 @@
+---
+lifecycle:
+  directory: tests/fixtures/expire_partitions/global_config
+  timezone: Etc/UTC
+  description:
+    expire: "Expire global {table_schema}_{table_name}"
+  output_file_template: "{description}.sql"
+  partition:
+    retention: 1 month
+    detach_first: true
+    detach_concurrently: true
+    idempotent: true
+  tables:
+    - schema: test
+      name: inherited_events
+    - schema: test
+      name: overridden_events
+      description:
+        expire: "Detach override {table_schema}_{table_name}"
+      partition:
+        detach_only: true
+        detach_first: false
+        detach_concurrently: false
+        idempotent: false

@@ -6,7 +6,7 @@ CREATE OR REPLACE FUNCTION pgpartium.expire_partitions (
   , p_detach_first boolean DEFAULT FALSE
   , p_detach_concurrently boolean DEFAULT FALSE
   , p_timezone text DEFAULT 'Etc/UTC'
-  , p_idempotency boolean DEFAULT FALSE
+  , p_idempotent boolean DEFAULT FALSE
 )
 RETURNS SETOF text
 LANGUAGE plpgsql
@@ -16,12 +16,12 @@ BEGIN
 
     PERFORM set_config('timezone', p_timezone, TRUE);
 
-    IF NOT pgpartium.table_exists(p_table_schema=>p_table_schema, p_table_name=>p_table_name) THEN
+    IF NOT pgpartium.table_exists(p_table_schema => p_table_schema, p_table_name => p_table_name) THEN
         RAISE 'table "%"."%" does not exist', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
 
-    IF NOT pgpartium.is_table_partitioned(p_table_schema=>p_table_schema, p_table_name=>p_table_name) THEN
+    IF NOT pgpartium.is_table_partitioned(p_table_schema => p_table_schema, p_table_name => p_table_name) THEN
         RAISE 'table "%"."%" is not partitioned', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
@@ -32,7 +32,7 @@ BEGIN
                  WHEN p_detach_only
                    THEN format(
                             E'ALTER TABLE %1$s%2$I.%3$I\n    DETACH PARTITION %4$I.%5$I%6$s;\n'
-                          , CASE p_idempotency                                  -- <1>
+                          , CASE p_idempotent                                   -- <1>
                               WHEN TRUE
                                 THEN 'IF EXISTS '
                               ELSE ''
@@ -50,7 +50,7 @@ BEGIN
                  WHEN p_detach_first
                    THEN format(
                             E'ALTER TABLE %1$s%2$I.%3$I\n    DETACH PARTITION %4$I.%5$I%6$s;\n\nDROP TABLE %1$s%4$I.%5$I;\n'
-                          , CASE p_idempotency                                  -- <1>
+                          , CASE p_idempotent                                   -- <1>
                               WHEN TRUE
                                 THEN 'IF EXISTS '
                               ELSE ''
@@ -67,7 +67,7 @@ BEGIN
                         )
                  ELSE format(
                           E'DROP TABLE %1$s%2$I.%3$I;\n'
-                        , CASE p_idempotency                                  -- <1>
+                        , CASE p_idempotent                                   -- <1>
                             WHEN TRUE
                               THEN 'IF EXISTS '
                             ELSE ''

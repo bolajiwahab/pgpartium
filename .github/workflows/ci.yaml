@@ -44,7 +44,7 @@ jobs:
 
       - name: Run tests
         run: |
-          PGP_PG_MAJOR_VERSION=${{ matrix.postgresql }} ./tests/run_tests.sh
+          PGP_PG_MAJOR_VERSION=${{ matrix.postgresql }} ./tests/run-tests.sh
 
   ensure-up-to-date-schema-doc:
     runs-on: ubuntu-latest

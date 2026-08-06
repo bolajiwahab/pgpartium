@@ -1,0 +1,15 @@
+#!/bin/bash
+
+function configure_database_environment() {
+    export PGP_USER="${PGP_USER:-postgres}" \
+        PGP_PASSWORD="${PGP_PASSWORD:-postgres}" \
+        PGP_DATABASE="${PGP_DATABASE:-postgres}" \
+        PGP_HOST="${PGP_HOST:-localhost}" \
+        PGP_PORT="${PGP_PORT:-5432}"
+
+    export PGUSER="${PGP_USER}" \
+        PGPASSWORD="${PGP_PASSWORD}" \
+        PGDATABASE="${PGP_DATABASE}" \
+        PGHOST="${PGP_HOST}" \
+        PGPORT="${PGP_PORT}"
+}

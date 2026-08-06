@@ -1,5 +1,6 @@
 CREATE TABLE test.transactions (
     transaction_id uuid NOT NULL
+  , status text NOT NULL
   , created_at timestamptz NOT NULL
   , updated_at timestamptz NOT NULL
   , CONSTRAINT transactions_key UNIQUE (transaction_id, created_at)

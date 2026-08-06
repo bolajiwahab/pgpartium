@@ -3,8 +3,8 @@ CREATE OR REPLACE FUNCTION pgpartium.get_partition_bounds (
   , p_table_name text
 )
 RETURNS TABLE (
-    partition_schema name
-  , partition_name name
+    partition_schema text
+  , partition_name text
   , lower_bound timestamptz
   , upper_bound timestamptz
 )

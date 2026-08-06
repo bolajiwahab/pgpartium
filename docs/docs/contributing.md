@@ -19,7 +19,7 @@ Contributions are welcome, whether they are bug reports, feature requests, code 
     pre-commit install
     ```
 
-## Project Structure
+## Project structure
 
 ```text
 .
@@ -27,13 +27,13 @@ Contributions are welcome, whether they are bug reports, feature requests, code 
     ├── bin                       # Binaries
     ├── sql                       # Database functions
 │── docs                          # Documentation
-│── tests                         # Tests
-    │── fixtures                  # Test fixtures
-        │── expire_partitions     # Expire partitions fixtures
-        │── make_partitions       # Make partitions fixtures
-    │── spec                      # Shellspec tests
-    │── tap                       # pgTap tests
-    |── setup.sh                  # Test setup script
+│── tests                         # Bats integration tests and fixtures
+    │── fixtures
+        │── expire_partitions
+        │── make_partitions
+    │── test_expire_partitions.sh
+    │── test_make_partitions.sh
+    │── run-tests.sh
 │── tools                         # Tools
 ```
 
@@ -46,21 +46,18 @@ pgpartium has two main components:
 
 ## Testing
 
-Test files are located in `tests` directory. There are two different tests: **shellspec** and **pgTap**.
-
-1. **shellspec**: shellspec is used to test the Bash binaries. The tests are located in `tests/spec/`.
-2. **pgTap**: pgTap is used to test the database functions. The tests are located in `tests/tap/`.
+Tests are Bats integration tests driven through the public CLI. Their fixtures initialize real PostgreSQL objects, generate migrations, compare expected SQL, and execute generated SQL against disposable databases. This keeps command behavior and the SQL functions behind it covered through the same entry point users run.
 
 To run tests, use:
 
 ```bash
-./tests/run_tests.sh
+./tests/run-tests.sh
 ```
 
 To run tests for a specific postgres version, use:
 
 ```bash
-PGP_PG_MAJOR_VERSION=<POSTGRES_MAJOR_VERSION> ./tests/run_tests.sh
+PGP_PG_MAJOR_VERSION=<POSTGRES_MAJOR_VERSION> ./tests/run-tests.sh
 ```
 
 ## Documentation
