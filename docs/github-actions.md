@@ -203,7 +203,7 @@ When an authoritative non-production catalog is already available, install the P
       # App token and checkout steps omitted here.
       - name: Install PostgreSQL client runtime
         env:
-          NO_CLUSTER: "1"
+          NO_CLUSTER: 1
         run: pgp-start
 
       - name: Generate lifecycle migrations
@@ -212,7 +212,7 @@ When an authoritative non-production catalog is already available, install the P
           pgp-expire-partitions -c partition-lifecycle.yaml
 ```
 
-Use a read-only catalog role where practical. pgpartium installs helper functions into the selected database through `pgp-setup-infrastructure`, so the role must be permitted to create or replace objects in the `pgpartium` schema. Do not point scheduled generation at production without explicitly accepting that requirement.
+Use a read-only database role where practical. pgpartium installs helper functions into the selected database through `pgp-setup-infrastructure`, so the role must be permitted to create or replace objects in the `pgpartium` schema.
 
 Protect external credentials with environments, network allowlists, short-lived database authentication, or a self-hosted runner inside the appropriate network boundary.
 
@@ -254,7 +254,7 @@ gh-create-pr \
 
 The `pgpartium/` prefix is added automatically to the supplied branch name.
 
-Because the automation branch is force-updated, do not place human commits on it. Make review changes in configuration or generator code and rerun the workflow, preserving the declarative reconciliation model.
+Because the automation branch is force-updated, do not place human commits on it. Make review changes in configuration and rerun the workflow, preserving the declarative reconciliation model.
 
 ## Repository governance
 
@@ -290,7 +290,7 @@ Verify that the PR was created using the App token rather than `GITHUB_TOKEN`, a
 
 ### No PR is created
 
-This is expected when no tracked or untracked migration file changed. Review generator logs and confirm `lifecycle.directory` is inside the checked-out repository.
+This is expected when no tracked or untracked migration file changed. Review the logs and confirm `lifecycle.directory` is inside the checked-out repository.
 
 ### A schedule creates overlapping runs
 
