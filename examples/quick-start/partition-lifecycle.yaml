@@ -1,9 +1,9 @@
 ---
 lifecycle:
   directory: examples/quick-start/migrations
-  timezone: Etc/UTC
+  timezone: UTC
   partition:
-    naming:
+    # naming:
     # template: "{table_schema}__{table_name}__YYYY_MM"
     # interval: 1 month
     # start_timestamp: NOW

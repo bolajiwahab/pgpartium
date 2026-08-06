@@ -300,7 +300,7 @@
              data-parent="#accordionlifecycle_partition_naming">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Partition naming configuration.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -324,14 +324,14 @@
              data-parent="#accordionlifecycle_partition_naming_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">Template for naming objects.</span>
 
-    <span class="pattern-value" id="lifecycle_partition_naming_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_partition_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_partition_naming_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Examples:</div>
@@ -390,14 +390,16 @@
              data-parent="#accordionlifecycle_partition_tablespace">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
-<span class="description">Tablespace name.</span>
+    <span class="badge badge-dark value-type">Type: string</span><br/>
+<span class="description">Tablespace for partitions.</span>
 
-    <span class="pattern-value" id="lifecycle_partition_tablespace_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    
+
+    <span class="pattern-value" id="lifecycle_partition_tablespace_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_partition_tablespace_minLength">Must be at least <code>1</code> characters long</span></p>
 
         
             </div>
@@ -418,7 +420,7 @@
              data-parent="#accordionlifecycle_partition_storage">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Storage parameters for partitions.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -471,7 +473,7 @@
              data-parent="#accordionlifecycle_partition_storage_parameters">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Storage parameters to apply to partitions.</span>
         
 
@@ -674,7 +676,7 @@
              data-parent="#accordionlifecycle_partition_default">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Default partition configuration.</span> <span class="badge badge-info no-additional">No Additional Properties</span>
         
 
@@ -696,7 +698,7 @@
              data-parent="#accordionlifecycle_partition_default_naming">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Default partition naming configuration.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -720,14 +722,14 @@
              data-parent="#accordionlifecycle_partition_default_naming_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">Template for naming default partition.</span>
 
-    <span class="pattern-value" id="lifecycle_partition_default_naming_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_partition_default_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_partition_default_naming_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
@@ -830,51 +832,19 @@
              data-parent="#accordionlifecycle_partition_constraint_naming_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_{constraint_suffix}"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_{constraint_suffix}"</span><br/>
 <span class="description">Fallback template for constraint types without a specific naming template.</span>
 
-     <span class="badge badge-info no-additional">No Additional Properties</span>
+    <span class="pattern-value" id="lifecycle_partition_constraint_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_partition_constraint_naming_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
 <br/><div id="lifecycle_partition_constraint_naming_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">partition_name</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">_{constraint_keys}_{constraint_suffix}</span>
 </pre></div>
-</div>
-<div class="accordion" id="accordionlifecycle_partition_constraint_naming_template_template">
-    <div class="card">
-        <div class="card-header" id="headinglifecycle_partition_constraint_naming_template_template">
-            <h2 class="mb-0">
-                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_partition_constraint_naming_template_template"
-                        aria-expanded="" aria-controls="lifecycle_partition_constraint_naming_template_template" onclick="setAnchor('#lifecycle_partition_constraint_naming_template_template')"><span class="property-name">template</span></button>
-            </h2>
-        </div>
-
-        <div id="lifecycle_partition_constraint_naming_template_template"
-             class="collapse property-definition-div" aria-labelledby="headinglifecycle_partition_constraint_naming_template_template"
-             data-parent="#accordionlifecycle_partition_constraint_naming_template_template">
-            <div class="card-body pl-5">
-
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
-<span class="description">Template for naming objects.</span>
-
-    <span class="pattern-value" id="lifecycle_partition_constraint_naming_template_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
-        
-
-        
-        
-
-        <br/>
-<div class="badge badge-secondary">Example:</div>
-<br/><div id="lifecycle_partition_constraint_naming_template_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">parent_schema</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">__{parent_name}__{partition_name}</span>
-</pre></div>
-</div>
-            </div>
-        </div>
-    </div>
 </div>
             </div>
         </div>
@@ -894,7 +864,7 @@
              data-parent="#accordionlifecycle_partition_constraint_naming_primary_key">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Naming configuration for primary keys.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -918,14 +888,14 @@
              data-parent="#accordionlifecycle_partition_constraint_naming_primary_key_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_pkey"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_pkey"</span><br/>
 <span class="description">Template for naming primary keys.</span>
 
-    <span class="pattern-value" id="lifecycle_partition_constraint_naming_primary_key_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_partition_constraint_naming_primary_key_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_partition_constraint_naming_primary_key_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
@@ -954,7 +924,7 @@
              data-parent="#accordionlifecycle_partition_constraint_naming_foreign_key">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Naming configuration for foreign keys.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -978,14 +948,14 @@
              data-parent="#accordionlifecycle_partition_constraint_naming_foreign_key_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_fkey"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_fkey"</span><br/>
 <span class="description">Template for naming foreign keys.</span>
 
-    <span class="pattern-value" id="lifecycle_partition_constraint_naming_foreign_key_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_partition_constraint_naming_foreign_key_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_partition_constraint_naming_foreign_key_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
@@ -1014,7 +984,7 @@
              data-parent="#accordionlifecycle_partition_constraint_naming_unique_key">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Naming configuration for unique constraints.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -1038,14 +1008,14 @@
              data-parent="#accordionlifecycle_partition_constraint_naming_unique_key_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_key"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_key"</span><br/>
 <span class="description">Template for naming unique constraints.</span>
 
-    <span class="pattern-value" id="lifecycle_partition_constraint_naming_unique_key_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_partition_constraint_naming_unique_key_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_partition_constraint_naming_unique_key_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
@@ -1074,7 +1044,7 @@
              data-parent="#accordionlifecycle_partition_constraint_naming_check">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Naming configuration for check constraints.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -1098,14 +1068,14 @@
              data-parent="#accordionlifecycle_partition_constraint_naming_check_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_check"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_check"</span><br/>
 <span class="description">Template for naming check constraints.</span>
 
-    <span class="pattern-value" id="lifecycle_partition_constraint_naming_check_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_partition_constraint_naming_check_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_partition_constraint_naming_check_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
@@ -1134,7 +1104,7 @@
              data-parent="#accordionlifecycle_partition_constraint_naming_exclusion">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Naming configuration for exclusion constraints.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -1158,14 +1128,14 @@
              data-parent="#accordionlifecycle_partition_constraint_naming_exclusion_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_excl"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_excl"</span><br/>
 <span class="description">Template for naming exclusion constraints.</span>
 
-    <span class="pattern-value" id="lifecycle_partition_constraint_naming_exclusion_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_partition_constraint_naming_exclusion_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_partition_constraint_naming_exclusion_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
@@ -1224,7 +1194,7 @@
              data-parent="#accordionlifecycle_partition_index_naming">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Index naming configuration.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -1248,14 +1218,14 @@
              data-parent="#accordionlifecycle_partition_index_naming_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_{index_keys}_idx{ordinal}"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{index_keys}_idx{ordinal}"</span><br/>
 <span class="description">Template for naming indexes.</span>
 
-    <span class="pattern-value" id="lifecycle_partition_index_naming_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_partition_index_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_partition_index_naming_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Examples:</div>
@@ -1286,14 +1256,16 @@
              data-parent="#accordionlifecycle_partition_index_tablespace">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">Tablespace for indexes.</span>
 
-    <span class="pattern-value" id="lifecycle_partition_index_tablespace_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    
+
+    <span class="pattern-value" id="lifecycle_partition_index_tablespace_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_partition_index_tablespace_minLength">Must be at least <code>1</code> characters long</span></p>
 
         
             </div>
@@ -1340,7 +1312,7 @@
              data-parent="#accordionlifecycle_partition_trigger_naming">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Trigger naming configuration.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -1364,18 +1336,18 @@
              data-parent="#accordionlifecycle_partition_trigger_naming_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_{event_timing}_{trigger_event}_{function_name}"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{event_timing}_{trigger_event}_{function_name}{ordinal}"</span><br/>
 <span class="description">Template for naming triggers.</span>
 
-    <span class="pattern-value" id="lifecycle_partition_trigger_naming_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_partition_trigger_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_partition_trigger_naming_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
-<br/><div id="lifecycle_partition_trigger_naming_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">partition_name</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">_{event_timing}_{trigger_event}_{function_name}</span>
+<br/><div id="lifecycle_partition_trigger_naming_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">partition_name</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">_{event_timing}_{trigger_event}_{function_name}{ordinal}</span>
 </pre></div>
 </div>
             </div>
@@ -1404,7 +1376,7 @@
              data-parent="#accordionlifecycle_partition_retention">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Configuration for expiring partitions.</span> <span class="badge badge-info no-additional">No Additional Properties</span>
         
 
@@ -1898,7 +1870,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_naming">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Partition naming configuration.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -1922,14 +1894,14 @@
              data-parent="#accordionlifecycle_tables_items_partition_naming_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">Template for naming objects.</span>
 
-    <span class="pattern-value" id="lifecycle_tables_items_partition_naming_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_tables_items_partition_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_partition_naming_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Examples:</div>
@@ -1988,14 +1960,16 @@
              data-parent="#accordionlifecycle_tables_items_partition_tablespace">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
-<span class="description">Tablespace name.</span>
+    <span class="badge badge-dark value-type">Type: string</span><br/>
+<span class="description">Tablespace for partitions.</span>
 
-    <span class="pattern-value" id="lifecycle_tables_items_partition_tablespace_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    
+
+    <span class="pattern-value" id="lifecycle_tables_items_partition_tablespace_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_partition_tablespace_minLength">Must be at least <code>1</code> characters long</span></p>
 
         
             </div>
@@ -2016,7 +1990,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_storage">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Storage parameters for partitions.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -2069,7 +2043,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_storage_parameters">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Storage parameters to apply to partitions.</span>
         
 
@@ -2272,7 +2246,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_default">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Default partition configuration.</span> <span class="badge badge-info no-additional">No Additional Properties</span>
         
 
@@ -2294,7 +2268,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_default_naming">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Default partition naming configuration.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -2318,14 +2292,14 @@
              data-parent="#accordionlifecycle_tables_items_partition_default_naming_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">Template for naming default partition.</span>
 
-    <span class="pattern-value" id="lifecycle_tables_items_partition_default_naming_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_tables_items_partition_default_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_partition_default_naming_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
@@ -2428,51 +2402,19 @@
              data-parent="#accordionlifecycle_tables_items_partition_constraint_naming_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_{constraint_suffix}"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_{constraint_suffix}"</span><br/>
 <span class="description">Fallback template for constraint types without a specific naming template.</span>
 
-     <span class="badge badge-info no-additional">No Additional Properties</span>
+    <span class="pattern-value" id="lifecycle_tables_items_partition_constraint_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_partition_constraint_naming_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
 <br/><div id="lifecycle_tables_items_partition_constraint_naming_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">partition_name</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">_{constraint_keys}_{constraint_suffix}</span>
 </pre></div>
-</div>
-<div class="accordion" id="accordionlifecycle_tables_items_partition_constraint_naming_template_template">
-    <div class="card">
-        <div class="card-header" id="headinglifecycle_tables_items_partition_constraint_naming_template_template">
-            <h2 class="mb-0">
-                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_partition_constraint_naming_template_template"
-                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_constraint_naming_template_template" onclick="setAnchor('#lifecycle_tables_items_partition_constraint_naming_template_template')"><span class="property-name">template</span></button>
-            </h2>
-        </div>
-
-        <div id="lifecycle_tables_items_partition_constraint_naming_template_template"
-             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_partition_constraint_naming_template_template"
-             data-parent="#accordionlifecycle_tables_items_partition_constraint_naming_template_template">
-            <div class="card-body pl-5">
-
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
-<span class="description">Template for naming objects.</span>
-
-    <span class="pattern-value" id="lifecycle_tables_items_partition_constraint_naming_template_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
-        
-
-        
-        
-
-        <br/>
-<div class="badge badge-secondary">Example:</div>
-<br/><div id="lifecycle_tables_items_partition_constraint_naming_template_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">parent_schema</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">__{parent_name}__{partition_name}</span>
-</pre></div>
-</div>
-            </div>
-        </div>
-    </div>
 </div>
             </div>
         </div>
@@ -2492,7 +2434,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_constraint_naming_primary_key">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Naming configuration for primary keys.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -2516,14 +2458,14 @@
              data-parent="#accordionlifecycle_tables_items_partition_constraint_naming_primary_key_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_pkey"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_pkey"</span><br/>
 <span class="description">Template for naming primary keys.</span>
 
-    <span class="pattern-value" id="lifecycle_tables_items_partition_constraint_naming_primary_key_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_tables_items_partition_constraint_naming_primary_key_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_partition_constraint_naming_primary_key_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
@@ -2552,7 +2494,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_constraint_naming_foreign_key">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Naming configuration for foreign keys.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -2576,14 +2518,14 @@
              data-parent="#accordionlifecycle_tables_items_partition_constraint_naming_foreign_key_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_fkey"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_fkey"</span><br/>
 <span class="description">Template for naming foreign keys.</span>
 
-    <span class="pattern-value" id="lifecycle_tables_items_partition_constraint_naming_foreign_key_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_tables_items_partition_constraint_naming_foreign_key_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_partition_constraint_naming_foreign_key_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
@@ -2612,7 +2554,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_constraint_naming_unique_key">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Naming configuration for unique constraints.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -2636,14 +2578,14 @@
              data-parent="#accordionlifecycle_tables_items_partition_constraint_naming_unique_key_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_key"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_key"</span><br/>
 <span class="description">Template for naming unique constraints.</span>
 
-    <span class="pattern-value" id="lifecycle_tables_items_partition_constraint_naming_unique_key_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_tables_items_partition_constraint_naming_unique_key_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_partition_constraint_naming_unique_key_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
@@ -2672,7 +2614,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_constraint_naming_check">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Naming configuration for check constraints.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -2696,14 +2638,14 @@
              data-parent="#accordionlifecycle_tables_items_partition_constraint_naming_check_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_check"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_check"</span><br/>
 <span class="description">Template for naming check constraints.</span>
 
-    <span class="pattern-value" id="lifecycle_tables_items_partition_constraint_naming_check_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_tables_items_partition_constraint_naming_check_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_partition_constraint_naming_check_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
@@ -2732,7 +2674,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_constraint_naming_exclusion">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Naming configuration for exclusion constraints.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -2756,14 +2698,14 @@
              data-parent="#accordionlifecycle_tables_items_partition_constraint_naming_exclusion_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_excl"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{constraint_keys}_excl"</span><br/>
 <span class="description">Template for naming exclusion constraints.</span>
 
-    <span class="pattern-value" id="lifecycle_tables_items_partition_constraint_naming_exclusion_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_tables_items_partition_constraint_naming_exclusion_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_partition_constraint_naming_exclusion_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
@@ -2822,7 +2764,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_index_naming">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Index naming configuration.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -2846,14 +2788,14 @@
              data-parent="#accordionlifecycle_tables_items_partition_index_naming_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_{index_keys}_idx{ordinal}"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{index_keys}_idx{ordinal}"</span><br/>
 <span class="description">Template for naming indexes.</span>
 
-    <span class="pattern-value" id="lifecycle_tables_items_partition_index_naming_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_tables_items_partition_index_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_partition_index_naming_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Examples:</div>
@@ -2884,14 +2826,16 @@
              data-parent="#accordionlifecycle_tables_items_partition_index_tablespace">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span><br/>
 <span class="description">Tablespace for indexes.</span>
 
-    <span class="pattern-value" id="lifecycle_tables_items_partition_index_tablespace_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    
+
+    <span class="pattern-value" id="lifecycle_tables_items_partition_index_tablespace_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_partition_index_tablespace_minLength">Must be at least <code>1</code> characters long</span></p>
 
         
             </div>
@@ -2938,7 +2882,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_trigger_naming">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Trigger naming configuration.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
@@ -2962,18 +2906,18 @@
              data-parent="#accordionlifecycle_tables_items_partition_trigger_naming_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string or null</span> <span class="badge badge-success default-value">Default: "{partition_name}_{event_timing}_{trigger_event}_{function_name}"</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{partition_name}_{event_timing}_{trigger_event}_{function_name}{ordinal}"</span><br/>
 <span class="description">Template for naming triggers.</span>
 
-    <span class="pattern-value" id="lifecycle_tables_items_partition_trigger_naming_template_pattern">Must match regular expression: <code>^\S(?:.*\S)?$</code></span>
+    <span class="pattern-value" id="lifecycle_tables_items_partition_trigger_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_partition_trigger_naming_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Example:</div>
-<br/><div id="lifecycle_tables_items_partition_trigger_naming_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">partition_name</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">_{event_timing}_{trigger_event}_{function_name}</span>
+<br/><div id="lifecycle_tables_items_partition_trigger_naming_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">partition_name</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">_{event_timing}_{trigger_event}_{function_name}{ordinal}</span>
 </pre></div>
 </div>
             </div>
@@ -3002,7 +2946,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_retention">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: object or null</span> <span class="badge badge-success default-value">Default: null</span><br/>
+    <span class="badge badge-dark value-type">Type: object</span><br/>
 <span class="description">Configuration for expiring partitions.</span> <span class="badge badge-info no-additional">No Additional Properties</span>
         
 

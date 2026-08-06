@@ -84,7 +84,7 @@ function make_partitions() {
         DEFAULT_INDEX_NAME_TEMPLATE=null \
         DEFAULT_CONSTRAINT_NAME_TEMPLATE="{partition_name}_{constraint_keys}_{constraint_suffix}" \
         DEFAULT_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE="{partition_name}_pkey" \
-        DEFAULT_TRIGGER_NAME_TEMPLATE="{partition_name}_{event_timing}_{trigger_event}_{function_name}" \
+        DEFAULT_TRIGGER_NAME_TEMPLATE="{partition_name}_{event_timing}_{trigger_event}_{function_name}{ordinal}" \
         DEFAULT_TIMEZONE="Etc/UTC" \
         DIRECTORY="."
 

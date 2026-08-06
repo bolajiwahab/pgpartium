@@ -31,12 +31,8 @@
                 "null"
             ],
             "minLength": 1,
-            "pattern": "^\\S(?:.*\\S)?$",
+            "pattern": "^\\S+$",
             "default": null
-        },
-        "name_template": {
-            "$ref": "#/definitions/name",
-            "description": "Template for naming objects."
         },
         "description": {
             "description": "A description of the partition lifecycle, available for use as {description} in output_file_template.",
@@ -74,10 +70,7 @@
         },
         "storage": {
             "description": "Storage parameters for relations.",
-            "type": [
-                "object",
-                "null"
-            ],
+            "type": "object",
             "properties": {
                 "mode": {
                     "description": "Mode for storage parameters.",
@@ -91,8 +84,7 @@
                 },
                 "parameters": {
                     "description": "Storage parameters to apply to partitions.",
-                    "type": ["object", "null"],
-                    "default": null,
+                    "type": "object",
                     "minProperties": 1,
                     "examples": [
                         {
@@ -102,7 +94,6 @@
                     ]
                 }
             },
-            "default": null,
             "minProperties": 1,
             "additionalProperties": false
         },
@@ -118,19 +109,22 @@
         },
         "naming": {
             "description": "Naming configuration.",
-            "type": ["object", "null"],
+            "type": "object",
             "properties": {
                 "template": {
-                    "$ref": "#/definitions/nullable_name",
+                    "$ref": "#/definitions/name",
                     "description": "Template for naming objects.",
                     "examples": [
                         "{parent_schema}__{parent_name}__{partition_name}"
                     ]
                 }
             },
-            "default": null,
             "minProperties": 1,
             "additionalProperties": false
+        },
+        "tablespace": {
+            "$ref": "#/definitions/name",
+            "description": "Tablespace name."
         },
         "partition": {
             "type": "object",
@@ -146,8 +140,7 @@
                                 "{parent_schema}__{parent_name}__YYYY_MM_DD"
                             ]
                         }
-                    },
-                    "default": null
+                    }
                 },
                 "schema": {
                     "$ref": "#/definitions/name",
@@ -155,8 +148,8 @@
                     "default": "parent's schema"
                 },
                 "tablespace": {
-                    "$ref": "#/definitions/nullable_name",
-                    "description": "Tablespace name."
+                    "$ref": "#/definitions/tablespace",
+                    "description": "Tablespace for partitions."
                 },
                 "storage": {
                     "$ref": "#/definitions/storage",
@@ -202,7 +195,7 @@
                     "default": 0
                 },
                 "default": {
-                    "type": ["object", "null"],
+                    "type": "object",
                     "description": "Default partition configuration.",
                     "properties": {
                         "naming": {
@@ -218,7 +211,6 @@
                             }
                         }
                     },
-                    "default": null,
                     "additionalProperties": false
                 },
                 "skip_overlapping": {
@@ -235,7 +227,7 @@
                             "description": "Naming configuration for constraints.",
                             "properties": {
                                 "template": {
-                                    "$ref": "#/definitions/nullable_name",
+                                    "$ref": "#/definitions/name",
                                     "description": "Fallback template for constraint types without a specific naming template.",
                                     "examples": [
                                         "{partition_name}_{constraint_keys}_{constraint_suffix}"
@@ -335,7 +327,7 @@
                             }
                         },
                         "tablespace": {
-                            "$ref": "#/definitions/nullable_name",
+                            "$ref": "#/definitions/tablespace",
                             "description": "Tablespace for indexes."
                         }
                     },
@@ -351,19 +343,18 @@
                             "description": "Trigger naming configuration.",
                             "properties": {
                                 "template": {
-                                    "$ref": "#/definitions/name_template",
                                     "description": "Template for naming triggers.",
                                     "examples": [
-                                        "{partition_name}_{event_timing}_{trigger_event}_{function_name}"
+                                        "{partition_name}_{event_timing}_{trigger_event}_{function_name}{ordinal}"
                                     ],
-                                    "default": "{partition_name}_{event_timing}_{trigger_event}_{function_name}"
+                                    "default": "{partition_name}_{event_timing}_{trigger_event}_{function_name}{ordinal}"
                                 }
                             }
                         }
                     }
                 },
                 "retention": {
-                  "type": ["object", "null"],
+                  "type": "object",
                   "description": "Configuration for expiring partitions.",
                   "properties": {
                     "interval": {
@@ -386,8 +377,7 @@
                       "default": false
                     }
                   },
-                  "additionalProperties": false,
-                  "default": null
+                  "additionalProperties": false
                 },
                 "detach_first": {
                     "description": "Whether to detach the expired partitions first before dropping them.",
