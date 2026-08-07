@@ -1,6 +1,9 @@
 # FROM python:3.12-slim-bookworm@sha256:c18c7a910432dde3311fc54d02e5d5220f3ebe26fec43ff15745982863dd7b3b AS build
 
-FROM python:3.12-slim-bookworm@sha256:6e13e65c55e33adf203d77ee371cf8bf5d81bd4902ef07565721f46bf44917af AS build
+FROM python:3.12-slim-bookworm@sha256:4766d8b510c428e595d74b9cc5bbb2fae8e26316fffb4adc89908d79aacd58a2 AS build
+
+# sha256:4766d8b510c428e595d74b9cc5bbb2fae8e26316fffb4adc89908d79aacd58a2
+ARG YQ_VERSION=4.45.1
 
 ADD https://salsa.debian.org/postgresql/postgresql-common/-/raw/master/pgdg/apt.postgresql.org.sh /usr/local/bin/
 
@@ -16,11 +19,9 @@ COPY src/sql sql
 
 COPY src/sql src/schema.json src/requirements.txt ./
 
-# Install dependencies check-jsonschema, pgrubic, and GitHub CLI
-# Enable amd64 architecture in case we are running on arm64
-RUN dpkg --add-architecture amd64 \
-        && apt-get update \
-        && apt-get install -y wget git ca-certificates gnupg2 libc6:amd64 \
+# Install dependencies and GitHub CLI
+RUN apt-get update \
+        && apt-get install -y wget git ca-certificates gnupg2 \
         && pip install --no-cache-dir --upgrade pip -r requirements.txt \
         && apt-get clean \
         && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
@@ -40,26 +41,32 @@ RUN git config --system --add safe.directory '*'
 
 ENV LC_ALL=C.UTF-8 LANG=C.UTF-8 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-RUN wget --quiet https://github.com/mikefarah/yq/releases/download/v4.45.1/yq_linux_amd64 --output-document=/usr/bin/yq && \
+RUN wget --quiet "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_amd64" --output-document=/usr/bin/yq && \
     chmod +x /usr/bin/yq
 
 FROM build AS test
 
+ARG BATS_VERSION=1.14.0
+ARG KCOV_VERSION=43+dfsg-1~bpo12+1
+
 COPY tests tests
 
-# Install kcov run-time dependencies and bats.
-RUN apt-get update && \
-    apt-get install --yes --no-install-suggests --no-install-recommends \
-      libbfd-dev \
-      libcurl4 \
-      libdw1 \
-      zlib1g \
-      bats \
-      && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Install kcov
 
-COPY --from=kcov/kcov:latest /usr/local/bin/kcov* /usr/local/bin/
+RUN echo "deb http://deb.debian.org/debian bookworm-backports main" \
+      > /etc/apt/sources.list.d/bookworm-backports.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+         -t bookworm-backports \
+         "kcov=${KCOV_VERSION}" \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN wget -qO- \
+        "https://github.com/bats-core/bats-core/archive/refs/tags/v${BATS_VERSION}.tar.gz" \
+    | tar -xz \
+&& ./bats-core-${BATS_VERSION}/install.sh /usr/local \
+&& rm -rf bats-core-${BATS_VERSION} \
+&& rm -rf /var/lib/apt/lists/*
 
 CMD ["/bin/bash"]
 
