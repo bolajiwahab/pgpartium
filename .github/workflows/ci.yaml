@@ -16,10 +16,10 @@ jobs:
     name: Run pre-commit
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -40,7 +40,7 @@ jobs:
     name: Run tests on PostgreSQL ${{ matrix.postgresql }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Run tests
         run: |
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Ensure schema doc is up to date
         run: tools/ensure_up_to_date_schema_doc.sh
