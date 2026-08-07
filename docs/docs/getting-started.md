@@ -50,7 +50,7 @@ docker run --rm --user root \
 
 `pgp-start` defaults to PostgreSQL 14 and supplies the local cluster connection settings. `PGP_INIT_DIR` is the only database setup input here and loads the example schema. `--workdir /repository` makes repository-relative configuration and output paths resolve inside the mounted host directory. The generated migration appears at `examples/quick-start/migrations/pgpartium_output.sql` on the host.
 
-To adapt the example, copy its configuration and initialization layout into the application repository. Change `lifecycle.directory`, the configured tables, and the initialization SQL or scripts to match the application's schema migration setup. The output directory must already exist. For all available options, inheritance rules, and naming placeholders, use the [configuration reference](configuration.md) and [annotated sample](../config.sample.yaml).
+To adapt the example, copy its configuration and initialization layout into the application repository. Change `lifecycle.directory`, the configured tables, and the initialization SQL or scripts to match the application's schema migration setup. The output directory must already exist. For all available options, inheritance rules, and naming placeholders, use the [configuration reference](configuration.md) and [annotated sample](../../config.sample.yaml).
 
 ## Choose a database source
 

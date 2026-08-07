@@ -75,16 +75,16 @@ docker run --rm --user root \
 
 `pgp-start` defaults to PostgreSQL 14 and supplies the local cluster connection settings. The only database setup input in this example is the initialization directory. It can contain `.sql`, `.sql.gz`, and `.sh` files, including scripts that invoke the application's existing schema or migration tooling. `--workdir /repository` is required because the image otherwise runs from `/src`, while the configuration and output paths are relative to the mounted repository. Generated SQL is written to `examples/quick-start/migrations/pgpartium_output.sql`; apply generated lifecycle migrations only through the application's normal migration process.
 
-See [Getting started](docs/getting-started.md) for external database mode, prerequisites, and output validation.
+See [Getting started](docs/docs/getting-started.md) for external database mode, prerequisites, and output validation.
 
 ## Documentation
 
-The [documentation index](docs/README.md) routes each task to a focused guide:
+The [documentation index](docs/docs/README.md) routes each task to a focused guide:
 
-- [Getting started](docs/getting-started.md)—installation, catalog setup, and first generation.
-- [Configuration reference](docs/configuration.md)—all creation, expiration, naming, template, storage, and override options.
-- [Optional GitHub Actions automation](docs/github-actions.md)—GitHub App setup, short-lived tokens, scheduling, PR reconciliation, security, and troubleshooting.
-- [CLI reference](docs/cli-reference.md)—commands, environment variables, examples, and exit behavior.
+- [Getting started](docs/docs/getting-started.md)—installation, catalog setup, and first generation.
+- [Configuration reference](docs/docs/configuration.md)—all creation, expiration, naming, template, storage, and override options.
+- [Optional GitHub Actions automation](docs/docs/github-actions.md)—GitHub App setup, short-lived tokens, scheduling, PR reconciliation, security, and troubleshooting.
+- [CLI reference](docs/docs/cli-reference.md)—commands, environment variables, examples, and exit behavior.
 - [Annotated configuration](config.sample.yaml)—a complete example using the current schema.
 - [Generated JSON Schema reference](https://bolajiwahab.github.io/pgpartium/schema.html).
 
@@ -99,7 +99,7 @@ The [documentation index](docs/README.md) routes each task to a focused guide:
 | `pgp-get-migration-filename` | Resolve migration filename templates. |
 | `gh-create-pr` | Optionally create or update a GitHub partition-maintenance PR. |
 
-Use the [CLI reference](docs/cli-reference.md) for syntax and operational behavior.
+Use the [CLI reference](docs/docs/cli-reference.md) for syntax and operational behavior.
 
 ## Contributing and support
 

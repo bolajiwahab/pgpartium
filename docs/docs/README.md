@@ -11,9 +11,9 @@ pgpartium generates reviewable PostgreSQL partition-lifecycle migrations. Users 
 ## Reference
 
 - [CLI reference](cli-reference.md)—commands, environment variables, exit behavior, and examples.
-- [Annotated configuration](../config.sample.yaml)—a complete configuration using the current schema.
-- [Generated JSON Schema reference](docs/schema.html)—machine-derived option documentation.
-- [Contributing](docs/contributing.md)—development environment, testing, and contribution workflow.
+- [Annotated configuration](../../config.sample.yaml)—a complete configuration using the current schema.
+- [Generated JSON Schema reference](schema.html)—machine-derived option documentation.
+- [Contributing](contributing.md)—development environment, testing, and contribution workflow.
 
 ## Documentation boundaries
 
@@ -26,4 +26,4 @@ Each guide has one purpose:
 | [GitHub Actions](github-actions.md) | You want the optional scheduled GitHub PR workflow. |
 | [CLI reference](cli-reference.md) | You need command syntax, environment requirements, or failure semantics. |
 
-The project [README](../README.md) remains a concise overview and entry point.
+The project [README](../../README.md) remains a concise overview and entry point.
