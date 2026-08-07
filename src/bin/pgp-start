@@ -1,0 +1,107 @@
+#!/bin/bash
+
+# shellcheck source=src/bin/pgp-shell-helpers
+source "$(dirname "${BASH_SOURCE[0]}")/pgp-shell-helpers"
+
+PGP_MIN_POSTGRES_VERSION=14
+
+usage()
+{
+    cat <<EOF
+    ${0##*/}
+
+    Installs major PostgreSQL version, psql client, optionally creates a cluster, starts the cluster and applies init directory if provided.
+
+    OPTIONS:
+      -v  the postgres version to use (Default: ${PGP_MIN_POSTGRES_VERSION}, must be at least ${PGP_MIN_POSTGRES_VERSION})
+      -i  the init directory to apply (Optional) (supports .sh, .sql and .sql.gz)
+      -h  show this help message.
+
+    SAMPLE USAGE:
+        ${0##*/} -i initdir
+        ${0##*/} -v 17 -i initdir
+EOF
+}
+
+while getopts "v:i:h" option
+do
+    case "${option}" in
+        v)
+            pg_major_version="${OPTARG}"
+            ;;
+        i)
+            init_dir="${OPTARG}"
+            ;;
+        h | *)
+            usage
+            exit 0
+            ;;
+    esac
+done
+
+set -euo pipefail
+
+configure_database_environment
+
+export PGP_CLUSTER_NAME="${PGP_CLUSTER_NAME:-pgpartium}"
+
+pg_major_version=${pg_major_version:-${PGP_PG_MAJOR_VERSION:-${PGP_MIN_POSTGRES_VERSION}}}
+init_dir=${init_dir:-${PGP_INIT_DIR:-}}
+export PGP_PG_MAJOR_VERSION="${pg_major_version}"
+
+if (( pg_major_version < PGP_MIN_POSTGRES_VERSION )); then
+  echo "Error: PostgreSQL major version must be at least ${PGP_MIN_POSTGRES_VERSION}" >&2
+  exit 1
+fi
+
+# Install PostgreSQL
+apt.postgresql.org.sh -i -v "${pg_major_version}"
+
+if [[ -z ${NO_CLUSTER+yes} ]]; then
+    echo "INFO: Creating PostgreSQL cluster ${PGP_CLUSTER_NAME} for PostgreSQL ${pg_major_version}"
+
+    # shellcheck disable=SC2086 # Allow word splitting for additional options
+    pg_createcluster --start "${pg_major_version}" "${PGP_CLUSTER_NAME}" --port="${PGPORT:-5432}" ${PGP_CREATE_OPTIONS:-} -- -A trust
+
+    # Ensure the provided init directory exists and is a directory
+    if [[ -n "${init_dir}" && ! -d "${init_dir}" ]]; then
+        echo "The provided init directory ${init_dir} does not exist or is not a directory" >&2
+        exit 1
+    fi
+
+    if [[ -d "${init_dir}" ]]; then
+        echo "INFO: Applying init scripts from ${init_dir}"
+
+        find "${init_dir}" -type f \( -iname "*.sh" -o -iname "*.sql" -o -iname "*.sql.gz" \) \
+        | sort \
+        | while IFS= read -r file; do
+            case "${file}" in
+                *.sh)
+                    if [[ -x "${file}" ]]; then
+                        "${file}"
+                    else
+                        # shellcheck source=/dev/null
+                        . "${file}"
+                    fi
+                    ;;
+                *.sql)
+                    psql --username=postgres \
+                        --dbname=postgres \
+                        -v "ON_ERROR_STOP=1" \
+                        --quiet \
+                        --no-psqlrc -f "${file}"
+                    ;;
+                *.sql.gz)
+                    gunzip -c "${file}" | psql \
+                        --username=postgres \
+                        --dbname=postgres \
+                        -v "ON_ERROR_STOP=1" \
+                        --quiet \
+                        --no-psqlrc
+                    ;;
+            esac
+        done
+
+        echo "INFO: Applied init scripts from ""${init_dir}"""
+    fi
+fi

@@ -1,0 +1,17 @@
+---
+lifecycle:
+  directory: examples/quick-start/migrations
+  timezone: UTC
+  partition:
+    # naming:
+    # template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
+    # interval: 1 month
+    # start_timestamp: NOW
+    future: 2
+    # retention:
+    #   # interval:
+    #   detach_first: true
+  tables:
+    - schema: public
+      name: transactions
+      idempotent: true

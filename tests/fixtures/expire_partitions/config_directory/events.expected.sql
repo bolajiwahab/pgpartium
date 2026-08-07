@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS test.events_2025_01;

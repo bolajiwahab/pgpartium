@@ -1,0 +1,19 @@
+---
+lifecycle:
+  directory: tests/fixtures/make_partitions/partition_storage_parameters
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        naming:
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
+        interval: 1 mon
+        start_timestamp: 2025-04-01T00:00:00+00:00
+        storage:
+          mode: inherit
+          parameters:
+            fillfactor: 70
+            autovacuum_enabled: true
+      template:
+        schema: test
+        name: transactions_template

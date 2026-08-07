@@ -1,0 +1,7 @@
+CREATE TABLE test.events_2025_04
+    PARTITION OF test.events
+    FOR VALUES FROM ('2025-04-01 00:00:00+00') TO ('2025-05-01 00:00:00+00');
+
+CREATE TABLE test.measurements_2025_04
+    PARTITION OF test.measurements
+    FOR VALUES FROM ('2025-04-01 00:00:00+00') TO ('2025-05-01 00:00:00+00');

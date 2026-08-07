@@ -1,0 +1,12 @@
+---
+lifecycle:
+  directory: tests/fixtures/make_partitions/skip_overlapping
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        naming:
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
+        interval: 1 mon
+        future: 1
+        skip_overlapping: true

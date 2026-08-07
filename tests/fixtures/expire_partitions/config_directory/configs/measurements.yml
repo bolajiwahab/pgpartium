@@ -1,0 +1,11 @@
+---
+lifecycle:
+  directory: "tests/fixtures/expire_partitions/config_directory"
+  idempotent: true
+  partition:
+    retention:
+      interval: "1 month"
+  tables:
+    - schema: "test"
+      name: "measurements"
+      output_file_template: "measurements.sql"

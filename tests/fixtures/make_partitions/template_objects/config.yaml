@@ -1,0 +1,17 @@
+---
+lifecycle:
+  directory: tests/fixtures/make_partitions/template_objects
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        naming:
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
+        interval: 1 mon
+        start_timestamp: NOW
+        trigger:
+          naming:
+            template: "{partition_name}_{trigger_function_name}{ordinal}"
+      template:
+        schema: test
+        name: transactions_template

@@ -1,0 +1,9 @@
+---
+lifecycle:
+  directory: tests/fixtures/expire_partitions/supported_data_types
+  partition:
+    retention:
+      interval: 1 month
+  tables:
+    - schema: test
+      name: expire_by_int8

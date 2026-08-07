@@ -19,27 +19,34 @@ Contributions are welcome, whether they are bug reports, feature requests, code 
     pre-commit install
     ```
 
-## Project Structure
+## Project structure
 
 ```text
 .
 ├── src
-    ├── bin                       # Binaries
-    ├── sql                       # Database functions
-│── docs                          # Documentation
-│── tests                         # Tests
-    │── fixtures                  # Test fixtures
-        │── expire_partitions     # Expire partitions fixtures
-        │── make_partitions       # Make partitions fixtures
-    │── migrations                # Schema migrations for tests
-        │── dbmate                # Schema migrations for dbmate
-        │── flyway                # Schema migrations for flyway
-        │── goose                 # Schema migrations for goose
-        │── go-migrate            # Schema migrations for go-migrate
-    │── spec                      # Shellspec tests
-    │── tap                       # pgTap tests
-    |── setup.sh                  # Test setup script
-│── tools                         # Tools
+│   ├── bin                       # Binaries (pgp-*, gh-create-pr)
+│   ├── sql                       # Database functions, numbered by load order
+│   ├── schema.json               # JSON Schema for lifecycle configuration files
+│   └── createcluster.conf        # Debian pg_createcluster defaults for the image
+├── docs                          # Schema doc tooling (schema_doc_generator.sh, schema_doc.yaml)
+│   └── docs                      # All published guides (see docs/docs/README.md for the index),
+│                                    plus the generated schema.html — this is the GitHub Pages root
+├── examples                      # End-to-end configuration examples
+├── tests                         # Bats integration tests and fixtures
+│   ├── fixtures
+│   │   ├── expire_partitions
+│   │   ├── make_partitions
+│   │   └── initdir               # SQL applied once when the test cluster starts
+│   ├── test_make_partitions.sh
+│   ├── test_expire_partitions.sh
+│   ├── test_get_migration_filename.sh
+│   ├── test_setup_infrastructure.sh
+│   ├── test_start.sh
+│   ├── run-tests.sh              # Builds the test image and runs the suite in Docker
+│   ├── run-coverage.sh           # Runs bats under kcov and enforces MIN_COVERAGE
+│   └── docker-compose-test.yaml
+├── tools                         # Repo maintenance scripts (schema doc freshness check)
+└── config.sample.yaml            # Complete annotated configuration reference
 ```
 
 ## Architecture
@@ -51,10 +58,34 @@ pgpartium has two main components:
 
 ## Testing
 
-Test files are located in `tests` directory. There are two different tests: **shellspec** and **pgTap**.
+Tests are Bats integration tests driven through the public CLI, run inside the project's Docker image against a disposable PostgreSQL cluster. There is no unit-test layer or pgTAP suite; every SQL function is exercised only through the CLI commands that call it.
 
-1. **shellspec**: shellspec is used to test the Bash binaries. The tests are located in `tests/spec/`.
-2. **pgTap**: pgTap is used to test the database functions. The tests are located in `tests/tap/`.
+Each `test_*.sh` file under `tests/` covers one binary. `test_make_partitions.sh` and `test_expire_partitions.sh` additionally auto-discover every fixture directory under `tests/fixtures/{make_partitions,expire_partitions}/` and run it as its own test case, so adding coverage for a new option is usually just adding a fixture, not editing the `.sh` file.
+
+A fixture directory can contain:
+
+| File | Purpose |
+| --- | --- |
+| `setup.sql` | Optional. Applied before the command runs (schema, tables, template objects, `ALTER SYSTEM SET mock.now = ...`). Requires a matching `teardown.sql`. |
+| `teardown.sql` | Drops what `setup.sql` created. Required whenever `setup.sql` is present. |
+| `config.yaml` | The lifecycle configuration passed to `-c`. Fixtures with multiple config files (e.g. one per scenario) each get their own `*.expected.sql`, matched by stripping the `.yaml`/`.yml` extension. |
+| `config.expected.sql` (or `<name>.expected.sql`) | The exact output the command must produce, including `pgrubic format`'s formatting. |
+
+The test runner diffs the generated file against `*.expected.sql` and then applies the generated SQL to a throwaway database to confirm it is valid, executable DDL - not just textually correct.
+
+`tests/coverage` collects `kcov` output from `run-coverage.sh`, which is what `docker-compose-test.yaml` runs inside the container; `run-tests.sh` is the entry point that builds the image and drives that container.
+
+To run tests, use:
+
+```bash
+./tests/run-tests.sh
+```
+
+To run tests for a specific postgres version, use:
+
+```bash
+PGP_PG_MAJOR_VERSION=<POSTGRES_MAJOR_VERSION> ./tests/run-tests.sh
+```
 
 ## Documentation
 

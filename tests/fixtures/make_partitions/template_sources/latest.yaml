@@ -1,0 +1,12 @@
+---
+lifecycle:
+  directory: tests/fixtures/make_partitions/template_sources
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        naming:
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
+        interval: 1 mon
+        future: 1
+      template: LATEST_PARTITION

@@ -1,0 +1,16 @@
+---
+lifecycle:
+  directory: "tests/fixtures/expire_partitions/database_failure"
+  idempotent: true
+  partition:
+    retention:
+      interval: "1 month"
+  tables:
+    - schema: "test"
+      name: "successful_notifications"
+    - schema: "test"
+      name: "successful_events"
+    - schema: "test"
+      name: "missing_notifications"
+    - schema: "test"
+      name: "notifications"

@@ -1,0 +1,11 @@
+---
+lifecycle:
+  directory: tests/fixtures/make_partitions/interval
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        naming:
+          template: "{parent_table_schema}__{parent_table_name}__IYYY_IW"
+        interval: 1 week
+        start_timestamp: 2025-04-01T00:00:00+00:00

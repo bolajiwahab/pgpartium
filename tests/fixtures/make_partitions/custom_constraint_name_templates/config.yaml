@@ -1,0 +1,26 @@
+---
+lifecycle:
+  directory: tests/fixtures/make_partitions/custom_constraint_name_templates
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        naming:
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
+        interval: 1 mon
+        start_timestamp: NOW
+        constraint:
+          naming:
+            primary_key:
+              template: "{partition_name}_custom_pkey"
+            unique_key:
+              template: "{partition_name}_custom_{constraint_keys}_unique"
+            foreign_key:
+              template: "{partition_name}_custom_{constraint_keys}_foreign"
+            check:
+              template: "{partition_name}_custom_{constraint_keys}_validation"
+            exclusion:
+              template: "{partition_name}_custom_{constraint_keys}_exclusion"
+      template:
+        schema: test
+        name: transactions_template

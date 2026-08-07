@@ -1,0 +1,13 @@
+---
+lifecycle:
+  directory: tests/fixtures/make_partitions/retention
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        naming:
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
+        interval: 1 mon
+        start_timestamp: 2025-01-01T00:00:00+00:00
+        retention:
+          interval: 1 mon

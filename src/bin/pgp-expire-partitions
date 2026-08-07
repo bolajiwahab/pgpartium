@@ -1,90 +1,98 @@
 #!/bin/bash
 
+set -euo pipefail
+
+# shellcheck source=src/bin/pgp-shell-helpers
+source "$(dirname "${BASH_SOURCE[0]}")/pgp-shell-helpers"
+
 usage() {
-    echo "
+    cat <<EOF
     ${0##*/}
 
     Creates migration files to expire partitions for partitioned tables.
 
     OPTIONS:
-      -c  the config file in yaml (Required)
-      -u  the database username (Default: postgres)
-      -w  the database password (Default: postgres)
-      -s  the database host (Default: localhost)
-      -p  the database port (Default: 5432)
-      -d  the database name (Default: postgres)
+      -c  Path to a configuration file or directory containing configuration files (Required)
       -h  show this help message.
 
     SAMPLE USAGE:
         ${0##*/} -c config.yaml
-        ${0##*/} -c config.yaml -u user -w password -s host -p port -d database
-"
+        ${0##*/} -c config_directory
+EOF
 }
 
-while getopts "c:u:w:s:p:d:h" option; do
+while getopts "c:h" option; do
     case "${option}" in
     c)
-        config="${OPTARG}"
+        config_path="${OPTARG}"
         ;;
-    u)
-        dbuser="${OPTARG}"
-        ;;
-    w)
-        dbpassword="${OPTARG}"
-        ;;
-    s)
-        dbhost="${OPTARG}"
-        ;;
-    p)
-        dbport="${OPTARG}"
-        ;;
-    d)
-        dbname="${OPTARG}"
-        ;;
-    h | *)
+    h)
         usage
         exit 0
+        ;;
+    ?)
+        usage
+        exit 1
         ;;
     esac
 done
 
-set -euo pipefail
+configure_database_environment
 
-config=${config:-}
-dbuser=${dbuser:-postgres}
-dbpassword=${dbpassword:-postgres}
-dbhost=${dbhost:-localhost}
-dbport=${dbport:-5432}
-dbname=${dbname:-postgres}
+config_path="${config_path:-}"
 
 # Ensure config is provided.
-if [[ -z "${config}" ]]; then
+if [[ -z "${config_path}" ]]; then
     usage
     exit 1
 fi
 
-# Validate schema.
-jsonschema /src/schema.json <<< "$(yq -o=json "${config}")"
+if [[ ! -e "${config_path}" ]]; then
+    echo "The provided config path '${config_path}' does not exist" >&2
+    exit 1
+fi
+
+function validate_config() {
+    local config="${1}"
+
+    if ! check-jsonschema --schemafile /src/schema.json <(yq -o=json "${config}"); then
+        echo "ERROR: Config file ${config} is invalid" >&2
+        exit 1
+    fi
+}
+
+function expire_partitions() {
+    local config="${1}"
+
+validate_config "${config}"
 
 # Set defaults
-export DEFAULT_RETENTION='-1'
-export DEFAULT_DETACH_ONLY=false
-export DEFAULT_DETACH_FIRST=false
-export DEFAULT_DETACH_CONCURRENTLY=false
-export DEFAULT_TIMEZONE="Etc/UTC"
+export DEFAULT_RETENTION=NULL \
+       DEFAULT_DETACH_ONLY=false \
+       DEFAULT_DETACH_FIRST=false \
+       DEFAULT_DETACH_CONCURRENTLY=false \
+       DEFAULT_IDEMPOTENT=false \
+       DEFAULT_TIMEZONE="Etc/UTC" \
+       DEFAULT_DESCRIPTION_EXPIRE="Expire partitions for {parent_table_schema}.{parent_table_name}" \
+       DEFAULT_OUTPUT_FILE_TEMPLATE="pgpartium_output.sql"
 
 # Extract global configs
-GLOBAL_RETENTION=$(yq '.generates.retention // strenv(DEFAULT_RETENTION)' "${config}")
-GLOBAL_DETACH_ONLY=$(yq '.generates.detach_only // strenv(DEFAULT_DETACH_ONLY)' "${config}")
-GLOBAL_DETACH_FIRST=$(yq '.generates.detach_first // strenv(DEFAULT_DETACH_FIRST)' "${config}")
-GLOBAL_DETACH_CONCURRENTLY=$(yq '.generates.detach_concurrently // strenv(DEFAULT_DETACH_CONCURRENTLY)' "${config}")
-GLOBAL_TIMEZONE=$(yq '.generates.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
+GLOBAL_RETENTION=$(yq '.lifecycle.partition.retention.interval // strenv(DEFAULT_RETENTION)' "${config}")
+GLOBAL_DETACH_ONLY=$(yq '.lifecycle.partition.retention.detach_only // strenv(DEFAULT_DETACH_ONLY)' "${config}")
+GLOBAL_DETACH_FIRST=$(yq '.lifecycle.partition.retention.detach_first // strenv(DEFAULT_DETACH_FIRST)' "${config}")
+GLOBAL_DETACH_CONCURRENTLY=$(yq '.lifecycle.partition.retention.detach_concurrently // strenv(DEFAULT_DETACH_CONCURRENTLY)' "${config}")
+GLOBAL_IDEMPOTENT=$(yq '.lifecycle.idempotent // strenv(DEFAULT_IDEMPOTENT)' "${config}")
+GLOBAL_TIMEZONE=$(yq '.lifecycle.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
+GLOBAL_DESCRIPTION_EXPIRE=$(yq '.lifecycle.description.expire // strenv(DEFAULT_DESCRIPTION_EXPIRE)' "${config}")
+GLOBAL_OUTPUT_FILE_TEMPLATE=$(yq '.lifecycle.output_file_template // strenv(DEFAULT_OUTPUT_FILE_TEMPLATE)' "${config}")
 
-export GLOBAL_RETENTION GLOBAL_DETACH_ONLY GLOBAL_DETACH_FIRST GLOBAL_DETACH_CONCURRENTLY GLOBAL_TIMEZONE
+export GLOBAL_RETENTION GLOBAL_DETACH_ONLY GLOBAL_DETACH_FIRST GLOBAL_DETACH_CONCURRENTLY GLOBAL_TIMEZONE \
+       GLOBAL_IDEMPOTENT GLOBAL_DESCRIPTION_EXPIRE GLOBAL_OUTPUT_FILE_TEMPLATE
 
-directory=$(yq '.generates.directory' "${config}")
+directory=$(yq '.lifecycle.directory // "."' "${config}")
 
 declare -A failed_tables=()
+declare -A generated_output_files=()
 
 # Staging area.
 temp_migration_directory=$(mktemp -d)
@@ -99,53 +107,57 @@ cleanup() {
     rm -rf "${temp_error_directory}"
 }
 
-trap cleanup EXIT ERR
+trap cleanup EXIT ERR INT TERM
 
 # Setup infrastructure.
 echo "INFO: Setting up infrastructure"
-pgp-setup-infrastructure -u "${dbuser}" -w "${dbpassword}" -s "${dbhost}" -p "${dbport}" -d "${dbname}"
+pgp-setup-infrastructure
 
 # Process each partitioned table
 while read -r table; do
-    table_schema=$(yq '.table_schema' <<< "${table}")
-    table_name=$(yq '.table_name' <<< "${table}")
-    file_name_template=$(yq '.file_name_template' <<< "${table}")
-    description=$(yq '.description.expire // "Expire partitions for {table_schema}_{table_name}"' <<< "${table}")
+    table_schema=$(yq '.schema' <<< "${table}")
+    table_name=$(yq '.name' <<< "${table}")
+    file_name_template=$(yq '.output_file_template // strenv(GLOBAL_OUTPUT_FILE_TEMPLATE)' <<< "${table}")
+    description=$(yq '.description.expire // strenv(GLOBAL_DESCRIPTION_EXPIRE)' <<< "${table}")
     # Replace table_schema and table_name placeholders in the description
-    description="${description//\{table_schema\}/$table_schema}"
-    description="${description//\{table_name\}/$table_name}"
+    description="${description//\{parent_table_schema\}/$table_schema}"
+    description="${description//\{parent_table_name\}/$table_name}"
 
     output_filename=$(pgp-get-migration-filename -t "${file_name_template}" -d "${directory}" -m "${description}")
     echo "INFO: Expiring partitions for ${table_schema}.${table_name}"
 
-    timezone=$(yq '.partition.timezone // strenv(GLOBAL_TIMEZONE)' <<< "${table}")
-    retention=$(yq '.partition.retention // strenv(GLOBAL_RETENTION)' <<< "${table}")
+    timezone="${GLOBAL_TIMEZONE}"
+    retention=$(yq '.partition.retention.interval // strenv(GLOBAL_RETENTION)' <<< "${table}")
 
     # Because yq default value operator is used to provide alternative (or default) values
-    # when a particular expression is either null or false, we cannot use it here since detach_only is boolean
-    # and we need to override it only when it is not set. Same for detach_first and detach_concurrently
-    detach_only=$(yq '.partition.detach_only' <<< "${table}")
+    # when a particular expression is either null or false, we cannot use it as it would
+    # instead override partition level boolean values, instead we override them if they are not set.
+    detach_only=$(yq '.partition.retention.detach_only' <<< "${table}")
     if [[ "${detach_only}" == "null" ]]; then
         detach_only="${GLOBAL_DETACH_ONLY}"
     fi
 
-    detach_first=$(yq '.partition.detach_first' <<< "${table}")
+    detach_first=$(yq '.partition.retention.detach_first' <<< "${table}")
     if [[ "${detach_first}" == "null" ]]; then
         detach_first="${GLOBAL_DETACH_FIRST}"
     fi
 
-    detach_concurrently=$(yq '.partition.detach_concurrently' <<< "${table}")
+    detach_concurrently=$(yq '.partition.retention.detach_concurrently' <<< "${table}")
     if [[ "${detach_concurrently}" == "null" ]]; then
         detach_concurrently="${GLOBAL_DETACH_CONCURRENTLY}"
     fi
 
-    error_file="${temp_error_directory}/${table_schema}.${table_name}.error"
+    idempotent=$(yq '.idempotent' <<< "${table}")
+    if [[ "${idempotent}" == "null" ]]; then
+        idempotent="${GLOBAL_IDEMPOTENT}"
+    fi
 
-    if ! PGPASSWORD="${dbpassword}" psql --username="${dbuser}" \
-        --dbname="${dbname}" \
-        --host="${dbhost}" \
-        --port="${dbport}" \
-        --tuples-only \
+    error_file="${temp_error_directory}/${table_schema}.${table_name}.error"
+    table_output_file=$(mktemp "${temp_migration_directory}/.pgpartium-output.XXXXXX")
+    mv "${table_output_file}" "${table_output_file}.sql"
+    table_output_file="${table_output_file}.sql"
+
+    if ! psql --tuples-only \
         --no-align \
         --quiet \
         -v "ON_ERROR_STOP=1" \
@@ -155,10 +167,12 @@ while read -r table; do
         -v detach_only="${detach_only}" \
         -v detach_first="${detach_first}" \
         -v detach_concurrently="${detach_concurrently}" \
+        -v idempotent="${idempotent}" \
         -v timezone="${timezone}" \
-        --output="${temp_migration_directory}/${output_filename}" \
+        --output="${table_output_file}" \
         2>"${error_file}" \
         <<EOF
+-- KCOV_EXCL_START
 SELECT *
   FROM pgpartium.expire_partitions(
     p_table_schema=>:'table_schema'
@@ -166,34 +180,75 @@ SELECT *
   , p_detach_only=>:'detach_only'
   , p_detach_first=>:'detach_first'
   , p_detach_concurrently=>:'detach_concurrently'
-  , p_retention=>:'retention'
+  , p_retention=>NULLIF(:'retention', 'NULL')::interval
   , p_timezone=>:'timezone'
+  , p_idempotent=>:'idempotent'
 )
 EOF
+# KCOV_EXCL_STOP
 
     then
         failed_tables["${table_schema}.${table_name}"]=$(<"${error_file}")
+        rm -f "${table_output_file}"
         continue
     fi
 
-    if [[ -s "${temp_migration_directory}/${output_filename}" ]]; then
-        # PSQL sadly adds an empty line at the end, so remove it
-        sed -i -e '${/^$/d;}' "${temp_migration_directory}/${output_filename}"
+    if [[ -s "${table_output_file}" ]]; then
+        if ! pgrubic format "${table_output_file}" >"${error_file}" 2>&1; then
+            failed_tables["${table_schema}.${table_name}"]="failed to format generated SQL: $(<"${error_file}")"
+            rm "${table_output_file}"
+            continue
+        fi
+
+        output_file="${temp_migration_directory}/${output_filename}"
+        if [[ -n "${generated_output_files[${output_filename}]+_}" ]]; then
+            printf '\n' >> "${output_file}"
+            cat "${table_output_file}" >> "${output_file}"
+            rm "${table_output_file}"
+        else
+            rm -f "${output_file}"
+            mv "${table_output_file}" "${output_file}"
+            generated_output_files["${output_filename}"]=1
+        fi
+
         echo "INFO: Expired partitions for ${table_schema}.${table_name}"
         printf "\n\nExpires partitions for  \`%s\`\n\n" "${table_schema}.${table_name}" >> /src/partition_maintenance.log
     else
         echo "INFO: No partitions expired for ${table_schema}.${table_name}"
-        rm "${temp_migration_directory}/${output_filename}"
+        rm "${table_output_file}"
     fi
 
-done < <(yq '.generates.tables[] | @json' "${config}")
+done < <(yq '.lifecycle.tables[] | @json' "${config}")
 
-if [ ${#failed_tables[@]} -gt 0 ]; then
-    echo "ERROR: failed for ${#failed_tables[@]} table(s):" 2>&1
+cp -rf "${temp_migration_directory}/." "${directory}/"
+
+if [[ "${#failed_tables[@]}" -gt 0 ]]; then
+    echo "ERROR: failed for ${#failed_tables[@]} table(s):" >&2
     for table in "${!failed_tables[@]}"; do
-        echo "  '${table}': ${failed_tables[${table}]}" 2>&1
+        echo "  '${table}': ${failed_tables[${table}]}" >&2
     done
     exit 1
-else
-    cp -rf "${temp_migration_directory}/." "${directory}/"
 fi
+
+cleanup
+trap - EXIT ERR INT TERM
+}
+
+function run_expire_partitions() {
+    if [[ -d "${config_path}" ]]; then
+        echo "INFO: Applying configs from ${config_path}"
+
+        find "${config_path}" -type f \( -iname "*.yaml" -o -iname "*.yml" \) \
+        | sort \
+        | while IFS= read -r config; do
+            expire_partitions "${config}"
+        done
+
+        echo "INFO: Applied configs from ${config_path}"
+    else
+        expire_partitions "${config_path}"
+        echo "INFO: Applied config ${config_path}"
+    fi
+}
+
+run_expire_partitions

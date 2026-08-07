@@ -1,0 +1,6 @@
+---
+lifecycle:
+  directory: "tests/fixtures/expire_partitions/empty_result"
+  tables:
+    - schema: "test"
+      name: "notifications"

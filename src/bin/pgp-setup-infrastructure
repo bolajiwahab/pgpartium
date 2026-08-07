@@ -1,64 +1,42 @@
 #!/bin/bash
 
-usage() {
-    echo "
+# shellcheck source=src/bin/pgp-shell-helpers
+source "$(dirname "${BASH_SOURCE[0]}")/pgp-shell-helpers"
+
+function usage() {
+    cat <<EOF
     ${0##*/}
 
-    Set up infrastruture.
+    Set up infrastructure.
 
     OPTIONS:
-      -u  the database username (Default: postgres)
-      -w  the database password (Default: postgres)
-      -s  the database host (Default: localhost)
-      -p  the database port (Default: 5432)
-      -d  the database name (Default: postgres)
       -h  show this help message.
 
     SAMPLE USAGE:
         ${0##*/}
-        ${0##*/} -u user -w password -s host -p port -d database
-"
+EOF
 }
 
-while getopts "u:w:s:p:d:h" option; do
+while getopts "h" option; do
     case "${option}" in
-    u)
-        dbuser="${OPTARG}"
-        ;;
-    w)
-        dbpassword="${OPTARG}"
-        ;;
-    s)
-        dbhost="${OPTARG}"
-        ;;
-    p)
-        dbport="${OPTARG}"
-        ;;
-    d)
-        dbname="${OPTARG}"
-        ;;
-    h | *)
+    h)
         usage
         exit 0
+        ;;
+    ?)
+        usage
+        exit 1
         ;;
     esac
 done
 
 set -euo pipefail
 
-dbuser=${dbuser:-postgres}
-dbpassword=${dbpassword:-postgres}
-dbhost=${dbhost:-localhost}
-dbport=${dbport:-5432}
-dbname=${dbname:-postgres}
+configure_database_environment
 
 # Setup infrastructure
 find /src/sql -type f -iname "*.sql" -print0 | sort -z | xargs -0 printf -- ' -f %s' |
-    PGPASSWORD="${dbpassword}" PGOPTIONS='--client_min_messages=warning' xargs \
-    psql --username="${dbuser}" \
-        --dbname="${dbname}" \
-        --host="${dbhost}" \
-        --port="${dbport}" \
-        --quiet \
+    PGOPTIONS='--client_min_messages=warning' xargs \
+    psql --quiet \
         -v "ON_ERROR_STOP=1" \
         --single-transaction

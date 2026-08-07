@@ -1,7 +1,7 @@
 #!/bin/bash
 
-usage() {
-    echo "
+function usage() {
+    cat <<EOF
     ${0##*/}
 
     Helper to generate a migration filename.
@@ -13,11 +13,11 @@ usage() {
       -h  show this help message.
 
     SAMPLE USAGE:
-        ${0##*/} -t \"V{integer}__{description}.sql\" -d \"migrations\" -m \"Add partitions for sample table\"
-        ${0##*/} -t \"V{integer:03}__{description}.sql\" -d \"migrations\" -m \"Expire partitions for sample table\"
-        ${0##*/} -t \"{timestamp}__{description}.sql\" -d \"migrations\" -m \"Add partitions for sample table\"
-        ${0##*/} -t \"{epoch}_{description}.up.sql\" -d \"migrations\" -m \"Add partitions for sample table\"
-"
+        ${0##*/} -t "V{integer}__{description}.sql" -d "migrations" -m "Add partitions for sample table"
+        ${0##*/} -t "V{integer:03}__{description}.sql" -d "migrations" -m "Expire partitions for sample table"
+        ${0##*/} -t "{timestamp}__{description}.sql" -d "migrations" -m "Add partitions for sample table"
+        ${0##*/} -t "{epoch}_{description}.up.sql" -d "migrations" -m "Add partitions for sample table"
+EOF
 }
 
 while getopts "t:d:m:h" option; do
@@ -31,9 +31,13 @@ while getopts "t:d:m:h" option; do
     m)
         description="${OPTARG}"
         ;;
-    h | *)
+    h)
         usage
         exit 0
+        ;;
+    ?)
+        usage
+        exit 1
         ;;
     esac
 done
@@ -52,7 +56,7 @@ fi
 
 placeholders=(timestamp epoch date year month day hour description direction)
 
-get_next_version() {
+function get_next_version() {
     # Return next version for sequential migrations.
     local file_name_pattern="$1" padding="$2" directory="$3"
 
@@ -80,7 +84,7 @@ get_next_version() {
     echo "${next_version}"
 }
 
-template_to_pattern() {
+function template_to_pattern() {
     # Generate file name pattern by replacing placeholders.
     local template="$1"
     local file_name_pattern="${template}"
@@ -97,49 +101,56 @@ template_to_pattern() {
     echo "${file_name_pattern}"
 }
 
-file_name="${template}"
+function get_migration_filename() {
+    local template="$1"
+    local directory="$2"
+    local description="$3"
+    local file_name="${template}"
 
-if [[ "${template}" =~ \{integer:([0-9]+)\} ]]; then
-    padding="${BASH_REMATCH[1]}"
-    version_key="{integer:${padding}}"
+    if [[ "${template}" =~ \{integer:([0-9]+)\} ]]; then
+        padding="${BASH_REMATCH[1]}"
+        version_key="{integer:${padding}}"
 
-    file_name_pattern=$(template_to_pattern "${template}")
+        file_name_pattern=$(template_to_pattern "${template}")
 
-    next_version=$(get_next_version "${file_name_pattern}" "${padding}" "${directory}")
-    file_name="${file_name//$version_key/$next_version}"
-elif [[ "${template}" == *"{integer}"* ]]; then
-    padding=0
-    version_key="{integer}"
+        next_version=$(get_next_version "${file_name_pattern}" "${padding}" "${directory}")
+        file_name="${file_name//$version_key/$next_version}"
+    elif [[ "${template}" == *"{integer}"* ]]; then
+        padding=0
+        version_key="{integer}"
 
-    file_name_pattern=$(template_to_pattern "${template}")
+        file_name_pattern=$(template_to_pattern "${template}")
 
-    next_version=$(get_next_version "${file_name_pattern}" "${padding}" "${directory}")
-    file_name="${file_name//$version_key/$next_version}"
-fi
+        next_version=$(get_next_version "${file_name_pattern}" "${padding}" "${directory}")
+        file_name="${file_name//$version_key/$next_version}"
+    fi
 
-# Transform description to lowercase and replace spaces with underscores.
-description="${description,,}"
-description="${description//[[:space:]]/_}"
+    # Transform description to lowercase and replace spaces with underscores.
+    description="${description,,}"
+    description="${description//[[:space:]]/_}"
 
-timestamp=$(date +"%Y%m%d%H%M%S")
-epoch=$(date +"%s")
-date=$(date -u +%Y%m%d)
-year=$(date -u +%Y)
-month=$(date -u +%m)
-day=$(date -u +%d)
-hour=$(date -u +%H)
-direction="up"
+    timestamp=$(date +"%Y%m%d%H%M%S")
+    epoch=$(date +"%s")
+    date=$(date -u +%Y%m%d)
+    year=$(date -u +%Y)
+    month=$(date -u +%m)
+    day=$(date -u +%d)
+    hour=$(date -u +%H)
+    direction="up"
 
-# Update placeholders
-# Update description first as it can contain other placeholders
-file_name="${file_name//\{description\}/$description}"
-file_name="${file_name//\{timestamp\}/$timestamp}"
-file_name="${file_name//\{epoch\}/$epoch}"
-file_name="${file_name//\{date\}/$date}"
-file_name="${file_name//\{year\}/$year}"
-file_name="${file_name//\{month\}/$month}"
-file_name="${file_name//\{day\}/$day}"
-file_name="${file_name//\{hour\}/$hour}"
-file_name="${file_name//\{direction\}/$direction}"
+    # Update placeholders
+    # Update description first as it can contain other placeholders
+    file_name="${file_name//\{description\}/$description}"
+    file_name="${file_name//\{timestamp\}/$timestamp}"
+    file_name="${file_name//\{epoch\}/$epoch}"
+    file_name="${file_name//\{date\}/$date}"
+    file_name="${file_name//\{year\}/$year}"
+    file_name="${file_name//\{month\}/$month}"
+    file_name="${file_name//\{day\}/$day}"
+    file_name="${file_name//\{hour\}/$hour}"
+    file_name="${file_name//\{direction\}/$direction}"
 
-echo "${file_name}"
+    echo "${file_name}"
+}
+
+get_migration_filename "${template}" "${directory}" "${description}"
