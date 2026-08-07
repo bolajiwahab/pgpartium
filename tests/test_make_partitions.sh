@@ -31,14 +31,14 @@ function run_config_file() {
     local result
     local setup_file
     local teardown_file
-    local test_db="pgpartium_test_$$"
+    local test_db="pgpartix_test_$$"
 
     config_file_directory="$(dirname "${config_file}")"
     config_file_name="${config_file%.yaml}"
     config_file_name="${config_file_name%.yml}"
 
     expected="${config_file_name}.expected.sql"
-    result="${config_file_directory}/pgpartium_output.sql"
+    result="${config_file_directory}/pgpartix_output.sql"
 
     setup_file="${config_file_directory}/setup.sql"
     teardown_file="${config_file_directory}/teardown.sql"
@@ -76,7 +76,7 @@ function run_config_file() {
 function run_config_directory() {
     local fixture="$1"
     local expected="${fixture}/config.expected.sql"
-    local result="${fixture}/pgpartium_output.sql"
+    local result="${fixture}/pgpartix_output.sql"
 
     pgp-make-partitions -c "${fixture}"
 
@@ -84,9 +84,9 @@ function run_config_directory() {
         "${expected}" \
         "${result}"
 
-    createdb --template="${PGP_DATABASE}" pgpartium_test_$$
-    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --dbname pgpartium_test_$$ --file "${result}"
-    dropdb pgpartium_test_$$
+    createdb --template="${PGP_DATABASE}" pgpartix_test_$$
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --dbname pgpartix_test_$$ --file "${result}"
+    dropdb pgpartix_test_$$
 
     rm -f "${result}"
 }
@@ -107,7 +107,7 @@ function run_config_directory() {
 
 @test "pgp-make-partitions uses local connection defaults and silences successful formatting" {
     local fixture="tests/fixtures/make_partitions/defaults"
-    local result="${fixture}/pgpartium_output.sql"
+    local result="${fixture}/pgpartix_output.sql"
 
     rm -f "${result}"
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
@@ -194,7 +194,7 @@ YAML
 
 @test "pgp-make-partitions requires a partition naming template when an interval is specified" {
     local config="${BATS_TEST_TMPDIR}/missing-name-template.yaml"
-    local result="${BATS_TEST_TMPDIR}/pgpartium_output.sql"
+    local result="${BATS_TEST_TMPDIR}/pgpartix_output.sql"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 <<SQL
 CREATE TABLE test.transactions (
@@ -228,7 +228,7 @@ SQL
 
 @test "pgp-make-partitions skips generation when no partition interval is configured" {
     local config="${BATS_TEST_TMPDIR}/missing-interval.yaml"
-    local result="${BATS_TEST_TMPDIR}/pgpartium_output.sql"
+    local result="${BATS_TEST_TMPDIR}/pgpartix_output.sql"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 <<SQL
 CREATE TABLE test.transactions (
@@ -298,7 +298,7 @@ SQL
 
 @test "pgp-make-partitions reports generation failures" {
     local config="${BATS_TEST_TMPDIR}/missing-parent-table.yaml"
-    local result="${BATS_TEST_TMPDIR}/pgpartium_output.sql"
+    local result="${BATS_TEST_TMPDIR}/pgpartix_output.sql"
     cat > "${config}" <<YAML
 ---
 lifecycle:
@@ -323,8 +323,8 @@ YAML
 
 @test "pgp-make-partitions reports SQL validation failures through the CLI" {
     local fixture="tests/fixtures/make_partitions/sql_failures"
-    local expected="${fixture}/pgpartium_output.expected.sql"
-    local result="${fixture}/pgpartium_output.sql"
+    local expected="${fixture}/pgpartix_output.expected.sql"
+    local result="${fixture}/pgpartix_output.sql"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
     pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
@@ -351,7 +351,7 @@ YAML
 @test "pgp-make-partitions manages formatter failures" {
     local fixture="tests/fixtures/make_partitions/defaults"
     local fake_bin="${BATS_TEST_TMPDIR}/bin"
-    local result="${fixture}/pgpartium_output.sql"
+    local result="${fixture}/pgpartix_output.sql"
 
     rm -f "${result}"
     mkdir -p "${fake_bin}"
@@ -388,7 +388,7 @@ YAML
 
 @test "pgp-make-partitions handles an empty result" {
     local fixture="tests/fixtures/make_partitions/defaults"
-    local result="${fixture}/pgpartium_output.sql"
+    local result="${fixture}/pgpartix_output.sql"
     local run_status
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"

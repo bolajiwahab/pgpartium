@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION pgpartium.generate_partition_triggers (
+CREATE OR REPLACE FUNCTION pgpartix.generate_partition_triggers (
     p_parent_table_schema text
   , p_parent_table_name text
   , p_partition_schema text
@@ -22,7 +22,7 @@ AS $BODY$
              , trigger_event
              , ordinal::text AS ordinal
              , trigger_body
-          FROM pgpartium.get_triggers(p_table_schema => p_template_table_schema, p_table_name => p_template_table_name)
+          FROM pgpartix.get_triggers(p_table_schema => p_template_table_schema, p_table_name => p_template_table_name)
     )
     , parent_triggers AS (
         SELECT trigger_name
@@ -33,10 +33,10 @@ AS $BODY$
              , event_timing
              , trigger_event
              , trigger_body
-          FROM pgpartium.get_triggers(p_table_schema => p_parent_table_schema, p_table_name => p_parent_table_name)
+          FROM pgpartix.get_triggers(p_table_schema => p_parent_table_schema, p_table_name => p_parent_table_name)
     )
     , partition_triggers AS (
-        SELECT pgpartium.render_template(
+        SELECT pgpartix.render_template(
                    p_trigger_name_template,
                    jsonb_build_object(
                        '{parent_table_schema}', p_parent_table_schema,

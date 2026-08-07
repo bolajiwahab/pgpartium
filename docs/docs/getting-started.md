@@ -1,6 +1,6 @@
 # Getting started
 
-pgpartium inspects a PostgreSQL database and writes migration files for missing and expired partitions. It does not apply those lifecycle migrations to the source database. The intended output is a repository change reviewed and deployed through the application's existing migration process.
+pgpartix inspects a PostgreSQL database and writes migration files for missing and expired partitions. It does not apply those lifecycle migrations to the source database. The intended output is a repository change reviewed and deployed through the application's existing migration process.
 
 ## Requirements
 
@@ -10,7 +10,7 @@ pgpartium inspects a PostgreSQL database and writes migration files for missing 
 - An existing directory for generated migration files.
 - A database containing the parent tables and any configured schemas, tablespaces, or template tables.
 
-The packaged container supplies PostgreSQL setup utilities, the pgpartium CLIs, pgrubic, Git, and GitHub CLI.
+The packaged container supplies PostgreSQL setup utilities, the pgpartix CLIs, pgrubic, Git, and GitHub CLI.
 
 ## Install the image
 
@@ -48,17 +48,17 @@ docker run --rm --user root \
   '
 ```
 
-`pgp-start` defaults to PostgreSQL 14 and supplies the local cluster connection settings. `PGP_INIT_DIR` is the only database setup input here and loads the example schema. `--workdir /repository` makes repository-relative configuration and output paths resolve inside the mounted host directory. The generated migration appears at `examples/quick-start/migrations/pgpartium_output.sql` on the host.
+`pgp-start` defaults to PostgreSQL 14 and supplies the local cluster connection settings. `PGP_INIT_DIR` is the only database setup input here and loads the example schema. `--workdir /repository` makes repository-relative configuration and output paths resolve inside the mounted host directory. The generated migration appears at `examples/quick-start/migrations/pgpartix_output.sql` on the host.
 
 To adapt the example, copy its configuration and initialization layout into the application repository. Change `lifecycle.directory`, the configured tables, and the initialization SQL or scripts to match the application's schema migration setup. The output directory must already exist. For all available options, inheritance rules, and naming placeholders, use the [configuration reference](configuration.md) and [annotated sample](../../config.sample.yaml).
 
 ## Choose a database source
 
-pgpartium needs an accurate PostgreSQL database. It supports two practical approaches.
+pgpartix needs an accurate PostgreSQL database. It supports two practical approaches.
 
 ### Ephemeral PostgreSQL from repository migrations
 
-This is the recommended mode for local evaluation and automated environments. Provide an initialization directory that recreates the schema pgpartium should inspect.
+This is the recommended mode for local evaluation and automated environments. Provide an initialization directory that recreates the schema pgpartix should inspect.
 
 `pgp-start -i` processes files in lexical order:
 
@@ -120,7 +120,7 @@ docker run --rm --user root \
   '
 ```
 
-The connection role must be able to inspect the application catalog, creates a dedicated schema `pgpartium` for the helper objects, and create or replace helper objects in the `pgpartium` schema. Prefer a non-production database and restrict network and credential access appropriately.
+The connection role must be able to inspect the application catalog, creates a dedicated schema `pgpartix` for the helper objects, and create or replace helper objects in the `pgpartix` schema. Prefer a non-production database and restrict network and credential access appropriately.
 
 ## Review the output
 
@@ -134,11 +134,11 @@ Before applying generated migrations:
 4. Execute migrations against a disposable database.
 5. Deploy them through the existing migration process.
 
-pgpartium formats each table independently. If one table fails, valid output from other tables is retained, the failed table's partial output is removed, and the command exits nonzero.
+pgpartix formats each table independently. If one table fails, valid output from other tables is retained, the failed table's partial output is removed, and the command exits nonzero.
 
 ## Choose how to publish the result
 
-Generated migrations are ordinary repository files. pgpartium does not require a particular Git provider or publication workflow. Common operating models include:
+Generated migrations are ordinary repository files. pgpartix does not require a particular Git provider or publication workflow. Common operating models include:
 
 - run locally, review the files, then use the normal `git add`, `git commit`, and `git push` workflow;
 - invoke the lifecycle commands from an existing GitHub, GitLab, Jenkins, or other CI/CD pipeline;

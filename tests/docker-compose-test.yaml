@@ -20,7 +20,7 @@ services:
       PGP_PORT: ${PGP_PORT:-5432}
       PGP_DATABASE: ${PGP_DATABASE:-postgres}
       BATS_CORE_VERSION: "v1.13.0"
-      PGP_CLUSTER_NAME: pgpartium
+      PGP_CLUSTER_NAME: pgpartix
       PGUSER: ${PGP_USER:-postgres}
       PGPASSWORD: ${PGP_PASSWORD:-postgres}
       PGHOST: ${PGP_HOST:-localhost}

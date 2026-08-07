@@ -1,6 +1,6 @@
 # Configuration reference
 
-pgpartium reads one YAML file or every `.yaml` and `.yml` file in a directory. The same configuration drives both sides of the lifecycle:
+pgpartix reads one YAML file or every `.yaml` and `.yml` file in a directory. The same configuration drives both sides of the lifecycle:
 
 - `pgp-make-partitions` generates DDL for partitions that should exist.
 - `pgp-expire-partitions` generates DDL for partitions whose upper bounds have passed the retention window.
@@ -64,7 +64,7 @@ Overrides are resolved per field, including explicit `false` values. In the exam
 | `lifecycle.timezone` | IANA timezone | `Etc/UTC` | Global | Time context used for partition bounds and expiration calculations. |
 | `lifecycle.description.make` | string | `Make partitions for {parent_table_schema}.{parent_table_name}` | Global or table | Description used when naming creation migrations and composing the PR body. |
 | `lifecycle.description.expire` | string | `Expire partitions for {parent_table_schema}.{parent_table_name}` | Global or table | Description used when naming expiration migrations and composing the PR body. |
-| `lifecycle.output_file_template` | string | `pgpartium_output.sql` | Global or table | Template for the generated migration filename. |
+| `lifecycle.output_file_template` | string | `pgpartix_output.sql` | Global or table | Template for the generated migration filename. |
 | `lifecycle.idempotent` | boolean | `false` | Global or table | Add supported `IF NOT EXISTS`, `CREATE OR REPLACE` to generated DDL. |
 | `lifecycle.partition` | object | none | Global or table | Creation, replication, storage, and expiration behavior. |
 | `lifecycle.tables` | array | required | Global | Parent tables whose lifecycle should be evaluated. |
@@ -108,7 +108,7 @@ lifecycle:
   output_file_template: "V{integer:4}__{description}.{direction}.sql"
 ```
 
-Multiple successful tables may target one filename, depending on the provided `output_file_template`. pgpartium formats each table's SQL independently and appends the successful results in configuration order. A failed table does not discard successful output and does not contribute partial SQL. The command still exits nonzero and reports every failed table so automation remains visibly unhealthy.
+Multiple successful tables may target one filename, depending on the provided `output_file_template`. pgpartix formats each table's SQL independently and appends the successful results in configuration order. A failed table does not discard successful output and does not contribute partial SQL. The command still exits nonzero and reports every failed table so automation remains visibly unhealthy.
 
 ## Partition creation options
 
@@ -184,7 +184,7 @@ It may also be one of:
 - `LATEST_PARTITION`: the attached partition with the greatest upper bound;
 - `DEFAULT_PARTITION`: the parent's default partition.
 
-pgpartium replicates template constraints, indexes, and user triggers that are not already represented by the parent table. Trigger enabled/disabled state is preserved. `NOT NULL` attributes are part of the table's logical data model and are inherited through PostgreSQL partitioning rather than replicated as separate template constraints.
+pgpartix replicates template constraints, indexes, and user triggers that are not already represented by the parent table. Trigger enabled/disabled state is preserved. `NOT NULL` attributes are part of the table's logical data model and are inherited through PostgreSQL partitioning rather than replicated as separate template constraints.
 
 The selected template must exist. Symbolic sources fail with a useful message when no matching partition exists.
 
@@ -295,11 +295,11 @@ Mode precedence is:
 
 1. `detach_only: true` generates detach statements only.
 2. Otherwise, `detach_first: true` generates detach followed by drop.
-3. Otherwise, pgpartium generates direct `DROP TABLE` statements.
+3. Otherwise, pgpartix generates direct `DROP TABLE` statements.
 
 `detach_concurrently` has an effect only when a detach statement is generated.
 
-PostgreSQL does not support `DETACH PARTITION IF EXISTS`. With `idempotent: true`, pgpartium can guard the parent table and drop statements, but detach operations remain only partially idempotent if a partition has already been detached outside the generated migration.
+PostgreSQL does not support `DETACH PARTITION IF EXISTS`. With `idempotent: true`, pgpartix can guard the parent table and drop statements, but detach operations remain only partially idempotent if a partition has already been detached outside the generated migration.
 
 ## Connection environment
 

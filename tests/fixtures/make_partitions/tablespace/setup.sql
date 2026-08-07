@@ -14,6 +14,6 @@ CREATE TABLE test.transactions_template (
 
 CREATE INDEX transactions_template__status_idx
     ON test.transactions_template (status)
-TABLESPACE pgpartium;
+TABLESPACE pgpartix;
 
 ALTER SYSTEM SET mock.now = '2025-04-01 00:00:00+00';

@@ -1,11 +1,11 @@
 # Contributing
 
-Thank you for your interest in contributing to pgpartium!.
+Thank you for your interest in contributing to pgpartix!.
 Contributions are welcome, whether they are bug reports, feature requests, code improvements, documentation updates, or new features. Contributions are welcome in form of Pull Requests. This guide will help you get started with the contributing process.
 
 ## Development
 
-**pgpartium** is packaged as a Docker image. The image is built on the Debian Bookworm Slim base and installs PostgreSQL using the official PostgreSQL APT repository. Its development is based on **Bash** and **SQL**. For development, you will also need **pre-commit**.
+**pgpartix** is packaged as a Docker image. The image is built on the Debian Bookworm Slim base and installs PostgreSQL using the official PostgreSQL APT repository. Its development is based on **Bash** and **SQL**. For development, you will also need **pre-commit**.
 
 1. Install **pre-commit**:
 
@@ -51,7 +51,7 @@ Contributions are welcome, whether they are bug reports, feature requests, code 
 
 ## Architecture
 
-pgpartium has two main components:
+pgpartix has two main components:
 
 1. **The Binaries:** These are the various commands that helps in the generation of migration files for making and expiring partitions.
 2. **The Database Functions:** These are the various functions that are used to generate DDL for making and expiring partitions.

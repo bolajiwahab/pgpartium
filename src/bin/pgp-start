@@ -43,7 +43,7 @@ set -euo pipefail
 
 configure_database_environment
 
-export PGP_CLUSTER_NAME="${PGP_CLUSTER_NAME:-pgpartium}"
+export PGP_CLUSTER_NAME="${PGP_CLUSTER_NAME:-pgpartix}"
 
 pg_major_version=${pg_major_version:-${PGP_PG_MAJOR_VERSION:-${PGP_MIN_POSTGRES_VERSION}}}
 init_dir=${init_dir:-${PGP_INIT_DIR:-}}

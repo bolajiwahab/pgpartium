@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION pgpartium.get_indexes (
+CREATE OR REPLACE FUNCTION pgpartix.get_indexes (
     p_table_schema text
   , p_table_name text
 )
@@ -38,7 +38,7 @@ AS $BODY$
                    ORDER BY u.ordinality
                ) AS index_keys
              , substring(pg_catalog.pg_get_indexdef(i.indexrelid, 0, TRUE) FROM 'USING .*') AS index_definition
-             , pgpartium.get_relation_tablespace(
+             , pgpartix.get_relation_tablespace(
                    p_relation_schema => inp.nspname
                  , p_relation_name => ix.relname
                ) AS index_tablespace

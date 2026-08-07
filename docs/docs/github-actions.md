@@ -1,11 +1,11 @@
 # Automating lifecycle PRs with GitHub Actions
 
-GitHub Actions is an optional convenience integration for teams that want a Dependabot- or Renovate-like experience. The core pgpartium workflow ends after generating deterministic migration files; those files can instead be reviewed and committed locally, published by another CI/CD provider, or scheduled from a VM or other infrastructure.
+GitHub Actions is an optional convenience integration for teams that want a Dependabot- or Renovate-like experience. The core pgpartix workflow ends after generating deterministic migration files; those files can instead be reviewed and committed locally, published by another CI/CD provider, or scheduled from a VM or other infrastructure.
 
 For the GitHub Actions integration:
 
 1. A scheduled GitHub Actions workflow inspects the current PostgreSQL schema.
-2. pgpartium calculates the partitions that should be created or expired.
+2. pgpartix calculates the partitions that should be created or expired.
 3. It writes ordinary migration files into the application repository.
 4. `gh-create-pr` creates or refreshes one dedicated maintenance pull request.
 5. The repository's normal SQL linting, migration validation, review, approval, and deployment process handles the change.
@@ -14,10 +14,10 @@ The workflow does not silently mutate production. It turns generated lifecycle D
 
 ## Why the image includes `gh`
 
-The pgpartium image includes the GitHub CLI. `gh-create-pr` uses `git` and `gh` to provide a small reconciliation loop:
+The pgpartix image includes the GitHub CLI. `gh-create-pr` uses `git` and `gh` to provide a small reconciliation loop:
 
 - exit without creating a PR when no migration changed;
-- create or reset `pgpartium/<branch>` from the current default branch;
+- create or reset `pgpartix/<branch>` from the current default branch;
 - commit all generated migration changes;
 - force-update that dedicated automation branch;
 - create a PR when none exists;
@@ -38,7 +38,7 @@ Create a GitHub App owned by the organization or account that owns the target re
 Recommended registration settings:
 
 - Homepage URL: the repository or internal platform documentation URL.
-- Webhooks: disabled; pgpartium does not require inbound events.
+- Webhooks: disabled; pgpartix does not require inbound events.
 - User authorization: not required.
 - Repository permissions:
   - **Contents: Read and write**-required for authenticated Git push.
@@ -49,7 +49,7 @@ Do not grant **Workflows** permission unless the configured migration directory 
 
 ### 2. Install the App
 
-Install the App on the organization or user account, selecting only the repositories where pgpartium should manage lifecycle PRs. Repository selection is an additional boundary on top of the App's declared permissions.
+Install the App on the organization or user account, selecting only the repositories where pgpartix should manage lifecycle PRs. Repository selection is an additional boundary on top of the App's declared permissions.
 
 ### 3. Generate a private key
 
@@ -61,8 +61,8 @@ In the target repository or organization, create:
 
 | Kind | Name | Value |
 | --- | --- | --- |
-| Actions variable | `PGPARTIUM_APP_CLIENT_ID` | The App's **Client ID**. |
-| Actions secret | `PGPARTIUM_APP_PRIVATE_KEY` | Complete private-key PEM contents. |
+| Actions variable | `PGPARTIX_APP_CLIENT_ID` | The App's **Client ID**. |
+| Actions secret | `PGPARTIX_APP_PRIVATE_KEY` | Complete private-key PEM contents. |
 
 The current official token action uses the Client ID, which is distinct from the numeric App ID. GitHub's guide is [Making authenticated API requests with a GitHub App in a GitHub Actions workflow](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/making-authenticated-api-requests-with-a-github-app-in-a-github-actions-workflow).
 
@@ -107,8 +107,8 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ vars.PGPARTIUM_APP_CLIENT_ID }}
-          private-key: ${{ secrets.PGPARTIUM_APP_PRIVATE_KEY }}
+          client-id: ${{ vars.PGPARTIX_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PGPARTIX_APP_PRIVATE_KEY }}
           # Omitting owner/repositories scopes the token to this repository.
           permission-contents: write
           permission-pull-requests: write
@@ -160,7 +160,7 @@ Pin action references to commit SHAs if that is required by your supply-chain po
 
 ## Why generation uses `continue-on-error`
 
-pgpartium handles tables independently. If nine tables generate correctly and one fails, the nine valid outputs are published and the CLI exits `1` with the failed table's PostgreSQL error.
+pgpartix handles tables independently. If nine tables generate correctly and one fails, the nine valid outputs are published and the CLI exits `1` with the failed table's PostgreSQL error.
 
 Without `continue-on-error`, GitHub Actions would stop before `gh-create-pr`, throwing away the practical value of that partial result. The workflow therefore:
 
@@ -172,7 +172,7 @@ The PR remains useful, while alerts and branch-protection checks still show that
 
 ## Loading the schema in CI
 
-pgpartium needs a PostgreSQL database that represents the schema being maintained. There are two supported operating patterns.
+pgpartix needs a PostgreSQL database that represents the schema being maintained. There are two supported operating patterns.
 
 ### Ephemeral cluster from repository migrations
 
@@ -193,11 +193,11 @@ When an authoritative non-production catalog is already available, install the P
 ```yaml
     env:
       PGP_PG_MAJOR_VERSION: 17
-      PGP_USER: ${{ secrets.PGPARTIUM_DATABASE_USER }}
-      PGP_PASSWORD: ${{ secrets.PGPARTIUM_DATABASE_PASSWORD }}
-      PGP_HOST: ${{ secrets.PGPARTIUM_DATABASE_HOST }}
-      PGP_PORT: ${{ vars.PGPARTIUM_DATABASE_PORT }}
-      PGP_DATABASE: ${{ vars.PGPARTIUM_DATABASE_NAME }}
+      PGP_USER: ${{ secrets.PGPARTIX_DATABASE_USER }}
+      PGP_PASSWORD: ${{ secrets.PGPARTIX_DATABASE_PASSWORD }}
+      PGP_HOST: ${{ secrets.PGPARTIX_DATABASE_HOST }}
+      PGP_PORT: ${{ vars.PGPARTIX_DATABASE_PORT }}
+      PGP_DATABASE: ${{ vars.PGPARTIX_DATABASE_NAME }}
 
     steps:
       # App token and checkout steps omitted here.
@@ -212,7 +212,7 @@ When an authoritative non-production catalog is already available, install the P
           pgp-expire-partitions -c partition-lifecycle.yaml
 ```
 
-Use a read-only database role where practical. pgpartium installs helper functions into the selected database through `pgp-setup-infrastructure`, so the role must be permitted to create or replace objects in the `pgpartium` schema.
+Use a read-only database role where practical. pgpartix installs helper functions into the selected database through `pgp-setup-infrastructure`, so the role must be permitted to create or replace objects in the `pgpartix` schema.
 
 Protect external credentials with environments, network allowlists, short-lived database authentication, or a self-hosted runner inside the appropriate network boundary.
 
@@ -235,7 +235,7 @@ Keep `workflow_dispatch` enabled. It provides a safe manual reconciliation after
 
 By default:
 
-- the branch is `pgpartium/partition-maintenance`;
+- the branch is `pgpartix/partition-maintenance`;
 - the title and commit message are `chore: partition maintenance`;
 - the repository's remote default branch is used as the PR base;
 - a later run force-refreshes the automation branch from the latest base;
@@ -252,7 +252,7 @@ gh-create-pr \
   -m "chore(db): regenerate partition lifecycle migrations"
 ```
 
-The `pgpartium/` prefix is added automatically to the supplied branch name.
+The `pgpartix/` prefix is added automatically to the supplied branch name.
 
 Because the automation branch is force-updated, do not place human commits on it. Make review changes in configuration and rerun the workflow, preserving the declarative reconciliation model.
 

@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION pgpartium.make_partitions (
+CREATE OR REPLACE FUNCTION pgpartix.make_partitions (
     p_table_schema text
   , p_table_name text
   , p_partition_name_template text DEFAULT NULL
@@ -70,14 +70,14 @@ BEGIN
               );
     END IF;
 
-    v_partitioning_details := pgpartium.get_partitioning_details(p_table_schema => p_table_schema, p_table_name => p_table_name);
+    v_partitioning_details := pgpartix.get_partitioning_details(p_table_schema => p_table_schema, p_table_name => p_table_name);
 
-    IF NOT pgpartium.table_exists(p_table_schema => p_table_schema, p_table_name => p_table_name) THEN
+    IF NOT pgpartix.table_exists(p_table_schema => p_table_schema, p_table_name => p_table_name) THEN
         RAISE 'table "%"."%" does not exist', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
 
-    IF NOT pgpartium.is_table_partitioned(p_table_schema => p_table_schema, p_table_name => p_table_name) THEN
+    IF NOT pgpartix.is_table_partitioned(p_table_schema => p_table_schema, p_table_name => p_table_name) THEN
         RAISE 'table "%"."%" is not partitioned', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
@@ -112,21 +112,21 @@ BEGIN
     END IF;
 
     IF p_partition_tablespace IS NOT NULL
-    AND NOT pgpartium.tablespace_exists(p_partition_tablespace)
+    AND NOT pgpartix.tablespace_exists(p_partition_tablespace)
     THEN
         RAISE 'partition tablespace "%" does not exist', p_partition_tablespace
         USING ERRCODE = 'undefined_object';
     END IF;
 
     IF p_index_tablespace IS NOT NULL
-    AND NOT pgpartium.tablespace_exists(p_index_tablespace)
+    AND NOT pgpartix.tablespace_exists(p_index_tablespace)
     THEN
         RAISE 'index tablespace "%" does not exist', p_index_tablespace
         USING ERRCODE = 'undefined_object';
     END IF;
 
     IF (COALESCE(p_template_table_schema, '') > '' OR COALESCE(p_template_table_name, '') > '')
-    AND NOT pgpartium.table_exists(p_table_schema => p_template_table_schema, p_table_name => p_template_table_name) THEN
+    AND NOT pgpartix.table_exists(p_table_schema => p_template_table_schema, p_table_name => p_template_table_name) THEN
         RAISE 'template table "%"."%" does not exist', p_template_table_schema, p_template_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
@@ -151,7 +151,7 @@ BEGIN
     SELECT COALESCE(
                (
                     SELECT upper_bound
-                      FROM pgpartium.get_latest_partition(p_table_schema => p_table_schema, p_table_name => p_table_name)
+                      FROM pgpartix.get_latest_partition(p_table_schema => p_table_schema, p_table_name => p_table_name)
                )
              , p_start_timestamp
            )
@@ -160,7 +160,7 @@ BEGIN
     SELECT CASE p_partition_storage_mode
              WHEN 'inherit'
                THEN COALESCE(
-                        pgpartium.render_storage_parameters(
+                        pgpartix.render_storage_parameters(
                             p_relation_schema => p_template_table_schema
                           , p_relation_name => p_template_table_name
                           , p_user_config => NULL
@@ -169,7 +169,7 @@ BEGIN
                     )
              WHEN 'override'
                THEN COALESCE(
-                        pgpartium.render_storage_parameters(
+                        pgpartix.render_storage_parameters(
                             p_relation_schema => NULL
                           , p_relation_name => NULL
                           , p_user_config => p_partition_storage_parameters
@@ -178,7 +178,7 @@ BEGIN
                     )
              WHEN 'merge'
                THEN COALESCE(
-                        pgpartium.render_storage_parameters(
+                        pgpartix.render_storage_parameters(
                             p_relation_schema => p_template_table_schema
                           , p_relation_name => p_template_table_name
                           , p_user_config => p_partition_storage_parameters
@@ -200,7 +200,7 @@ BEGIN
         , current_bounds AS (
             SELECT lower_bound
                  , upper_bound
-              FROM pgpartium.get_partition_bounds(p_table_schema => p_table_schema, p_table_name => p_table_name)
+              FROM pgpartix.get_partition_bounds(p_table_schema => p_table_schema, p_table_name => p_table_name)
         )
         , partitions AS (
             -- Range partitions
@@ -225,7 +225,7 @@ BEGIN
                            THEN (
                                overlay(
                                    overlay(
-                                       pgpartium.generate_uuid_v7("date")::text
+                                       pgpartix.generate_uuid_v7("date")::text
                                        PLACING '0000' FROM 15 FOR 4
                                    )
                                    PLACING '0000-000000000000' FROM 20
@@ -247,7 +247,7 @@ BEGIN
                            THEN (
                                overlay(
                                    overlay(
-                                       pgpartium.generate_uuid_v7("date" + p_interval)::text
+                                       pgpartix.generate_uuid_v7("date" + p_interval)::text
                                        PLACING '0000' FROM 15 FOR 4
                                   )
                                   PLACING '0000-000000000000' FROM 20
@@ -266,7 +266,7 @@ BEGIN
              WHERE p_default_partition_name_template IS NOT NULL
                AND NOT EXISTS (
                    SELECT NULL
-                     FROM pgpartium.get_default_partition(p_table_schema => p_table_schema, p_table_name => p_table_name)
+                     FROM pgpartix.get_default_partition(p_table_schema => p_table_schema, p_table_name => p_table_name)
              )
         )
         , filtered AS (
@@ -310,7 +310,7 @@ BEGIN
               FROM partitions
              WHERE is_default
                AND NOT EXISTS (
-                       SELECT pgpartium.get_default_partition(p_table_schema => p_table_schema, p_table_name => p_table_name)
+                       SELECT pgpartix.get_default_partition(p_table_schema => p_table_schema, p_table_name => p_table_name)
                    )
         )
         , resolved AS (
@@ -340,7 +340,7 @@ BEGIN
     LOOP
 
         -- Get constraint definition.
-        SELECT pgpartium.generate_partition_constraints(
+        SELECT pgpartix.generate_partition_constraints(
                p_parent_table_schema   => p_table_schema
              , p_parent_table_name     => p_table_name
              , p_template_table_schema => p_template_table_schema
@@ -352,7 +352,7 @@ BEGIN
           INTO v_constraints;
 
         -- Get index create statement.
-        SELECT pgpartium.generate_partition_indexes(
+        SELECT pgpartix.generate_partition_indexes(
                p_parent_table_schema                                  => p_table_schema
              , p_parent_table_name                                    => p_table_name
              , p_template_table_schema                                => p_template_table_schema
@@ -366,7 +366,7 @@ BEGIN
           INTO v_indexes;
 
         -- Get create trigger statement.
-        SELECT pgpartium.generate_partition_triggers(
+        SELECT pgpartix.generate_partition_triggers(
                p_parent_table_schema   => p_table_schema
              , p_parent_table_name     => p_table_name
              , p_template_table_schema => p_template_table_schema

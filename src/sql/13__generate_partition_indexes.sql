@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION pgpartium.generate_partition_indexes (
+CREATE OR REPLACE FUNCTION pgpartix.generate_partition_indexes (
     p_parent_table_schema text
   , p_parent_table_name text
   , p_partition_schema text
@@ -20,14 +20,14 @@ AS $BODY$
              , index_keys
              , ordinal::text AS ordinal
              , index_definition
-          FROM pgpartium.get_indexes(p_table_schema => p_template_table_schema, p_table_name => p_template_table_name)
+          FROM pgpartix.get_indexes(p_table_schema => p_template_table_schema, p_table_name => p_template_table_name)
     )
     , parent_indexes AS (
         SELECT index_definition
-          FROM pgpartium.get_indexes(p_table_schema => p_parent_table_schema, p_table_name => p_parent_table_name)
+          FROM pgpartix.get_indexes(p_table_schema => p_parent_table_schema, p_table_name => p_parent_table_name)
     )
     , partition_indexes AS (
-        SELECT pgpartium.render_template(
+        SELECT pgpartix.render_template(
                    p_index_name_template
                  , jsonb_build_object(
                        '{parent_table_schema}', p_parent_table_schema

@@ -5,7 +5,7 @@
 
     Extracted from https://github.com/dverite/postgres-uuidv7-sql/blob/main/sql/uuidv7-sql--1.0.sql#L6-L19
 */
-CREATE OR REPLACE FUNCTION pgpartium.generate_uuid_v7 (
+CREATE OR REPLACE FUNCTION pgpartix.generate_uuid_v7 (
     p_timestamptz timestamptz = pg_catalog.clock_timestamp()
 )
 RETURNS uuid

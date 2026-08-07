@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION pgpartium.get_constraints (
+CREATE OR REPLACE FUNCTION pgpartix.get_constraints (
     p_table_schema text
   , p_table_name text
   , p_constraint_name_templates jsonb DEFAULT NULL

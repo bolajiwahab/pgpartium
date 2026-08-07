@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION pgpartium.get_default_partition (
+CREATE OR REPLACE FUNCTION pgpartix.get_default_partition (
     p_table_schema text
   , p_table_name text
 )

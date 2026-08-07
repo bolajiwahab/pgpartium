@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION pgpartium.generate_partition_constraints (
+CREATE OR REPLACE FUNCTION pgpartix.generate_partition_constraints (
     p_parent_table_schema text
   , p_parent_table_name text
   , p_partition_schema text
@@ -18,7 +18,7 @@ AS $BODY$
              , constraint_keys
              , ordinal::text AS ordinal
              , constraint_definition
-          FROM pgpartium.get_constraints(
+          FROM pgpartix.get_constraints(
                    p_table_schema => p_template_table_schema
                  , p_table_name => p_template_table_name
                  , p_constraint_name_templates => p_constraint_name_templates
@@ -26,10 +26,10 @@ AS $BODY$
     )
     , parent_constraints AS (
         SELECT constraint_definition
-          FROM pgpartium.get_constraints(p_table_schema => p_parent_table_schema, p_table_name => p_parent_table_name)
+          FROM pgpartix.get_constraints(p_table_schema => p_parent_table_schema, p_table_name => p_parent_table_name)
     )
     , partition_constraints AS (
-        SELECT pgpartium.render_template(
+        SELECT pgpartix.render_template(
                    template_constraints.constraint_name_template
                  , jsonb_build_object(
                        '{parent_table_schema}', p_parent_table_schema

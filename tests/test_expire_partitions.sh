@@ -31,13 +31,13 @@ function run_config_file() {
     local result
     local setup_file
     local teardown_file
-    local test_db="pgpartium_expire_test_$$"
+    local test_db="pgpartix_expire_test_$$"
 
     fixture="$(dirname "${config_file}")"
     config_file_name="${config_file%.yaml}"
     config_file_name="${config_file_name%.yml}"
     expected="${config_file_name}.expected.sql"
-    result="${fixture}/pgpartium_output.sql"
+    result="${fixture}/pgpartix_output.sql"
     setup_file="${fixture}/setup.sql"
     teardown_file="${fixture}/teardown.sql"
 
@@ -81,7 +81,7 @@ function run_config_directory() {
     local fixture="${1}"
     local expected
     local result
-    local test_db="pgpartium_expire_test_$$"
+    local test_db="pgpartix_expire_test_$$"
 
     trap 'cleanup_config_directory "${fixture}" "${test_db}"' ERR INT TERM
 
@@ -118,7 +118,7 @@ function run_config_directory() {
 
 @test "pgp-expire-partitions uses local connection defaults and silences successful formatting" {
     local fixture="tests/fixtures/expire_partitions/defaults"
-    local result="${fixture}/pgpartium_output.sql"
+    local result="${fixture}/pgpartix_output.sql"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
     pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
@@ -177,7 +177,7 @@ function run_config_directory() {
     local fixture="tests/fixtures/expire_partitions/global_config"
     local inherited_result="${fixture}/expire_global_test_inherited_events.sql"
     local overridden_result="${fixture}/detach_override_test_overridden_events.sql"
-    local test_db="pgpartium_expire_global_test_$$"
+    local test_db="pgpartix_expire_global_test_$$"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
     pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
@@ -198,7 +198,7 @@ function run_config_directory() {
 
 @test "pgp-expire-partitions handles an empty result" {
     local fixture="tests/fixtures/expire_partitions/empty_result"
-    local result="${fixture}/pgpartium_output.sql"
+    local result="${fixture}/pgpartix_output.sql"
     local run_status
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
@@ -215,8 +215,8 @@ function run_config_directory() {
 
 @test "pgp-expire-partitions reports database failures" {
     local fixture="tests/fixtures/expire_partitions/database_failure"
-    local expected="${fixture}/pgpartium_output.expected.sql"
-    local result="${fixture}/pgpartium_output.sql"
+    local expected="${fixture}/pgpartix_output.expected.sql"
+    local result="${fixture}/pgpartix_output.sql"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
 
@@ -253,7 +253,7 @@ function run_config_directory() {
     grep -Fq "failed to format generated SQL" <<< "${output}"
     grep -Fq "formatter internals" <<< "${output}"
     run ! grep -Fq "Traceback" <<< "${output}"
-    [ ! -e "${fixture}/pgpartium_output.sql" ]
+    [ ! -e "${fixture}/pgpartix_output.sql" ]
 }
 
 for fixture in tests/fixtures/expire_partitions/**/*.{yaml,yml}; do

@@ -4,4 +4,4 @@ CREATE TABLE test.test__transactions__2025_04
 
 CREATE INDEX
         ON test.test__transactions__2025_04 (status)
-TABLESPACE pgpartium_fast;
+TABLESPACE pgpartix_fast;
