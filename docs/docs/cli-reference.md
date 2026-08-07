@@ -1,6 +1,6 @@
 # CLI reference
 
-The pgpartium image contains commands for preparing PostgreSQL and generating lifecycle migrations. It also includes an optional GitHub pull-request helper.
+The pgpartix image contains commands for preparing PostgreSQL and generating lifecycle migrations. It also includes an optional GitHub pull-request helper.
 
 ## Database environment
 
@@ -43,7 +43,7 @@ The equivalent environment variables are:
 | --- | --- | --- |
 | `PGP_PG_MAJOR_VERSION` | `14` | PostgreSQL major version used when `-v` is omitted. |
 | `PGP_INIT_DIR` | None | Initialization directory used when `-i` is omitted; optional. |
-| `PGP_CLUSTER_NAME` | `pgpartium` | Name assigned to a locally created cluster. |
+| `PGP_CLUSTER_NAME` | `pgpartix` | Name assigned to a locally created cluster. |
 | `PGP_CREATE_OPTIONS` | None | Additional options passed when creating the cluster. |
 | `NO_CLUSTER` | Unset | When set, install the PostgreSQL runtime without creating a cluster. |
 
@@ -102,7 +102,7 @@ Expiration behavior is controlled by `retention`, `detach_only`, `detach_first`,
 
 ## `pgp-setup-infrastructure`
 
-Installs or refreshes pgpartium's SQL helper functions in the configured database. The lifecycle commands call it automatically.
+Installs or refreshes pgpartix's SQL helper functions in the configured database. The lifecycle commands call it automatically.
 
 ```text
 OPTIONS:
@@ -159,7 +159,7 @@ Behavior:
 
 - exits successfully without Git operations when no tracked or untracked file changed;
 - determines the remote default branch;
-- resets `pgpartium/<branch>` from the latest remote base;
+- resets `pgpartix/<branch>` from the latest remote base;
 - commits all repository changes;
 - force-updates the dedicated branch;
 - creates a PR when none is open;

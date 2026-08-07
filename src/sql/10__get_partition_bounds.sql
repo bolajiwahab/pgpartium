@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION pgpartium.get_partition_bounds (
+CREATE OR REPLACE FUNCTION pgpartix.get_partition_bounds (
     p_table_schema text
   , p_table_name text
 )
@@ -50,7 +50,7 @@ AS $BODY$
      INNER JOIN pg_catalog.pg_namespace AS cn
         ON c.relnamespace = cn.oid
      CROSS JOIN regexp_matches(pg_catalog.pg_get_expr(c.relpartbound, c.oid), '\(\''?(.+?)\''?\).+\(\''?(.+?)\''?\)') AS matches
-         , LATERAL (SELECT keys_data_types FROM pgpartium.get_partitioning_details(p_table_schema, p_table_name)) AS partitioning_details
+         , LATERAL (SELECT keys_data_types FROM pgpartix.get_partitioning_details(p_table_schema, p_table_name)) AS partitioning_details
      WHERE pn.nspname = p_table_schema
        AND p.relname = p_table_name
        AND c.relispartition

@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION pgpartium.expire_partitions (
+CREATE OR REPLACE FUNCTION pgpartix.expire_partitions (
     p_table_schema text
   , p_table_name text
   , p_retention interval DEFAULT NULL
@@ -16,12 +16,12 @@ BEGIN
 
     PERFORM set_config('timezone', p_timezone, TRUE);
 
-    IF NOT pgpartium.table_exists(p_table_schema => p_table_schema, p_table_name => p_table_name) THEN
+    IF NOT pgpartix.table_exists(p_table_schema => p_table_schema, p_table_name => p_table_name) THEN
         RAISE 'table "%"."%" does not exist', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
 
-    IF NOT pgpartium.is_table_partitioned(p_table_schema => p_table_schema, p_table_name => p_table_name) THEN
+    IF NOT pgpartix.is_table_partitioned(p_table_schema => p_table_schema, p_table_name => p_table_name) THEN
         RAISE 'table "%"."%" is not partitioned', p_table_schema, p_table_name
         USING ERRCODE = 'undefined_table';
     END IF;
@@ -79,7 +79,7 @@ BEGIN
                E'\n'
                ORDER BY age DESC
            )
-      FROM pgpartium.get_expired_partitions(
+      FROM pgpartix.get_expired_partitions(
                p_table_schema => p_table_schema
              , p_table_name   => p_table_name
              , p_retention    => p_retention

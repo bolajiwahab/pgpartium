@@ -1,6 +1,6 @@
 /* Utility functions */
 
-CREATE OR REPLACE FUNCTION pgpartium.table_exists (
+CREATE OR REPLACE FUNCTION pgpartix.table_exists (
     p_table_schema text
   , p_table_name text
 )
@@ -17,7 +17,7 @@ AS $BODY$
     );
 $BODY$;
 
-CREATE OR REPLACE FUNCTION pgpartium.tablespace_exists (
+CREATE OR REPLACE FUNCTION pgpartix.tablespace_exists (
     p_tablespace text
 )
 RETURNS boolean
@@ -30,7 +30,7 @@ AS $BODY$
     );
 $BODY$;
 
-CREATE OR REPLACE FUNCTION pgpartium.get_relation_tablespace (
+CREATE OR REPLACE FUNCTION pgpartix.get_relation_tablespace (
     p_relation_schema text
   , p_relation_name text
 )
@@ -52,7 +52,7 @@ AS $BODY$
       AND c.relname = p_relation_name;
 $BODY$;
 
-CREATE OR REPLACE FUNCTION pgpartium.render_template (
+CREATE OR REPLACE FUNCTION pgpartix.render_template (
     p_template text,
     p_values jsonb
 )
@@ -82,7 +82,7 @@ BEGIN
 END;
 $BODY$;
 
-CREATE OR REPLACE FUNCTION pgpartium.is_table_partitioned (
+CREATE OR REPLACE FUNCTION pgpartix.is_table_partitioned (
     p_table_schema text
   , p_table_name text
 )
@@ -101,7 +101,7 @@ AS $BODY$
     );
 $BODY$;
 
-CREATE OR REPLACE FUNCTION pgpartium.get_partitioning_details (
+CREATE OR REPLACE FUNCTION pgpartix.get_partitioning_details (
     p_table_schema text
   , p_table_name text
 )
@@ -144,7 +144,7 @@ AS $BODY$
             , p.partstrat;
 $BODY$;
 
-CREATE OR REPLACE FUNCTION pgpartium.get_storage_parameters (
+CREATE OR REPLACE FUNCTION pgpartix.get_storage_parameters (
     p_relation_schema text
   , p_relation_name text
 )
@@ -205,7 +205,7 @@ AS $BODY$
 
 $BODY$;
 
-CREATE OR REPLACE FUNCTION pgpartium.render_storage_parameters (
+CREATE OR REPLACE FUNCTION pgpartix.render_storage_parameters (
     p_relation_schema text
   , p_relation_name text
   , p_user_config jsonb DEFAULT NULL
@@ -223,7 +223,7 @@ AS $BODY$
                    p_user_config ->> parameter_key
                  , parameter_value
                ) AS parameter_value
-          FROM pgpartium.get_storage_parameters(
+          FROM pgpartix.get_storage_parameters(
                    p_relation_schema,
                    p_relation_name
                )

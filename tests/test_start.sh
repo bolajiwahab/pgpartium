@@ -38,7 +38,7 @@ source "${BATS_TEST_DIRNAME}/conftest.sh"
 
     [ "${status}" -eq 0 ]
     grep -Fq -- "-i -v 14" "${apt_marker}"
-    grep -Fq -- "--start 14 pgpartium --port=5432" "${cluster_marker}"
+    grep -Fq -- "--start 14 pgpartix --port=5432" "${cluster_marker}"
 }
 
 @test "pgp-start rejects unsupported PostgreSQL versions" {

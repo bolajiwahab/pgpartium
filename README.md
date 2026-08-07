@@ -1,11 +1,11 @@
-# pgpartium
+# pgpartix
 
 [![CI](https://github.com/bolajiwahab/pgpartium/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/bolajiwahab/pgpartium/actions/workflows/ci.yaml)
 [![release](https://github.com/bolajiwahab/pgpartium/actions/workflows/release.yaml/badge.svg)](https://github.com/bolajiwahab/pgpartium/actions/workflows/release.yaml)
 
-pgpartium is a PostgreSQL partition-lifecycle migration generator. It inspects a PostgreSQL database and writes migrations for partitions that should be created or expired.
+pgpartix is a PostgreSQL partition-lifecycle migration generator. It inspects a PostgreSQL database and writes migrations for partitions that should be created or expired.
 
-pgpartium can be used:
+pgpartix can be used:
 
 - locally, with generated migration files reviewed and committed by the developer;
 - from an existing CI/CD system;
@@ -13,7 +13,7 @@ pgpartium can be used:
 
 The bundled GitHub helper optionally provides a Dependabot- or Renovate-like pull-request experience.
 
-pgpartium only writes migration files. It never applies the generated migrations to a database.
+pgpartix only writes migration files. It never applies the generated migrations to a database.
 
 ## What it provides
 
@@ -34,7 +34,7 @@ pgpartium only writes migration files. It never applies the generated migrations
   PostgreSQL schema + lifecycle YAML
                     |
                     v
-         pgpartium reconciliation
+         pgpartix reconciliation
           /                    \
 missing future partitions   expired partitions
            \               /
@@ -48,7 +48,7 @@ missing future partitions   expired partitions
             review and deploy
 ```
 
-pgpartium stops at generated migration files. How those files are committed, reviewed, and deployed remains under the user's repository and infrastructure controls.
+pgpartix stops at generated migration files. How those files are committed, reviewed, and deployed remains under the user's repository and infrastructure controls.
 
 ## Quick start
 
@@ -73,7 +73,7 @@ docker run --rm --user root \
   '
 ```
 
-`pgp-start` defaults to PostgreSQL 14 and supplies the local cluster connection settings. The only database setup input in this example is the initialization directory. It can contain `.sql`, `.sql.gz`, and `.sh` files, including scripts that invoke the application's existing schema or migration tooling. `--workdir /repository` is required because the image otherwise runs from `/src`, while the configuration and output paths are relative to the mounted repository. Generated SQL is written to `examples/quick-start/migrations/pgpartium_output.sql`; apply generated lifecycle migrations only through the application's normal migration process.
+`pgp-start` defaults to PostgreSQL 14 and supplies the local cluster connection settings. The only database setup input in this example is the initialization directory. It can contain `.sql`, `.sql.gz`, and `.sh` files, including scripts that invoke the application's existing schema or migration tooling. `--workdir /repository` is required because the image otherwise runs from `/src`, while the configuration and output paths are relative to the mounted repository. Generated SQL is written to `examples/quick-start/migrations/pgpartix_output.sql`; apply generated lifecycle migrations only through the application's normal migration process.
 
 See [Getting started](docs/docs/getting-started.md) for external database mode, prerequisites, and output validation.
 

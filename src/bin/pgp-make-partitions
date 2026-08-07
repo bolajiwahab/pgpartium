@@ -79,7 +79,7 @@ function make_partitions() {
         DEFAULT_STORAGE_PARAMETERS=null \
         DEFAULT_STORAGE_MODE="override" \
         DEFAULT_DESCRIPTION_MAKE="Make partitions for {parent_table_schema}.{parent_table_name}" \
-        DEFAULT_OUTPUT_FILE_TEMPLATE="pgpartium_output.sql" \
+        DEFAULT_OUTPUT_FILE_TEMPLATE="pgpartix_output.sql" \
         DEFAULT_INDEX_NAME_TEMPLATE=null \
         DEFAULT_CONSTRAINT_NAME_TEMPLATE="{partition_name}_{constraint_keys}_{constraint_suffix}" \
         DEFAULT_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE="{partition_name}_pkey" \
@@ -260,7 +260,7 @@ EOF
 SET TIMEZONE TO :'timezone';
 
 SELECT upper_bound
-  FROM pgpartium.get_latest_partition(
+  FROM pgpartix.get_latest_partition(
            p_table_schema => :'table_schema'
          , p_table_name   => :'table_name'
        );
@@ -293,7 +293,7 @@ SELECT json_build_object(
            'partition_schema', partition_schema
          , 'partition_name', partition_name
        )
-  FROM pgpartium.get_default_partition(
+  FROM pgpartix.get_default_partition(
            p_table_schema => :'table_schema'
          , p_table_name   => :'table_name'
        );
@@ -327,7 +327,7 @@ SELECT json_build_object(
            'partition_schema', partition_schema
          , 'partition_name', partition_name
        )
-  FROM pgpartium.get_latest_partition(
+  FROM pgpartix.get_latest_partition(
            p_table_schema => :'table_schema'
          , p_table_name   => :'table_name'
        );
@@ -361,7 +361,7 @@ SELECT json_build_object(
            'partition_schema', partition_schema
          , 'partition_name', partition_name
        )
-  FROM pgpartium.get_current_partition(
+  FROM pgpartix.get_current_partition(
            p_table_schema => :'table_schema'
          , p_table_name   => :'table_name'
        );
@@ -396,7 +396,7 @@ EOF
                     -v table_schema="${template_table_schema}" \
                     -v table_name="${template_table_name}" \
                     <<EOF
-SELECT pgpartium.table_exists(p_table_schema => :'table_schema', p_table_name => :'table_name');
+SELECT pgpartix.table_exists(p_table_schema => :'table_schema', p_table_name => :'table_name');
 EOF
 )"
 
@@ -408,7 +408,7 @@ EOF
         fi
 
         error_file="$(mktemp "${temp_error_directory}/error.XXXXXX")"
-        table_output_file="$(mktemp "${temp_migration_directory}/.pgpartium-output.XXXXXX")"
+        table_output_file="$(mktemp "${temp_migration_directory}/.pgpartix-output.XXXXXX")"
         mv "${table_output_file}" "${table_output_file}.sql"
         table_output_file="${table_output_file}.sql"
 
@@ -444,7 +444,7 @@ EOF
             <<EOF
 -- KCOV_EXCL_START
 SELECT *
-  FROM pgpartium.make_partitions(
+  FROM pgpartix.make_partitions(
     p_table_schema => :'table_schema'
   , p_table_name => :'table_name'
   , p_partition_name_template => NULLIF(:'partition_name_template', 'null')

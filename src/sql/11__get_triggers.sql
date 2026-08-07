@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION pgpartium.get_triggers (
+CREATE OR REPLACE FUNCTION pgpartix.get_triggers (
     p_table_schema text
   , p_table_name text
 )

@@ -1,6 +1,6 @@
-# pgpartium documentation
+# pgpartix documentation
 
-pgpartium generates reviewable PostgreSQL partition-lifecycle migrations. Users can commit them locally, integrate them with any CI/CD or scheduling environment, or use the optional GitHub pull-request helper.
+pgpartix generates reviewable PostgreSQL partition-lifecycle migrations. Users can commit them locally, integrate them with any CI/CD or scheduling environment, or use the optional GitHub pull-request helper.
 
 ## Start here
 
@@ -21,7 +21,7 @@ Each guide has one purpose:
 
 | Guide | Use it when |
 | --- | --- |
-| [Getting started](getting-started.md) | You are evaluating or installing pgpartium. |
+| [Getting started](getting-started.md) | You are evaluating or installing pgpartix. |
 | [Configuration](configuration.md) | You need to understand or change lifecycle behavior. |
 | [GitHub Actions](github-actions.md) | You want the optional scheduled GitHub PR workflow. |
 | [CLI reference](cli-reference.md) | You need command syntax, environment requirements, or failure semantics. |

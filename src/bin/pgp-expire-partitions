@@ -74,7 +74,7 @@ export DEFAULT_RETENTION=NULL \
        DEFAULT_IDEMPOTENT=false \
        DEFAULT_TIMEZONE="Etc/UTC" \
        DEFAULT_DESCRIPTION_EXPIRE="Expire partitions for {parent_table_schema}.{parent_table_name}" \
-       DEFAULT_OUTPUT_FILE_TEMPLATE="pgpartium_output.sql"
+       DEFAULT_OUTPUT_FILE_TEMPLATE="pgpartix_output.sql"
 
 # Extract global configs
 GLOBAL_RETENTION=$(yq '.lifecycle.partition.retention.interval // strenv(DEFAULT_RETENTION)' "${config}")
@@ -153,7 +153,7 @@ while read -r table; do
     fi
 
     error_file="${temp_error_directory}/${table_schema}.${table_name}.error"
-    table_output_file=$(mktemp "${temp_migration_directory}/.pgpartium-output.XXXXXX")
+    table_output_file=$(mktemp "${temp_migration_directory}/.pgpartix-output.XXXXXX")
     mv "${table_output_file}" "${table_output_file}.sql"
     table_output_file="${table_output_file}.sql"
 
@@ -174,7 +174,7 @@ while read -r table; do
         <<EOF
 -- KCOV_EXCL_START
 SELECT *
-  FROM pgpartium.expire_partitions(
+  FROM pgpartix.expire_partitions(
     p_table_schema=>:'table_schema'
   , p_table_name=>:'table_name'
   , p_detach_only=>:'detach_only'

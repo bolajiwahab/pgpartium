@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "pgpartium configuration schema",
+    "title": "pgpartix configuration schema",
     "description": "Schema for partition lifecycle.",
     "type": "object",
     "definitions": {
@@ -61,7 +61,7 @@
                 "{timestamp}__{description}.sql",
                 "{epoch}_{description}.up.sql"
             ],
-            "default": "pgpartium_output.sql"
+            "default": "pgpartix_output.sql"
         },
         "timezone": {
             "$ref": "#/definitions/name",

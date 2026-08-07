@@ -10,7 +10,7 @@ lifecycle:
         interval: 1 mon
         start_timestamp: 2025-04-01T00:00:00+00:00
         index:
-          tablespace: pgpartium_fast
+          tablespace: pgpartix_fast
       template:
         schema: test
         name: transactions_template
