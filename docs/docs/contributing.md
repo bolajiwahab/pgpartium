@@ -96,3 +96,20 @@ Schema definition is presented as `html` through [json-schema-for-human](https:/
 ```
 
 The changes can be previewed through a browser.
+
+## Release
+
+To create a new release, do the following:
+
+```bash
+git checkout -B Release
+git pull --rebase origin main
+git fetch --tags
+git tag
+
+# using the next available version, create a new tag e.g
+git tag -a 0.7.0 -m "Release 0.7.0"
+
+# push the new tag to trigger the release
+git push origin 0.7.0
+```
