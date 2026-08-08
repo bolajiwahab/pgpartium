@@ -99,7 +99,7 @@ The changes can be previewed through a browser.
 
 ## Release
 
-Checkout
+To create a new release, do the following:
 
 ```bash
 git checkout -B Release
