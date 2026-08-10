@@ -1,9 +1,9 @@
 CREATE TABLE test.test__transactions__2025_04
     PARTITION OF test.transactions (
-    CONSTRAINT test__transactions__2025_04_pkey PRIMARY KEY (transaction_id, account_id)
-  , CONSTRAINT test__transactions__2025_04_account_id_status_key UNIQUE (account_id, status)
-  , CONSTRAINT test__transactions__2025_04_amount_check CHECK (round(amount, 2) = amount)
-)
+        CONSTRAINT test__transactions__2025_04_pkey PRIMARY KEY (transaction_id, account_id)
+      , CONSTRAINT test__transactions__2025_04_account_id_status_key UNIQUE (account_id, status)
+      , CONSTRAINT test__transactions__2025_04_amount_check CHECK (round(amount, 2) = amount)
+    )
     FOR VALUES FROM ('2025-04-01 00:00:00+00') TO ('2025-05-01 00:00:00+00');
 
 CREATE UNIQUE INDEX
