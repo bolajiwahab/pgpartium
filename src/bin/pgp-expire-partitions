@@ -195,9 +195,7 @@ EOF
 
     if [[ -s "${table_output_file}" ]]; then
         if ! pgrubic format "${table_output_file}" >"${error_file}" 2>&1; then
-            failed_tables["${table_schema}.${table_name}"]="failed to format generated SQL: $(<"${error_file}")"
-            rm "${table_output_file}"
-            continue
+            echo "WARNING: failed to format generated SQL for ${table_schema}.${table_name}, writing unformatted SQL: $(<"${error_file}")" >&2
         fi
 
         output_file="${temp_migration_directory}/${output_filename}"

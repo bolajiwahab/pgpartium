@@ -233,10 +233,12 @@ function run_config_directory() {
     rm -f "${result}"
 }
 
-@test "pgp-expire-partitions manages formatter failures" {
+@test "pgp-expire-partitions writes unformatted SQL when the formatter fails" {
     local fixture="tests/fixtures/expire_partitions/defaults"
     local fake_bin="${BATS_TEST_TMPDIR}/bin"
+    local result="${fixture}/pgpartix_output.sql"
 
+    rm -f "${result}"
     mkdir -p "${fake_bin}"
     printf '%s\n' '#!/bin/bash' 'echo "formatter internals" >&2' 'exit 1' > "${fake_bin}/pgrubic"
     chmod +x "${fake_bin}/pgrubic"
@@ -246,14 +248,21 @@ function run_config_directory() {
 
     run env PATH="${fake_bin}:${PATH}" pgp-expire-partitions -c "${fixture}/config.yaml"
 
+    [ "${status}" -eq 0 ]
+    grep -Fq "WARNING: failed to format generated SQL" <<< "${output}"
+    grep -Fq "formatter internals" <<< "${output}"
+    run ! grep -Fq "failed for" <<< "${output}"
+    run ! grep -Fq "Traceback" <<< "${output}"
+    [ -s "${result}" ]
+
+    # The unformatted SQL must still be valid and applicable.
+    createdb --template="${PGP_DATABASE}" pgpartix_test_$$
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --dbname pgpartix_test_$$ --file "${result}"
+    dropdb pgpartix_test_$$
+
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/teardown.sql"
 
-    [ "${status}" -eq 1 ]
-    grep -Fq "failed for 1 table(s)" <<< "${output}"
-    grep -Fq "failed to format generated SQL" <<< "${output}"
-    grep -Fq "formatter internals" <<< "${output}"
-    run ! grep -Fq "Traceback" <<< "${output}"
-    [ ! -e "${fixture}/pgpartix_output.sql" ]
+    rm -f "${result}"
 }
 
 for fixture in tests/fixtures/expire_partitions/**/*.{yaml,yml}; do

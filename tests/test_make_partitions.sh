@@ -348,7 +348,7 @@ YAML
     rm -f "${result}"
 }
 
-@test "pgp-make-partitions manages formatter failures" {
+@test "pgp-make-partitions writes unformatted SQL when the formatter fails" {
     local fixture="tests/fixtures/make_partitions/defaults"
     local fake_bin="${BATS_TEST_TMPDIR}/bin"
     local result="${fixture}/pgpartix_output.sql"
@@ -363,14 +363,21 @@ YAML
 
     run env PATH="${fake_bin}:${PATH}" pgp-make-partitions -c "${fixture}/config.yaml"
 
+    [ "${status}" -eq 0 ]
+    grep -Fq "WARNING: failed to format generated SQL" <<< "${output}"
+    grep -Fq "formatter internals" <<< "${output}"
+    run ! grep -Fq "failed for" <<< "${output}"
+    run ! grep -Fq "Traceback" <<< "${output}"
+    [ -s "${result}" ]
+
+    # The unformatted SQL must still be valid and applicable.
+    createdb --template="${PGP_DATABASE}" pgpartix_test_$$
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --dbname pgpartix_test_$$ --file "${result}"
+    dropdb pgpartix_test_$$
+
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/teardown.sql"
 
-    [ "${status}" -eq 1 ]
-    grep -Fq "failed for 1 table(s)" <<< "${output}"
-    grep -Fq "failed to format generated SQL" <<< "${output}"
-    grep -Fq "formatter internals" <<< "${output}"
-    run ! grep -Fq "Traceback" <<< "${output}"
-    [ ! -e "${result}" ]
+    rm -f "${result}"
 }
 
 @test "pgp-make-partitions processes a config directory" {
