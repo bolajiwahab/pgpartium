@@ -1,2 +1,2 @@
-check-jsonschema==0.37.4
+check-jsonschema==0.38.0
 pgrubic==1.3.0
