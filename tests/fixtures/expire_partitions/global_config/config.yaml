@@ -4,7 +4,10 @@ lifecycle:
   timezone: Etc/UTC
   description:
     expire: "Expire global {parent_table_schema}_{parent_table_name}"
-  output_file_template: "{description}.sql"
+  output:
+    file:
+      naming:
+        template: "{description}.sql"
   idempotent: true
   partition:
     retention:

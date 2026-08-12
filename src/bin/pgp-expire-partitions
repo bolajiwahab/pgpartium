@@ -84,7 +84,7 @@ GLOBAL_DETACH_CONCURRENTLY=$(yq '.lifecycle.partition.retention.detach_concurren
 GLOBAL_IDEMPOTENT=$(yq '.lifecycle.idempotent // strenv(DEFAULT_IDEMPOTENT)' "${config}")
 GLOBAL_TIMEZONE=$(yq '.lifecycle.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")
 GLOBAL_DESCRIPTION_EXPIRE=$(yq '.lifecycle.description.expire // strenv(DEFAULT_DESCRIPTION_EXPIRE)' "${config}")
-GLOBAL_OUTPUT_FILE_TEMPLATE=$(yq '.lifecycle.output_file_template // strenv(DEFAULT_OUTPUT_FILE_TEMPLATE)' "${config}")
+GLOBAL_OUTPUT_FILE_TEMPLATE=$(yq '.lifecycle.output.file.naming.template // strenv(DEFAULT_OUTPUT_FILE_TEMPLATE)' "${config}")
 
 export GLOBAL_RETENTION GLOBAL_DETACH_ONLY GLOBAL_DETACH_FIRST GLOBAL_DETACH_CONCURRENTLY GLOBAL_TIMEZONE \
        GLOBAL_IDEMPOTENT GLOBAL_DESCRIPTION_EXPIRE GLOBAL_OUTPUT_FILE_TEMPLATE
@@ -117,7 +117,7 @@ pgp-setup-infrastructure
 while read -r table; do
     table_schema=$(yq '.schema' <<< "${table}")
     table_name=$(yq '.name' <<< "${table}")
-    file_name_template=$(yq '.output_file_template // strenv(GLOBAL_OUTPUT_FILE_TEMPLATE)' <<< "${table}")
+    file_name_template=$(yq '.output.file.naming.template // strenv(GLOBAL_OUTPUT_FILE_TEMPLATE)' <<< "${table}")
     description=$(yq '.description.expire // strenv(GLOBAL_DESCRIPTION_EXPIRE)' <<< "${table}")
     # Replace table_schema and table_name placeholders in the description
     description="${description//\{parent_table_schema\}/$table_schema}"

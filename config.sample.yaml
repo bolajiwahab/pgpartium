@@ -1,6 +1,6 @@
 ---
 # Values under lifecycle are defaults for every table. A table may override
-# description, output_file_template, and any partition option.
+# description, output.file.naming.template, and any partition option.
 lifecycle:
   # The directory should already exist. Generated migrations are written here.
   directory: migrations/partitions
@@ -9,7 +9,7 @@ lifecycle:
   timezone: Etc/UTC
 
   # {parent_table_schema} and {parent_table_name} are resolved before {description} is used
-  # by output_file_template.
+  # by output.file.naming.template
   description:
     make: "Make partitions for {parent_table_schema}.{parent_table_name}"
     expire: "Expire partitions for {parent_table_schema}.{parent_table_name}"
@@ -17,7 +17,10 @@ lifecycle:
   # Supported placeholders include {integer}, {integer:N}, {description},
   # {timestamp}, {epoch}, {date}, {year}, {month}, {day}, {hour}, and
   # {direction}. The direction is currently "up".
-  output_file_template: "V{integer:3}__{description}.sql"
+  output:
+    file:
+      naming:
+        template: "V{integer:3}__{description}.sql"
 
   # Add supported `IF NOT EXISTS`, `CREATE OR REPLACE` to generated DDL.
   idempotent: true
@@ -35,12 +38,16 @@ lifecycle:
 
     # Used by pgp-make-partitions. Any positive PostgreSQL interval is valid.
     interval: 1 month
+    # NOW is the default, so this may be omitted. It only matters on a table's first
+    # run: once a partition exists, its upper bound always overrides start_timestamp,
+    # so generation keeps moving forward from the latest partition on later runs.
     start_timestamp: NOW
     past: 0
     future: 2
 
     # Create a default partition when the parent does not already have one.
     default:
+      create: true
       naming:
         template: "{parent_table_schema}__{parent_table_name}__default"
 

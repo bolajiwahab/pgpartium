@@ -8,4 +8,7 @@ lifecycle:
   tables:
     - schema: "test"
       name: "measurements"
-      output_file_template: "measurements.sql"
+      output:
+        file:
+          naming:
+            template: "measurements.sql"

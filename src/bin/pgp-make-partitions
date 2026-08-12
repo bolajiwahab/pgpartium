@@ -61,6 +61,32 @@ function validate_config() {
     fi
 }
 
+function get_latest_partition_upper_bound() {
+    local table_schema="$1"
+    local table_name="$2"
+    local timezone="$3"
+
+    # KCOV_EXCL_START
+    psql \
+        --tuples-only \
+        --no-align \
+        --quiet \
+        --variable "ON_ERROR_STOP=1" \
+        --variable table_schema="${table_schema}" \
+        --variable table_name="${table_name}" \
+        --variable timezone="${timezone}" \
+        <<EOF
+SET TIMEZONE TO :'timezone';
+
+SELECT upper_bound
+  FROM pgpartix.get_latest_partition(
+           p_table_schema => :'table_schema'
+         , p_table_name   => :'table_name'
+       );
+EOF
+    # KCOV_EXCL_STOP
+}
+
 function make_partitions() {
     local config="$1"
 
@@ -69,8 +95,10 @@ function make_partitions() {
     # Set defaults.
     export DEFAULT_TABLESPACE=null \
         DEFAULT_INTERVAL=null \
-        DEFAULT_START_TIMESTAMP=null \
+        DEFAULT_START_TIMESTAMP=NOW \
         DEFAULT_PARTITION_NAME_TEMPLATE=null \
+        DEFAULT_DEFAULT_PARTITION_NAME_TEMPLATE="{parent_table_schema}__{parent_table_name}__default" \
+        DEFAULT_CREATE_DEFAULT_PARTITION=false \
         DEFAULT_PAST=0 \
         DEFAULT_FUTURE=0 \
         DEFAULT_RETENTION=null \
@@ -80,7 +108,7 @@ function make_partitions() {
         DEFAULT_STORAGE_MODE="override" \
         DEFAULT_DESCRIPTION_MAKE="Make partitions for {parent_table_schema}.{parent_table_name}" \
         DEFAULT_OUTPUT_FILE_TEMPLATE="pgpartix_output.sql" \
-        DEFAULT_INDEX_NAME_TEMPLATE=null \
+        DEFAULT_INDEX_NAME_TEMPLATE="{partition_name}_{index_keys}_idx{ordinal}" \
         DEFAULT_CONSTRAINT_NAME_TEMPLATE="{partition_name}_{constraint_keys}_{constraint_suffix}" \
         DEFAULT_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE="{partition_name}_pkey" \
         DEFAULT_TRIGGER_NAME_TEMPLATE="{partition_name}_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}" \
@@ -95,11 +123,12 @@ function make_partitions() {
     GLOBAL_INTERVAL="$(yq '.lifecycle.partition.interval // strenv(DEFAULT_INTERVAL)' "${config}")"
     GLOBAL_START_TIMESTAMP="$(yq '.lifecycle.partition.start_timestamp // strenv(DEFAULT_START_TIMESTAMP)' "${config}")"
     GLOBAL_RETENTION="$(yq '.lifecycle.partition.retention.interval // strenv(DEFAULT_RETENTION)' "${config}")"
-    GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE="$(yq '.lifecycle.partition.default.naming.template // strenv(DEFAULT_PARTITION_NAME_TEMPLATE)' "${config}")"
+    GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE="$(yq '.lifecycle.partition.default.naming.template // strenv(DEFAULT_DEFAULT_PARTITION_NAME_TEMPLATE)' "${config}")"
+    GLOBAL_CREATE_DEFAULT_PARTITION="$(yq '.lifecycle.partition.default.create // strenv(DEFAULT_CREATE_DEFAULT_PARTITION)' "${config}")"
     GLOBAL_SKIP_OVERLAPPING="$(yq '.lifecycle.partition.skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")"
     GLOBAL_IDEMPOTENT="$(yq '.lifecycle.idempotent // strenv(DEFAULT_IDEMPOTENT)' "${config}")"
     GLOBAL_DESCRIPTION_MAKE="$(yq '.lifecycle.description.make // strenv(DEFAULT_DESCRIPTION_MAKE)' "${config}")"
-    GLOBAL_OUTPUT_FILE_TEMPLATE="$(yq '.lifecycle.output_file_template // strenv(DEFAULT_OUTPUT_FILE_TEMPLATE)' "${config}")"
+    GLOBAL_OUTPUT_FILE_TEMPLATE="$(yq '.lifecycle.output.file.naming.template // strenv(DEFAULT_OUTPUT_FILE_TEMPLATE)' "${config}")"
     GLOBAL_PARTITION_TABLESPACE="$(yq '.lifecycle.partition.tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")"
     GLOBAL_INDEX_NAME_TEMPLATE="$(yq '.lifecycle.partition.index.naming.template // strenv(DEFAULT_INDEX_NAME_TEMPLATE)' "${config}")"
     GLOBAL_INDEX_TABLESPACE="$(yq '.lifecycle.partition.index.tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")"
@@ -121,7 +150,7 @@ function make_partitions() {
 
     export GLOBAL_PARTITION_TABLESPACE GLOBAL_INDEX_TABLESPACE GLOBAL_PARTITION_SCHEMA \
            GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL GLOBAL_START_TIMESTAMP GLOBAL_RETENTION \
-           GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE GLOBAL_SKIP_OVERLAPPING GLOBAL_PARTITION_STORAGE_PARAMETERS \
+           GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE GLOBAL_CREATE_DEFAULT_PARTITION GLOBAL_SKIP_OVERLAPPING GLOBAL_PARTITION_STORAGE_PARAMETERS \
            GLOBAL_PARTITION_STORAGE_MODE GLOBAL_IDEMPOTENT GLOBAL_DESCRIPTION_MAKE GLOBAL_OUTPUT_FILE_TEMPLATE \
            GLOBAL_INDEX_NAME_TEMPLATE GLOBAL_CONSTRAINT_NAME_TEMPLATE \
            GLOBAL_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE \
@@ -157,7 +186,7 @@ function make_partitions() {
         table_schema="$(yq '.schema' <<< "${table}")"
         table_name="$(yq '.name' <<< "${table}")"
 
-        output_file_template="$(yq '.output_file_template // strenv(GLOBAL_OUTPUT_FILE_TEMPLATE)' <<< "${table}")"
+        output_file_template="$(yq '.output.file.naming.template // strenv(GLOBAL_OUTPUT_FILE_TEMPLATE)' <<< "${table}")"
 
         description="$(yq '.description.make // strenv(GLOBAL_DESCRIPTION_MAKE)' <<< "${table}")"
         # Replace parent_table_schema and parent_table_name placeholders in the description.
@@ -173,6 +202,12 @@ function make_partitions() {
 
         partition_interval="$(yq '.partition.interval // strenv(GLOBAL_INTERVAL)' <<< "${table}")"
         partition_name_template="$(yq '.partition.naming.template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)' <<< "${table}")"
+
+        # Fail before touching the database when the combination is already known to be invalid.
+        if [[ "${partition_interval}" != "null" && "${partition_name_template}" == "null" ]]; then
+            failed_tables["${table_schema}.${table_name}"]="partition name template is required when partition interval is specified"
+            continue
+        fi
 
         partition_tablespace="$(yq '.partition.tablespace // strenv(GLOBAL_PARTITION_TABLESPACE)' <<< "${table}")"
         index_name_template="$(yq '.partition.index.naming.template // strenv(GLOBAL_INDEX_NAME_TEMPLATE)' <<< "${table}")"
@@ -209,6 +244,11 @@ function make_partitions() {
             idempotent="${GLOBAL_IDEMPOTENT}"
         fi
 
+        create_default_partition="$(yq '.partition.default.create' <<< "${table}")"
+        if [[ "${create_default_partition}" == "null" ]]; then
+            create_default_partition="${GLOBAL_CREATE_DEFAULT_PARTITION}"
+        fi
+
         default_partition_name_template="$(yq '.partition.default.naming.template // strenv(GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE)' <<< "${table}")"
 
         partition_storage_mode="$(yq '.partition.storage.mode // strenv(GLOBAL_PARTITION_STORAGE_MODE)' <<< "${table}")"
@@ -222,57 +262,60 @@ function make_partitions() {
 
         partition_start_timestamp="$(yq '.partition.start_timestamp // strenv(GLOBAL_START_TIMESTAMP)' <<< "${table}")"
 
-        if [[ "${partition_start_timestamp}" == "NOW" ]]; then
-
-            echo "INFO: Using current timestamp for partition start timestamp"
-
-            if !  partition_start_timestamp="$(
-                psql \
-                    --tuples-only \
-                    --no-align \
-                    --quiet \
-                    --variable "ON_ERROR_STOP=1" \
-                    --variable timezone="${timezone}" \
-                    <<EOF
-SET TIMEZONE TO :'timezone';
-
-SELECT now();
-EOF
-            )"; then
-                echo "ERROR: Failed to get current timestamp" >&2
-                exit 1
-            fi
-
-        elif [[ "${partition_start_timestamp}" == "LATEST_PARTITION" ]]; then
+        if [[ "${partition_start_timestamp}" == "LATEST_PARTITION" ]]; then
 
             echo "INFO: Using latest partition for partition start timestamp"
 
-            if ! partition_start_timestamp="$(
-                psql \
-                    --tuples-only \
-                    --no-align \
-                    --quiet \
-                    --variable "ON_ERROR_STOP=1" \
-                    --variable table_schema="${table_schema}" \
-                    --variable table_name="${table_name}" \
-                    --variable timezone="${timezone}" \
-                    <<EOF
-SET TIMEZONE TO :'timezone';
-
-SELECT upper_bound
-  FROM pgpartix.get_latest_partition(
-           p_table_schema => :'table_schema'
-         , p_table_name   => :'table_name'
-       );
-EOF
-            )"; then
+            if ! partition_start_timestamp="$(get_latest_partition_upper_bound "${table_schema}" "${table_name}" "${timezone}")"; then
+                # KCOV_EXCL_START
                 echo "ERROR: Failed to get latest partition for table ${table_schema}.${table_name}" >&2
                 exit 1
+                # KCOV_EXCL_STOP
             fi
 
             if [[ -z "${partition_start_timestamp}" ]]; then
                 echo "ERROR: No latest partition exists for table ${table_schema}.${table_name}" >&2
                 exit 1
+            fi
+
+        else
+
+            # Whether resolving to NOW or an explicit value, an existing latest partition's
+            # upper bound always takes precedence, so generation keeps moving forward from
+            # where partitions were previously created instead of rewinding or overlapping.
+            configured_start_timestamp="${partition_start_timestamp}"
+
+            if ! latest_partition_upper_bound="$(get_latest_partition_upper_bound "${table_schema}" "${table_name}" "${timezone}")"; then
+                # KCOV_EXCL_START
+                echo "ERROR: Failed to get latest partition for table ${table_schema}.${table_name}" >&2
+                exit 1
+                # KCOV_EXCL_STOP
+            fi
+
+            if [[ -n "${latest_partition_upper_bound}" ]]; then
+                echo "INFO: Table ${table_schema}.${table_name} already has partitions; using the latest partition's upper bound (${latest_partition_upper_bound}) instead of ${configured_start_timestamp}"
+                partition_start_timestamp="${latest_partition_upper_bound}"
+            elif [[ "${configured_start_timestamp}" == "NOW" ]]; then
+                echo "INFO: Using current timestamp for partition start timestamp"
+
+                if ! partition_start_timestamp="$(
+                    psql \
+                        --tuples-only \
+                        --no-align \
+                        --quiet \
+                        --variable "ON_ERROR_STOP=1" \
+                        --variable timezone="${timezone}" \
+                        <<EOF
+SET TIMEZONE TO :'timezone';
+
+SELECT now();
+EOF
+                )"; then
+                    echo "ERROR: Failed to get current timestamp" >&2
+                    exit 1
+                fi
+            else
+                echo "INFO: No existing partition for table ${table_schema}.${table_name}; using the provided start timestamp (${configured_start_timestamp})"
             fi
         fi
 
@@ -425,6 +468,7 @@ EOF
                  --variable past_partitions="${past_partitions}" \
                  --variable future_partitions="${future_partitions}" \
                  --variable default_partition_name_template="${default_partition_name_template}" \
+                 --variable create_default_partition="${create_default_partition}" \
                  --variable partition_schema="${partition_schema}" \
                  --variable partition_tablespace="${partition_tablespace}" \
                  --variable index_name_template="${index_name_template}" \
@@ -453,6 +497,7 @@ SELECT *
   , p_past => :'past_partitions'
   , p_future => :'future_partitions'
   , p_default_partition_name_template => NULLIF(:'default_partition_name_template', 'null')
+  , p_create_default_partition => :'create_default_partition'
   , p_partition_schema => :'partition_schema'
   , p_partition_tablespace => NULLIF(:'partition_tablespace', 'null')
   , p_index_name_template => NULLIF(:'index_name_template', 'null')

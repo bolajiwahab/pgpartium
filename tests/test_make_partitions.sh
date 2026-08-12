@@ -414,6 +414,106 @@ YAML
     [ ! -e "${result}" ]
 }
 
+@test "pgp-make-partitions honours NOW when no latest partition exists" {
+    local fixture="tests/fixtures/make_partitions/start_timestamp"
+    local result="${fixture}/pgpartix_output.sql"
+
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
+    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+
+    run pgp-make-partitions -c "${fixture}/now.yaml"
+
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/teardown.sql"
+    rm -f "${result}"
+
+    [ "${status}" -eq 0 ]
+    grep -Fq "INFO: Using current timestamp for partition start timestamp" <<< "${output}"
+}
+
+@test "pgp-make-partitions prefers an existing latest partition over NOW" {
+    local fixture="tests/fixtures/make_partitions/start_timestamp_with_existing_partitions"
+    local result="${fixture}/pgpartix_output.sql"
+
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
+    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+
+    run pgp-make-partitions -c "${fixture}/now.yaml"
+
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/teardown.sql"
+    rm -f "${result}"
+
+    [ "${status}" -eq 0 ]
+    grep -Fq "already has partitions; using the latest partition's upper bound" <<< "${output}"
+}
+
+@test "pgp-make-partitions honours an explicit start timestamp when no latest partition exists" {
+    local fixture="tests/fixtures/make_partitions/start_timestamp"
+    local result="${fixture}/pgpartix_output.sql"
+
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
+    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+
+    run pgp-make-partitions -c "${fixture}/value.yaml"
+
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/teardown.sql"
+    rm -f "${result}"
+
+    [ "${status}" -eq 0 ]
+    grep -Fq "INFO: No existing partition for table test.transactions; using the provided start timestamp (2025-03-01T00:00:00+00:00)" <<< "${output}"
+}
+
+@test "pgp-make-partitions prefers an existing latest partition over an explicit start timestamp" {
+    local fixture="tests/fixtures/make_partitions/start_timestamp_with_existing_partitions"
+    local result="${fixture}/pgpartix_output.sql"
+
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
+    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+
+    run pgp-make-partitions -c "${fixture}/value.yaml"
+
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/teardown.sql"
+    rm -f "${result}"
+
+    [ "${status}" -eq 0 ]
+    grep -Fq "already has partitions; using the latest partition's upper bound (2025-04-01 00:00:00+00) instead of 2025-03-01T00:00:00+00:00" <<< "${output}"
+}
+
+@test "pgp-make-partitions reports a clear error when LATEST_PARTITION has no latest partition" {
+    local config="${BATS_TEST_TMPDIR}/missing-latest-partition.yaml"
+    local result="${BATS_TEST_TMPDIR}/pgpartix_output.sql"
+
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 <<SQL
+CREATE TABLE test.transactions (
+    created_at timestamptz NOT NULL
+)
+PARTITION BY RANGE (created_at);
+SQL
+
+    cat > "${config}" <<YAML
+---
+lifecycle:
+  directory: ${BATS_TEST_TMPDIR}
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        naming:
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
+        interval: 1 mon
+        start_timestamp: LATEST_PARTITION
+YAML
+
+    run pgp-make-partitions -c "${config}"
+
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 <<SQL
+DROP TABLE test.transactions;
+SQL
+
+    [ "${status}" -eq 1 ]
+    grep -Fq "No latest partition exists for table test.transactions" <<< "${output}"
+    [ ! -e "${result}" ]
+}
+
 for fixture in tests/fixtures/make_partitions/**/*.{yaml,yml}; do
     [[ "${fixture}" == */sql_failures/* ]] && continue
     directory="$(basename "$(dirname "${fixture}")")"

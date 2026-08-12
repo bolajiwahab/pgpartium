@@ -3,7 +3,10 @@ lifecycle:
   directory: tests/fixtures/make_partitions/global_generation_options
   description:
     make: "pgpartix output"
-  output_file_template: "{description}.sql"
+  output:
+    file:
+      naming:
+        template: "{description}.sql"
   idempotent: true
   partition:
     index:

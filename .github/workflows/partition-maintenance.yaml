@@ -1,0 +1,153 @@
+---
+# yamllint disable rule:line-length
+name: Partition maintenance (reusable)
+
+on:  # yamllint disable-line rule:truthy
+  workflow_call:
+    inputs:
+      config:
+        description: Path to the pgpartix lifecycle configuration file or directory, relative to the checked-out repository.
+        required: true
+        type: string
+      image:
+        description: Container image to run pgpartix commands in.
+        required: false
+        type: string
+        default: ghcr.io/bolajiwahab/pgpartix
+      image_tag:
+        description: Image tag to pin, for example "0.5.0".
+        required: true
+        type: string
+      pg_major_version:
+        description: PostgreSQL major version to start for the ephemeral cluster. Ignored when init_dir is empty.
+        required: false
+        type: string
+        default: "17"
+      init_dir:
+        description: Initialization directory applied to an ephemeral, in-job PostgreSQL cluster. Leave empty to connect to an external database with db_* inputs instead.
+        required: false
+        type: string
+        default: ""
+      db_host:
+        description: External database host. Required only when init_dir is empty.
+        required: false
+        type: string
+      db_port:
+        description: External database port. Used only when init_dir is empty.
+        required: false
+        type: string
+        default: "5432"
+      db_database:
+        description: External database name. Required only when init_dir is empty.
+        required: false
+        type: string
+      db_user:
+        description: External database role. Required only when init_dir is empty.
+        required: false
+        type: string
+      app_client_id:
+        description: GitHub App Client ID used to mint the installation token.
+        required: true
+        type: string
+      branch:
+        description: Automation branch name. The "pgpartix/" prefix is added automatically by gh-create-pr.
+        required: false
+        type: string
+        default: partition-maintenance
+      title:
+        description: Pull request title (and default commit message).
+        required: false
+        type: string
+        default: "chore: partition maintenance"
+      commit_message:
+        description: Commit message for generated migrations.
+        required: false
+        type: string
+        default: "chore: partition maintenance"
+    secrets:
+      app_private_key:
+        description: GitHub App private key (PEM contents, including the BEGIN/END lines).
+        required: true
+      db_password:
+        description: External database password. Required only when init_dir is empty.
+        required: false
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  partition-maintenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # Do not let two runs (e.g. a schedule and a manual dispatch) rewrite the
+    # same automation branch concurrently.
+    concurrency:
+      group: partition-maintenance-${{ inputs.branch }}
+      cancel-in-progress: false
+
+    container:
+      image: ${{ inputs.image }}:${{ inputs.image_tag }}
+      options: --user root
+
+    env:
+      PGP_INIT_DIR: ${{ inputs.init_dir }}
+      NO_CLUSTER: ${{ inputs.init_dir == '' && '1' || '' }}
+      PGP_PG_MAJOR_VERSION: ${{ inputs.pg_major_version }}
+      PGP_HOST: ${{ inputs.db_host }}
+      PGP_PORT: ${{ inputs.db_port }}
+      PGP_DATABASE: ${{ inputs.db_database }}
+      PGP_USER: ${{ inputs.db_user }}
+      PGP_PASSWORD: ${{ secrets.db_password }}
+
+    steps:
+      - name: Create partition-maintenance App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ inputs.app_client_id }}
+          private-key: ${{ secrets.app_private_key }}
+          # Omitting owner/repositories scopes the token to the calling repository.
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Check out repository as the App
+        uses: actions/checkout@v5
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Start PostgreSQL and load the application schema
+        id: start
+        run: pgp-start
+
+      # A command may publish valid tables and still return 1 for other tables.
+      # Preserve that partial progress long enough to open/update the PR.
+      - name: Generate missing partitions
+        id: make
+        continue-on-error: true
+        run: pgp-make-partitions -c "${{ inputs.config }}"
+
+      - name: Generate expired partitions
+        id: expire
+        continue-on-error: true
+        run: pgp-expire-partitions -c "${{ inputs.config }}"
+
+      - name: Create or update partition-maintenance PR
+        if: ${{ always() && steps.start.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh-create-pr \
+            -b "${{ inputs.branch }}" \
+            -t "${{ inputs.title }}" \
+            -m "${{ inputs.commit_message }}"
+
+      # Keep the run visibly failed when any table failed, even though
+      # successful migrations were still proposed in the PR.
+      - name: Report generation failure
+        if: ${{ always() && (steps.make.outcome == 'failure' || steps.expire.outcome == 'failure') }}
+        run: |
+          echo "One or more partition tables failed generation" >&2
+          exit 1
