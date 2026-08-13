@@ -21,6 +21,12 @@ RUN mkdir -p -m 755 /etc/apt/keyrings \
 # Ensure Git can operate on the mounted working directory.
 RUN git config --system --add safe.directory '*'
 
+# pgrubic writes a local formatting cache into whatever repository it runs
+# against. Exclude it globally so it's never mistaken for a real change or
+# committed into a pgp-gh-create-pr pull request.
+RUN echo '.pgrubic_cache/' > /etc/gitexclude \
+    && git config --system core.excludesFile /etc/gitexclude
+
 RUN wget --quiet "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_amd64" --output-document=/usr/bin/yq \
     && chmod +x /usr/bin/yq
 

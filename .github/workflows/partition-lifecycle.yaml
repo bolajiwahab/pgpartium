@@ -1,6 +1,6 @@
 ---
 # yamllint disable rule:line-length
-name: Partition maintenance (reusable)
+name: Partition lifecycle (reusable)
 
 on:  # yamllint disable-line rule:truthy
   workflow_call:
@@ -15,7 +15,7 @@ on:  # yamllint disable-line rule:truthy
         type: string
         default: ghcr.io/bolajiwahab/pgpartix
       image_tag:
-        description: Image tag to pin, for example "0.5.0".
+        description: Image tag to pin, for example "0.8.0".
         required: true
         type: string
       pg_major_version:
@@ -23,6 +23,11 @@ on:  # yamllint disable-line rule:truthy
         required: false
         type: string
         default: "17"
+      no_cluster:
+        description: Set to "1" to skip starting an ephemeral cluster and connect to an external database instead.
+        required: false
+        type: string
+        default: ""
       init_dir:
         description: Initialization directory applied to an ephemeral, in-job PostgreSQL cluster. Leave empty to connect to an external database with db_* inputs instead.
         required: false
@@ -50,26 +55,26 @@ on:  # yamllint disable-line rule:truthy
         required: true
         type: string
       branch:
-        description: Automation branch name. The "pgpartix/" prefix is added automatically by gh-create-pr.
+        description: Automation branch name. The "pgpartix/" prefix is added automatically by pgp-gh-create-pr.
         required: false
         type: string
-        default: partition-maintenance
+        default: partition-lifecycle
       title:
         description: Pull request title (and default commit message).
         required: false
         type: string
-        default: "chore: partition maintenance"
+        default: "chore: partition lifecycle"
       commit_message:
         description: Commit message for generated migrations.
         required: false
         type: string
-        default: "chore: partition maintenance"
+        default: "chore: partition lifecycle"
     secrets:
       app_private_key:
         description: GitHub App private key (PEM contents, including the BEGIN/END lines).
         required: true
       db_password:
-        description: External database password. Required only when init_dir is empty.
+        description: External database password. Required only when not using the ephemeral cluster.
         required: false
 
 permissions:
@@ -77,14 +82,14 @@ permissions:
   packages: read
 
 jobs:
-  partition-maintenance:
+  partition-lifecycle:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     # Do not let two runs (e.g. a schedule and a manual dispatch) rewrite the
     # same automation branch concurrently.
     concurrency:
-      group: partition-maintenance-${{ inputs.branch }}
+      group: partition-lifecycle-${{ inputs.branch }}
       cancel-in-progress: false
 
     container:
@@ -93,7 +98,7 @@ jobs:
 
     env:
       PGP_INIT_DIR: ${{ inputs.init_dir }}
-      NO_CLUSTER: ${{ inputs.init_dir == '' && '1' || '' }}
+      NO_CLUSTER: ${{ inputs.no_cluster }}
       PGP_PG_MAJOR_VERSION: ${{ inputs.pg_major_version }}
       PGP_HOST: ${{ inputs.db_host }}
       PGP_PORT: ${{ inputs.db_port }}
@@ -102,7 +107,7 @@ jobs:
       PGP_PASSWORD: ${{ secrets.db_password }}
 
     steps:
-      - name: Create partition-maintenance App token
+      - name: Create partition-lifecycle App token
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
@@ -112,11 +117,18 @@ jobs:
           permission-contents: write
           permission-pull-requests: write
 
+      - name: Get App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
       - name: Check out repository as the App
         uses: actions/checkout@v5
         with:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Start PostgreSQL and load the application schema
         id: start
@@ -129,15 +141,17 @@ jobs:
         continue-on-error: true
         run: pgp-run-lifecycle -c "${{ inputs.config }}"
 
-      - name: Create or update partition-maintenance PR
+      - name: Create or update partition-lifecycle PR
         if: ${{ always() && steps.start.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          gh-create-pr \
+          pgp-gh-create-pr \
             -b "${{ inputs.branch }}" \
             -t "${{ inputs.title }}" \
-            -m "${{ inputs.commit_message }}"
+            -m "${{ inputs.commit_message }}" \
+            -n "${{ steps.app-token.outputs.app-slug }}[bot]" \
+            -e "${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
 
       # Keep the run visibly failed when any table failed, even though
       # successful migrations were still proposed in the PR.

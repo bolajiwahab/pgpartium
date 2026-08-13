@@ -140,7 +140,7 @@ function run_expire_config_directory() {
 @test "pgp-run-lifecycle rejects unknown options" {
     run pgp-run-lifecycle -z
 
-    [ "${status}" -eq 1 ]
+    [ "${status}" -eq 2 ]
     grep -Fq "Run the full partition lifecycle" <<< "${output}"
 }
 

@@ -146,6 +146,6 @@ Whichever model is used, preserve the generator exit status. The lifecycle comma
 
 ## Optional GitHub automation
 
-After local generation is stable, the [GitHub Actions guide](github-actions.md) provides one ready-made scheduling and publication option. It explains how to create a least-privileged GitHub App and use the bundled `gh-create-pr` command to create or refresh a maintenance PR. The lifecycle generator itself remains independent of GitHub and can be wrapped by other providers or infrastructure.
+After local generation is stable, the [GitHub Actions guide](github-actions.md) provides one ready-made scheduling and publication option. It explains how to create a least-privileged GitHub App and use the bundled `pgp-gh-create-pr` command to create or refresh a lifecycle PR. The lifecycle generator itself remains independent of GitHub and can be wrapped by other providers or infrastructure.
 
 For command syntax and environment variables, see the [CLI reference](cli-reference.md).

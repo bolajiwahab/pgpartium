@@ -24,7 +24,7 @@ Contributions are welcome, whether they are bug reports, feature requests, code 
 ```text
 .
 ├── src
-│   ├── bin                       # Binaries (pgp-*, gh-create-pr)
+│   ├── bin                       # Binaries (pgp-*)
 │   ├── sql                       # Database functions, numbered by load order
 │   ├── schema.json               # JSON Schema for lifecycle configuration files
 │   └── createcluster.conf        # Debian pg_createcluster defaults for the image
@@ -45,7 +45,7 @@ Contributions are welcome, whether they are bug reports, feature requests, code 
 │   ├── run-tests.sh              # Builds the test image and runs the suite in Docker
 │   ├── run-coverage.sh           # Runs bats under kcov and enforces MIN_COVERAGE
 │   └── docker-compose-test.yaml
-├── tools                         # Repo maintenance scripts (schema doc freshness check)
+├── tools                         # Repo lifecycle scripts (schema doc freshness check)
 └── config.sample.yaml            # Complete annotated configuration reference
 ```
 

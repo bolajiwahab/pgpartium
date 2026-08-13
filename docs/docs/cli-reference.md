@@ -117,35 +117,40 @@ pgp-get-migration-filename \
 
 See [Output filenames](configuration.md#output-filenames) for every placeholder.
 
-## `gh-create-pr`
+## `pgp-gh-create-pr`
 
-Optionally creates or updates a GitHub pull request containing generated repository changes. Migration generation does not depend on this command; users may commit and push locally or publish through another CI/CD system or scheduler.
+Optionally creates or updates a GitHub pull request containing generated repository changes. It is designed to run inside a CI job (for example, the reusable GitHub Actions workflow) against a repository already checked out at the desired base branch - it branches from the current `HEAD` rather than fetching or resetting to a remote ref itself, so it is not intended for ad hoc local invocation. Migration generation itself does not depend on this command; users may commit and push locally, or publish through another CI/CD system or scheduler instead.
 
 ```text
 OPTIONS:
-  -b  Branch suffix (default: partition-maintenance)
-  -t  Pull-request title (default: chore: partition maintenance)
+  -C  Repository directory to operate in (default: .)
+  -b  Branch suffix (default: partition-lifecycle)
+  -t  Pull-request title (default: chore: partition lifecycle)
   -m  Commit message (default: pull-request title)
+  -n  Committer name (default: the already-configured git identity)
+  -e  Committer email (default: the already-configured git identity)
   -h  Show help
 ```
 
-`GH_TOKEN` must authenticate an identity allowed to push branches and read/write pull requests. A short-lived dedicated GitHub App token is recommended.
+`GH_TOKEN` must authenticate an identity allowed to push branches and read/write pull requests. A short-lived dedicated GitHub App token is recommended. A Git committer identity must already be configured, either via `-n`/`-e` or by the calling environment; the command exits with an error otherwise.
 
 ```bash
-GH_TOKEN="..." gh-create-pr \
+GH_TOKEN="..." pgp-gh-create-pr \
   -b database-partitions \
   -t "chore(db): maintain partitions" \
-  -m "chore(db): regenerate partition lifecycle migrations"
+  -m "chore(db): regenerate partition lifecycle migrations" \
+  -n "some-bot[bot]" \
+  -e "some-bot[bot]@users.noreply.github.com"
 ```
 
 Behavior:
 
 - exits successfully without Git operations when no tracked or untracked file changed;
-- determines the remote default branch;
-- resets `pgpartix/<branch>` from the latest remote base;
+- requires a configured Git committer identity, failing fast otherwise;
+- creates or resets `pgpartix/<branch>` from the repository state already checked out in the job;
 - commits all repository changes;
 - force-updates the dedicated branch;
-- creates a PR when none is open;
+- determines the remote default branch and creates a PR against it when none is open;
 - updates the body of the existing PR on later runs.
 
 Do not add human commits to the automation branch; change the declarative configuration and rerun reconciliation instead.

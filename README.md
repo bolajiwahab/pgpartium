@@ -95,7 +95,7 @@ The [documentation index](docs/docs/README.md) routes each task to a focused gui
 | `pgp-run-lifecycle` | Generate migrations for missing desired partitions, then detach/drop migrations for expired ones. |
 | `pgp-setup-infrastructure` | Install the SQL functions used to inspect and render lifecycle DDL. |
 | `pgp-get-migration-filename` | Resolve migration filename templates. |
-| `gh-create-pr` | Optionally create or update a GitHub partition-maintenance PR. |
+| `pgp-gh-create-pr` | Optionally create or update a GitHub partition-lifecycle PR. |
 
 Use the [CLI reference](docs/docs/cli-reference.md) for syntax and operational behavior.
 
