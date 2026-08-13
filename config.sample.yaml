@@ -1,4 +1,8 @@
 ---
+# Note: quote any value containing a {...} placeholder, as done throughout this
+# file. YAML treats a leading `{` as the start of a flow mapping, so an unquoted
+# template value fails to parse as the intended string.
+
 # Values under lifecycle are defaults for every table. A table may override
 # description, output.file.naming.template, and any partition option.
 lifecycle:
@@ -36,7 +40,7 @@ lifecycle:
     schema: partitions
     tablespace: pg_default
 
-    # Used by pgp-make-partitions. Any positive PostgreSQL interval is valid.
+    # Used by the make phase of pgp-run-lifecycle. Any positive PostgreSQL interval is valid.
     interval: 1 month
     # NOW is the default, so this may be omitted. It only matters on a table's first
     # run: once a partition exists, its upper bound always overrides start_timestamp,

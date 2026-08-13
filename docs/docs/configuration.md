@@ -1,11 +1,11 @@
 # Configuration reference
 
-pgpartix reads one YAML file or every `.yaml` and `.yml` file in a directory. The same configuration drives both sides of the lifecycle:
+pgpartix reads one YAML file or every `.yaml` and `.yml` file in a directory. The same configuration drives both phases of the lifecycle, run by a single command, `pgp-run-lifecycle`:
 
-- `pgp-make-partitions` generates DDL for partitions that should exist.
-- `pgp-expire-partitions` generates DDL for partitions whose upper bounds have passed the retention window.
+- its make phase generates DDL for partitions that should exist;
+- its expire phase generates DDL for partitions whose upper bounds have passed the retention window.
 
-Neither command applies the generated lifecycle migration to the source database. They inspect the PostgreSQL database and write reviewable SQL files for the repository's normal migration process.
+Neither phase applies the generated lifecycle migration to the source database. They inspect the PostgreSQL database and write reviewable SQL files for the repository's normal migration process.
 
 ## Minimal configuration
 
@@ -27,6 +27,8 @@ lifecycle:
 `lifecycle.tables` is required. Partition creation is skipped for a table when `partition.interval` is omitted; when `partition.interval` is present, `partition.naming.template` must also be present, globally or on that table. Expiration produces no SQL when `retention.interval` is omitted or `null`.
 
 The output directory must exist before the command runs. The partitioned tables, configured schemas, tablespaces, and optional template tables must also exist in the database being inspected.
+
+Always quote naming, description, and output filename template values that include `{...}` placeholders, as shown above. YAML treats a leading `{` as the start of a flow mapping, so an unquoted value such as `template: {parent_table_schema}__{parent_table_name}__YYYY_MM` fails to parse as the intended string.
 
 ## Inheritance and overrides
 
@@ -115,7 +117,7 @@ Multiple successful tables may target one filename, depending on the provided `o
 
 ## Partition creation options
 
-These options are consumed primarily by `pgp-make-partitions`.
+These options are consumed by the make phase of `pgp-run-lifecycle`.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -157,7 +159,7 @@ Use a naming pattern whose precision distinguishes every configured interval. A 
 - An RFC 3339 value provides a stable explicit start point.
 - `LATEST_PARTITION` uses the upper bound of the most recent attached partition and fails clearly when no such partition exists.
 
-Whenever the target table already has an attached partition, its upper bound always overrides `partition.start_timestamp`, regardless of which of the above three forms was configured. This means a fixed RFC 3339 value or `NOW` only matters for the table's first run; every subsequent run picks up from the latest existing partition instead, so generation always moves forward from where partitions were last created and never re-evaluates or rewinds the start point. For both `NOW` and an explicit RFC 3339 value, `pgp-make-partitions` checks for an existing latest partition first and logs which one it used, so this override is always visible rather than silent; the configured value is only actually used when the table has no partitions yet.
+Whenever the target table already has an attached partition, its upper bound always overrides `partition.start_timestamp`, regardless of which of the above three forms was configured. This means a fixed RFC 3339 value or `NOW` only matters for the table's first run; every subsequent run picks up from the latest existing partition instead, so generation always moves forward from where partitions were last created and never re-evaluates or rewinds the start point. For both `NOW` and an explicit RFC 3339 value, the make phase checks for an existing latest partition first and logs which one it used, so this override is always visible rather than silent; the configured value is only actually used when the table has no partitions yet.
 
 ### Supported parent tables
 
@@ -285,7 +287,7 @@ Trigger enabled/disabled state is preserved regardless of naming.
 
 ## Expiration options
 
-These options are consumed by `pgp-expire-partitions`.
+These options are consumed by the expire phase of `pgp-run-lifecycle`.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -307,7 +309,7 @@ PostgreSQL does not support `DETACH PARTITION IF EXISTS`. With `idempotent: true
 
 ## Connection environment
 
-Both lifecycle commands read:
+The lifecycle command reads:
 
 | Variable | Purpose |
 | --- | --- |
@@ -317,7 +319,7 @@ Both lifecycle commands read:
 | `PGP_PORT` | PostgreSQL port. |
 | `PGP_DATABASE` | Database containing the partitioned tables. |
 
-The commands default these values to `postgres`, `postgres`, `localhost`, `5432`, and `postgres` respectively for the disposable local cluster. Local-cluster users do not need to define them. External databases must override every value explicitly; see [Database environment](cli-reference.md#database-environment).
+The command defaults these values to `postgres`, `postgres`, `localhost`, `5432`, and `postgres` respectively for the disposable local cluster. Local-cluster users do not need to define them. External databases must override every value explicitly; see [Database environment](cli-reference.md#database-environment).
 
 Pass a directory to `-c` to process multiple configuration files in sorted filename order.
 
@@ -335,4 +337,4 @@ This gives local and automated runs useful partial progress without disguising f
 
 ## Complete example
 
-See [`config.sample.yaml`](../../config.sample.yaml) for a current, annotated configuration containing global defaults, table overrides, naming templates, storage behavior, template replication, and expiration modes. The schema is available at [schema](https://bolajiwahab.github.io/pgpartium/schema.html).
+See [`config.sample.yaml`](../../config.sample.yaml) for a current, annotated configuration containing global defaults, table overrides, naming templates, storage behavior, template replication, and expiration modes. The schema is available at [schema](https://bolajiwahab.github.io/pgpartix/schema.html).

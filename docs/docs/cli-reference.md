@@ -4,7 +4,7 @@ The pgpartix image contains commands for preparing PostgreSQL and generating lif
 
 ## Database environment
 
-`pgp-make-partitions`, `pgp-expire-partitions`, and `pgp-setup-infrastructure` read these connection variables:
+`pgp-run-lifecycle` and `pgp-setup-infrastructure` read these connection variables:
 
 | Variable | Default | Description |
 | --- | --- | --- |
@@ -62,9 +62,9 @@ NO_CLUSTER=1 pgp-start
 
 Initialization files are processed in sorted order. Executable `.sh` files are run, non-executable `.sh` files are sourced, `.sql` files are passed to `psql`, and `.sql.gz` files are decompressed into `psql`.
 
-## `pgp-make-partitions`
+## `pgp-run-lifecycle`
 
-Inspects configured parent and template tables and generates DDL for missing partitions and replicated objects.
+Runs the full partition lifecycle for every configured table: inspects parent and template tables and generates DDL for missing partitions and replicated objects, then generates detach and/or drop DDL for partitions whose upper bounds are outside the configured retention period. Both phases always run against every table in the config, regardless of per-table failures in either phase.
 
 ```text
 OPTIONS:
@@ -75,28 +75,11 @@ OPTIONS:
 Examples:
 
 ```bash
-pgp-make-partitions -c partition-lifecycle.yaml
-pgp-make-partitions -c config/partitions
+pgp-run-lifecycle -c partition-lifecycle.yaml
+pgp-run-lifecycle -c config/partitions
 ```
 
 When a directory is supplied, `.yaml` and `.yml` files are processed in sorted path order.
-
-## `pgp-expire-partitions`
-
-Generates detach and/or drop DDL for partitions whose upper bounds are outside the configured retention period.
-
-```text
-OPTIONS:
-  -c  Configuration file or directory (required)
-  -h  Show help
-```
-
-Examples:
-
-```bash
-pgp-expire-partitions -c partition-lifecycle.yaml
-pgp-expire-partitions -c config/partitions
-```
 
 Expiration behavior is controlled by `retention`, `detach_only`, `detach_first`, `detach_concurrently`, and `idempotent`. See [Expiration options](configuration.md#expiration-options).
 
@@ -113,7 +96,7 @@ It uses the same connection defaults and optional `PGP_*` overrides as the lifec
 
 ## `pgp-get-migration-filename`
 
-Resolves a migration filename template. It is used internally by both lifecycle generators and is available for debugging templates.
+Resolves a migration filename template. It is used internally by the lifecycle generator and is available for debugging templates.
 
 ```text
 OPTIONS:
@@ -171,17 +154,17 @@ See [Automating lifecycle PRs with GitHub Actions](github-actions.md) for App cr
 
 ## Exit and publication behavior
 
-Both lifecycle generators use a staging directory and handle tables independently.
+The lifecycle generator uses a staging directory and handles tables independently, in both the make and expire phases.
 
 | Situation | Result |
 | --- | --- |
 | Every table succeeds | Successful migrations are published; exit `0`. |
 | No lifecycle change is needed | No empty migration is published; exit `0`. |
 | Some tables succeed and some fail | Successful migrations are published, failures are summarized; exit `1`. |
-| A table's SQL generation fails | Its partial file is removed; other tables continue. |
+| A table's SQL generation fails, in either phase | Its partial file is removed; other tables continue, and the other phase still runs. |
 | A table's formatting fails | Its unformatted file is removed; other tables continue. |
 | Configuration is invalid | No table processing occurs; exit `1`. |
 
-Multiple successful tables may share one output filename. Their formatted SQL is merged in configuration order. Failed table output is never appended.
+Multiple successful tables may share one output filename, including across the make and expire phases. Their formatted SQL is merged in configuration order. Failed table output is never appended.
 
-Any automation should record both generation exit statuses separately from publication so successful table output can be retained without hiding failures. In GitHub Actions, use `continue-on-error` on generation steps, create or update the PR with successful output, then explicitly fail the job based on the recorded step outcomes. The [GitHub Actions guide](github-actions.md#why-generation-uses-continue-on-error) includes this pattern.
+Any automation should record the generation exit status separately from publication so successful table output can be retained without hiding failures. In GitHub Actions, use `continue-on-error` on the generation step, create or update the PR with successful output, then explicitly fail the job based on the recorded step outcome. The [GitHub Actions guide](github-actions.md#why-generation-uses-continue-on-error) includes this pattern.

@@ -9,7 +9,8 @@ function usage() {
     cat <<EOF
     ${0##*/}
 
-    Make partitions for partitioned tables.
+    Run the full partition lifecycle for partitioned tables: make missing
+    partitions, then expire partitions outside the retention window.
 
     OPTIONS:
       -c  Path to a configuration file or directory containing configuration files (Default: .)
@@ -90,98 +91,6 @@ EOF
 function make_partitions() {
     local config="$1"
 
-    validate_config "${config}" /src/schema.json
-
-    # Set defaults.
-    export DEFAULT_TABLESPACE=null \
-        DEFAULT_INTERVAL=null \
-        DEFAULT_START_TIMESTAMP=NOW \
-        DEFAULT_PARTITION_NAME_TEMPLATE=null \
-        DEFAULT_DEFAULT_PARTITION_NAME_TEMPLATE="{parent_table_schema}__{parent_table_name}__default" \
-        DEFAULT_CREATE_DEFAULT_PARTITION=false \
-        DEFAULT_PAST=0 \
-        DEFAULT_FUTURE=0 \
-        DEFAULT_RETENTION=null \
-        DEFAULT_SKIP_OVERLAPPING=false \
-        DEFAULT_IDEMPOTENT=false \
-        DEFAULT_STORAGE_PARAMETERS=null \
-        DEFAULT_STORAGE_MODE="override" \
-        DEFAULT_DESCRIPTION_MAKE="Make partitions for {parent_table_schema}.{parent_table_name}" \
-        DEFAULT_OUTPUT_FILE_TEMPLATE="pgpartix_output.sql" \
-        DEFAULT_INDEX_NAME_TEMPLATE="{partition_name}_{index_keys}_idx{ordinal}" \
-        DEFAULT_CONSTRAINT_NAME_TEMPLATE="{partition_name}_{constraint_keys}_{constraint_suffix}" \
-        DEFAULT_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE="{partition_name}_pkey" \
-        DEFAULT_TRIGGER_NAME_TEMPLATE="{partition_name}_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}" \
-        DEFAULT_TIMEZONE="Etc/UTC" \
-        DIRECTORY="."
-
-    # Extract global configs.
-    GLOBAL_PARTITION_SCHEMA="$(yq '.lifecycle.partition.schema' "${config}")"
-    GLOBAL_PARTITION_NAME_TEMPLATE="$(yq '.lifecycle.partition.naming.template // strenv(DEFAULT_PARTITION_NAME_TEMPLATE)' "${config}")"
-    GLOBAL_PAST="$(yq '.lifecycle.partition.past // strenv(DEFAULT_PAST)' "${config}")"
-    GLOBAL_FUTURE="$(yq '.lifecycle.partition.future // strenv(DEFAULT_FUTURE)' "${config}")"
-    GLOBAL_INTERVAL="$(yq '.lifecycle.partition.interval // strenv(DEFAULT_INTERVAL)' "${config}")"
-    GLOBAL_START_TIMESTAMP="$(yq '.lifecycle.partition.start_timestamp // strenv(DEFAULT_START_TIMESTAMP)' "${config}")"
-    GLOBAL_RETENTION="$(yq '.lifecycle.partition.retention.interval // strenv(DEFAULT_RETENTION)' "${config}")"
-    GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE="$(yq '.lifecycle.partition.default.naming.template // strenv(DEFAULT_DEFAULT_PARTITION_NAME_TEMPLATE)' "${config}")"
-    GLOBAL_CREATE_DEFAULT_PARTITION="$(yq '.lifecycle.partition.default.create // strenv(DEFAULT_CREATE_DEFAULT_PARTITION)' "${config}")"
-    GLOBAL_SKIP_OVERLAPPING="$(yq '.lifecycle.partition.skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")"
-    GLOBAL_IDEMPOTENT="$(yq '.lifecycle.idempotent // strenv(DEFAULT_IDEMPOTENT)' "${config}")"
-    GLOBAL_DESCRIPTION_MAKE="$(yq '.lifecycle.description.make // strenv(DEFAULT_DESCRIPTION_MAKE)' "${config}")"
-    GLOBAL_OUTPUT_FILE_TEMPLATE="$(yq '.lifecycle.output.file.naming.template // strenv(DEFAULT_OUTPUT_FILE_TEMPLATE)' "${config}")"
-    GLOBAL_PARTITION_TABLESPACE="$(yq '.lifecycle.partition.tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")"
-    GLOBAL_INDEX_NAME_TEMPLATE="$(yq '.lifecycle.partition.index.naming.template // strenv(DEFAULT_INDEX_NAME_TEMPLATE)' "${config}")"
-    GLOBAL_INDEX_TABLESPACE="$(yq '.lifecycle.partition.index.tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")"
-    GLOBAL_CONSTRAINT_NAME_TEMPLATE="$(yq '.lifecycle.partition.constraint.naming.template // strenv(DEFAULT_CONSTRAINT_NAME_TEMPLATE)' "${config}")"
-    GLOBAL_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE="$(yq '.lifecycle.partition.constraint.naming.primary_key.template // strenv(DEFAULT_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE)' "${config}")"
-    GLOBAL_TRIGGER_NAME_TEMPLATE="$(yq '.lifecycle.partition.trigger.naming.template // strenv(DEFAULT_TRIGGER_NAME_TEMPLATE)' "${config}")"
-
-    # The type-specific fallbacks are read by yq through strenv, so expose the
-    # resolved generic and primary-key templates before deriving them.
-    export GLOBAL_CONSTRAINT_NAME_TEMPLATE GLOBAL_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE
-
-    GLOBAL_UNIQUE_CONSTRAINT_NAME_TEMPLATE="$(yq '.lifecycle.partition.constraint.naming.unique_key.template // strenv(GLOBAL_CONSTRAINT_NAME_TEMPLATE)' "${config}")"
-    GLOBAL_FOREIGN_KEY_CONSTRAINT_NAME_TEMPLATE="$(yq '.lifecycle.partition.constraint.naming.foreign_key.template // strenv(GLOBAL_CONSTRAINT_NAME_TEMPLATE)' "${config}")"
-    GLOBAL_CHECK_CONSTRAINT_NAME_TEMPLATE="$(yq '.lifecycle.partition.constraint.naming.check.template // strenv(GLOBAL_CONSTRAINT_NAME_TEMPLATE)' "${config}")"
-    GLOBAL_EXCLUSION_CONSTRAINT_NAME_TEMPLATE="$(yq '.lifecycle.partition.constraint.naming.exclusion.template // strenv(GLOBAL_CONSTRAINT_NAME_TEMPLATE)' "${config}")"
-
-    GLOBAL_PARTITION_STORAGE_MODE="$(yq '.lifecycle.partition.storage.mode // strenv(DEFAULT_STORAGE_MODE)' "${config}")"
-    GLOBAL_PARTITION_STORAGE_PARAMETERS="$(yq -o=json '.lifecycle.partition.storage.parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")"
-
-    export GLOBAL_PARTITION_TABLESPACE GLOBAL_INDEX_TABLESPACE GLOBAL_PARTITION_SCHEMA \
-           GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL GLOBAL_START_TIMESTAMP GLOBAL_RETENTION \
-           GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE GLOBAL_CREATE_DEFAULT_PARTITION GLOBAL_SKIP_OVERLAPPING GLOBAL_PARTITION_STORAGE_PARAMETERS \
-           GLOBAL_PARTITION_STORAGE_MODE GLOBAL_IDEMPOTENT GLOBAL_DESCRIPTION_MAKE GLOBAL_OUTPUT_FILE_TEMPLATE \
-           GLOBAL_INDEX_NAME_TEMPLATE GLOBAL_CONSTRAINT_NAME_TEMPLATE \
-           GLOBAL_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE \
-           GLOBAL_UNIQUE_CONSTRAINT_NAME_TEMPLATE GLOBAL_FOREIGN_KEY_CONSTRAINT_NAME_TEMPLATE \
-           GLOBAL_CHECK_CONSTRAINT_NAME_TEMPLATE GLOBAL_EXCLUSION_CONSTRAINT_NAME_TEMPLATE \
-           GLOBAL_TRIGGER_NAME_TEMPLATE
-
-    directory="$(yq '.lifecycle.directory // strenv(DIRECTORY)' "${config}")"
-    timezone="$(yq '.lifecycle.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")"
-
-    # Store failed table names.
-    declare -A failed_tables=()
-    declare -A generated_output_files=()
-
-    # Staging area.
-    temp_migration_directory="$(mktemp -d)"
-    temp_error_directory="$(mktemp -d)"
-
-    trap cleanup EXIT
-    trap 'exit 130' INT
-    trap 'exit 143' TERM
-
-    # Stage current migrations in staging area.
-    echo "INFO: Staging current migrations"
-    cp -a "${directory}/." "${temp_migration_directory}/"
-
-    # Setup infrastructure.
-    echo "INFO: Setting up infrastructure"
-    pgp-setup-infrastructure
-
-    # Process each partitioned table.
     while read -r table; do
         table_schema="$(yq '.schema' <<< "${table}")"
         table_name="$(yq '.name' <<< "${table}")"
@@ -205,7 +114,7 @@ function make_partitions() {
 
         # Fail before touching the database when the combination is already known to be invalid.
         if [[ "${partition_interval}" != "null" && "${partition_name_template}" == "null" ]]; then
-            failed_tables["${table_schema}.${table_name}"]="partition name template is required when partition interval is specified"
+            make_failed_tables["${table_schema}.${table_name}"]="partition name template is required when partition interval is specified"
             continue
         fi
 
@@ -268,14 +177,14 @@ function make_partitions() {
 
             if ! partition_start_timestamp="$(get_latest_partition_upper_bound "${table_schema}" "${table_name}" "${timezone}")"; then
                 # KCOV_EXCL_START
-                echo "ERROR: Failed to get latest partition for table ${table_schema}.${table_name}" >&2
-                exit 1
+                make_failed_tables["${table_schema}.${table_name}"]="failed to get latest partition for table ${table_schema}.${table_name}"
+                continue
                 # KCOV_EXCL_STOP
             fi
 
             if [[ -z "${partition_start_timestamp}" ]]; then
-                echo "ERROR: No latest partition exists for table ${table_schema}.${table_name}" >&2
-                exit 1
+                make_failed_tables["${table_schema}.${table_name}"]="No latest partition exists for table ${table_schema}.${table_name}"
+                continue
             fi
 
         else
@@ -287,8 +196,8 @@ function make_partitions() {
 
             if ! latest_partition_upper_bound="$(get_latest_partition_upper_bound "${table_schema}" "${table_name}" "${timezone}")"; then
                 # KCOV_EXCL_START
-                echo "ERROR: Failed to get latest partition for table ${table_schema}.${table_name}" >&2
-                exit 1
+                make_failed_tables["${table_schema}.${table_name}"]="failed to get latest partition for table ${table_schema}.${table_name}"
+                continue
                 # KCOV_EXCL_STOP
             fi
 
@@ -311,8 +220,8 @@ SET TIMEZONE TO :'timezone';
 SELECT now();
 EOF
                 )"; then
-                    echo "ERROR: Failed to get current timestamp" >&2
-                    exit 1
+                    make_failed_tables["${table_schema}.${table_name}"]="failed to get current timestamp"
+                    continue
                 fi
             else
                 echo "INFO: No existing partition for table ${table_schema}.${table_name}; using the provided start timestamp (${configured_start_timestamp})"
@@ -342,13 +251,13 @@ SELECT json_build_object(
        );
 EOF
             )"; then
-                echo "ERROR: Failed to get default partition for table ${table_schema}.${table_name}" >&2
-                exit 1
+                make_failed_tables["${table_schema}.${table_name}"]="failed to get default partition for table ${table_schema}.${table_name}"
+                continue
             fi
 
             if [[ -z "${result}" ]]; then
-                echo "ERROR: Default partition for table ${table_schema}.${table_name} not found" >&2
-                exit 1
+                make_failed_tables["${table_schema}.${table_name}"]="Default partition for table ${table_schema}.${table_name} not found"
+                continue
             fi
 
             template_table_schema="$(yq -r '.partition_schema' <<< "${result}")"
@@ -376,13 +285,13 @@ SELECT json_build_object(
        );
 EOF
             )"; then
-                echo "ERROR: Failed to get latest partition for table ${table_schema}.${table_name}" >&2
-                exit 1
+                make_failed_tables["${table_schema}.${table_name}"]="failed to get latest partition for table ${table_schema}.${table_name}"
+                continue
             fi
 
             if [[ -z "${result}" ]]; then
-                echo "ERROR: Latest partition for table ${table_schema}.${table_name} not found" >&2
-                exit 1
+                make_failed_tables["${table_schema}.${table_name}"]="Latest partition for table ${table_schema}.${table_name} not found"
+                continue
             fi
 
             template_table_schema="$(yq -r '.partition_schema' <<< "${result}")"
@@ -410,13 +319,13 @@ SELECT json_build_object(
        );
 EOF
             )"; then
-                echo "ERROR: Failed to get current partition for table ${table_schema}.${table_name}" >&2
-                exit 1
+                make_failed_tables["${table_schema}.${table_name}"]="failed to get current partition for table ${table_schema}.${table_name}"
+                continue
             fi
 
             if [[ -z "${result}" ]]; then
-                echo "ERROR: Current partition for table ${table_schema}.${table_name} not found" >&2
-                exit 1
+                make_failed_tables["${table_schema}.${table_name}"]="Current partition for table ${table_schema}.${table_name} not found"
+                continue
             fi
 
             template_table_schema="$(yq -r '.partition_schema' <<< "${result}")"
@@ -444,8 +353,8 @@ EOF
 )"
 
             if [[ "${template_table_exists}" = "f" ]]; then
-                echo "ERROR: Template table ${template_table_schema}.${template_table_name} does not exist" >&2
-                exit 1
+                make_failed_tables["${table_schema}.${table_name}"]="Template table ${template_table_schema}.${template_table_name} does not exist"
+                continue
             fi
 
         fi
@@ -517,7 +426,7 @@ EOF
 # KCOV_EXCL_STOP
 
         then
-            failed_tables["${table_schema}.${table_name}"]=$(<"${error_file}")
+            make_failed_tables["${table_schema}.${table_name}"]=$(<"${error_file}")
             rm -f "${table_output_file}"
             continue
         fi
@@ -546,14 +455,248 @@ EOF
         fi
 
     done < <(yq '.lifecycle.tables[] | @json' "${config}")
+}
+
+function expire_partitions() {
+    local config="$1"
+
+    while read -r table; do
+        table_schema="$(yq '.schema' <<< "${table}")"
+        table_name="$(yq '.name' <<< "${table}")"
+
+        output_file_template="$(yq '.output.file.naming.template // strenv(GLOBAL_OUTPUT_FILE_TEMPLATE)' <<< "${table}")"
+
+        description="$(yq '.description.expire // strenv(GLOBAL_DESCRIPTION_EXPIRE)' <<< "${table}")"
+        # Replace parent_table_schema and parent_table_name placeholders in the description.
+        description="${description//\{parent_table_schema\}/$table_schema}"
+        description="${description//\{parent_table_name\}/$table_name}"
+
+        output_filename="$(pgp-get-migration-filename -t "${output_file_template}" -d "${temp_migration_directory}" -m "${description}")"
+
+        echo "INFO: Expiring partitions for ${table_schema}.${table_name}"
+
+        retention="$(yq '.partition.retention.interval // strenv(GLOBAL_RETENTION)' <<< "${table}")"
+
+        # Because yq default value operator is used to provide alternative (or default) values
+        # when a particular expression is either null or false, we cannot use it here as it would
+        # instead override partition level boolean values, instead we override them if they are not set.
+        detach_only="$(yq '.partition.retention.detach_only' <<< "${table}")"
+        if [[ "${detach_only}" == "null" ]]; then
+            detach_only="${GLOBAL_DETACH_ONLY}"
+        fi
+
+        detach_first="$(yq '.partition.retention.detach_first' <<< "${table}")"
+        if [[ "${detach_first}" == "null" ]]; then
+            detach_first="${GLOBAL_DETACH_FIRST}"
+        fi
+
+        detach_concurrently="$(yq '.partition.retention.detach_concurrently' <<< "${table}")"
+        if [[ "${detach_concurrently}" == "null" ]]; then
+            detach_concurrently="${GLOBAL_DETACH_CONCURRENTLY}"
+        fi
+
+        idempotent="$(yq '.idempotent' <<< "${table}")"
+        if [[ "${idempotent}" == "null" ]]; then
+            idempotent="${GLOBAL_IDEMPOTENT}"
+        fi
+
+        error_file="$(mktemp "${temp_error_directory}/error.XXXXXX")"
+        table_output_file="$(mktemp "${temp_migration_directory}/.pgpartix-output.XXXXXX")"
+        mv "${table_output_file}" "${table_output_file}.sql"
+        table_output_file="${table_output_file}.sql"
+
+        if ! psql \
+                 --tuples-only \
+                 --no-align \
+                 --quiet \
+                 -v "ON_ERROR_STOP=1" \
+                 -v table_schema="${table_schema}" \
+                 -v table_name="${table_name}" \
+                 -v retention="${retention}" \
+                 -v detach_only="${detach_only}" \
+                 -v detach_first="${detach_first}" \
+                 -v detach_concurrently="${detach_concurrently}" \
+                 -v idempotent="${idempotent}" \
+                 -v timezone="${timezone}" \
+                 --output="${table_output_file}" \
+            2>"${error_file}" \
+            <<EOF
+-- KCOV_EXCL_START
+SELECT *
+  FROM pgpartix.expire_partitions(
+    p_table_schema=>:'table_schema'
+  , p_table_name=>:'table_name'
+  , p_detach_only=>:'detach_only'
+  , p_detach_first=>:'detach_first'
+  , p_detach_concurrently=>:'detach_concurrently'
+  , p_retention=>NULLIF(:'retention', 'null')::interval
+  , p_timezone=>:'timezone'
+  , p_idempotent=>:'idempotent'
+)
+EOF
+# KCOV_EXCL_STOP
+
+        then
+            expire_failed_tables["${table_schema}.${table_name}"]=$(<"${error_file}")
+            rm -f "${table_output_file}"
+            continue
+        fi
+
+        if [[ -s "${table_output_file}" ]]; then
+            if ! pgrubic format "${table_output_file}" >"${error_file}" 2>&1; then
+                echo "WARNING: failed to format generated SQL for ${table_schema}.${table_name}, writing unformatted SQL: $(<"${error_file}")" >&2
+            fi
+
+            output_file="${temp_migration_directory}/${output_filename}"
+            if [[ -n "${generated_output_files[${output_filename}]+_}" ]]; then
+                printf '\n' >> "${output_file}"
+                cat "${table_output_file}" >> "${output_file}"
+                rm "${table_output_file}"
+            else
+                rm -f "${output_file}"
+                mv "${table_output_file}" "${output_file}"
+                generated_output_files["${output_filename}"]=1
+            fi
+
+            echo "INFO: Expired partitions for ${table_schema}.${table_name}"
+            printf "\nExpires partitions for \`%s\`\n\n" "${table_schema}.${table_name}" >> /src/partition_maintenance.log
+        else
+            echo "INFO: No partitions expired for ${table_schema}.${table_name}"
+            rm "${table_output_file}"
+        fi
+
+    done < <(yq '.lifecycle.tables[] | @json' "${config}")
+}
+
+function run_lifecycle_for_config() {
+    local config="$1"
+
+    validate_config "${config}" /src/schema.json
+
+    # Set defaults.
+    export DEFAULT_TABLESPACE=null \
+        DEFAULT_INTERVAL=null \
+        DEFAULT_START_TIMESTAMP=NOW \
+        DEFAULT_PARTITION_NAME_TEMPLATE=null \
+        DEFAULT_DEFAULT_PARTITION_NAME_TEMPLATE="{parent_table_schema}__{parent_table_name}__default" \
+        DEFAULT_CREATE_DEFAULT_PARTITION=false \
+        DEFAULT_PAST=0 \
+        DEFAULT_FUTURE=0 \
+        DEFAULT_RETENTION=null \
+        DEFAULT_SKIP_OVERLAPPING=false \
+        DEFAULT_IDEMPOTENT=false \
+        DEFAULT_STORAGE_PARAMETERS=null \
+        DEFAULT_STORAGE_MODE="override" \
+        DEFAULT_DESCRIPTION_MAKE="Make partitions for {parent_table_schema}.{parent_table_name}" \
+        DEFAULT_DESCRIPTION_EXPIRE="Expire partitions for {parent_table_schema}.{parent_table_name}" \
+        DEFAULT_OUTPUT_FILE_TEMPLATE="pgpartix_output.sql" \
+        DEFAULT_INDEX_NAME_TEMPLATE="{partition_name}_{index_keys}_idx{ordinal}" \
+        DEFAULT_CONSTRAINT_NAME_TEMPLATE="{partition_name}_{constraint_keys}_{constraint_suffix}" \
+        DEFAULT_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE="{partition_name}_pkey" \
+        DEFAULT_TRIGGER_NAME_TEMPLATE="{partition_name}_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}" \
+        DEFAULT_DETACH_ONLY=false \
+        DEFAULT_DETACH_FIRST=false \
+        DEFAULT_DETACH_CONCURRENTLY=false \
+        DEFAULT_TIMEZONE="Etc/UTC" \
+        DIRECTORY="."
+
+    # Extract global configs.
+    GLOBAL_PARTITION_SCHEMA="$(yq '.lifecycle.partition.schema' "${config}")"
+    GLOBAL_PARTITION_NAME_TEMPLATE="$(yq '.lifecycle.partition.naming.template // strenv(DEFAULT_PARTITION_NAME_TEMPLATE)' "${config}")"
+    GLOBAL_PAST="$(yq '.lifecycle.partition.past // strenv(DEFAULT_PAST)' "${config}")"
+    GLOBAL_FUTURE="$(yq '.lifecycle.partition.future // strenv(DEFAULT_FUTURE)' "${config}")"
+    GLOBAL_INTERVAL="$(yq '.lifecycle.partition.interval // strenv(DEFAULT_INTERVAL)' "${config}")"
+    GLOBAL_START_TIMESTAMP="$(yq '.lifecycle.partition.start_timestamp // strenv(DEFAULT_START_TIMESTAMP)' "${config}")"
+    GLOBAL_RETENTION="$(yq '.lifecycle.partition.retention.interval // strenv(DEFAULT_RETENTION)' "${config}")"
+    GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE="$(yq '.lifecycle.partition.default.naming.template // strenv(DEFAULT_DEFAULT_PARTITION_NAME_TEMPLATE)' "${config}")"
+    GLOBAL_CREATE_DEFAULT_PARTITION="$(yq '.lifecycle.partition.default.create // strenv(DEFAULT_CREATE_DEFAULT_PARTITION)' "${config}")"
+    GLOBAL_SKIP_OVERLAPPING="$(yq '.lifecycle.partition.skip_overlapping // strenv(DEFAULT_SKIP_OVERLAPPING)' "${config}")"
+    GLOBAL_IDEMPOTENT="$(yq '.lifecycle.idempotent // strenv(DEFAULT_IDEMPOTENT)' "${config}")"
+    GLOBAL_DESCRIPTION_MAKE="$(yq '.lifecycle.description.make // strenv(DEFAULT_DESCRIPTION_MAKE)' "${config}")"
+    GLOBAL_DESCRIPTION_EXPIRE="$(yq '.lifecycle.description.expire // strenv(DEFAULT_DESCRIPTION_EXPIRE)' "${config}")"
+    GLOBAL_OUTPUT_FILE_TEMPLATE="$(yq '.lifecycle.output.file.naming.template // strenv(DEFAULT_OUTPUT_FILE_TEMPLATE)' "${config}")"
+    GLOBAL_PARTITION_TABLESPACE="$(yq '.lifecycle.partition.tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")"
+    GLOBAL_INDEX_NAME_TEMPLATE="$(yq '.lifecycle.partition.index.naming.template // strenv(DEFAULT_INDEX_NAME_TEMPLATE)' "${config}")"
+    GLOBAL_INDEX_TABLESPACE="$(yq '.lifecycle.partition.index.tablespace // strenv(DEFAULT_TABLESPACE)' "${config}")"
+    GLOBAL_CONSTRAINT_NAME_TEMPLATE="$(yq '.lifecycle.partition.constraint.naming.template // strenv(DEFAULT_CONSTRAINT_NAME_TEMPLATE)' "${config}")"
+    GLOBAL_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE="$(yq '.lifecycle.partition.constraint.naming.primary_key.template // strenv(DEFAULT_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE)' "${config}")"
+    GLOBAL_TRIGGER_NAME_TEMPLATE="$(yq '.lifecycle.partition.trigger.naming.template // strenv(DEFAULT_TRIGGER_NAME_TEMPLATE)' "${config}")"
+
+    # The type-specific fallbacks are read by yq through strenv, so expose the
+    # resolved generic and primary-key templates before deriving them.
+    export GLOBAL_CONSTRAINT_NAME_TEMPLATE GLOBAL_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE
+
+    GLOBAL_UNIQUE_CONSTRAINT_NAME_TEMPLATE="$(yq '.lifecycle.partition.constraint.naming.unique_key.template // strenv(GLOBAL_CONSTRAINT_NAME_TEMPLATE)' "${config}")"
+    GLOBAL_FOREIGN_KEY_CONSTRAINT_NAME_TEMPLATE="$(yq '.lifecycle.partition.constraint.naming.foreign_key.template // strenv(GLOBAL_CONSTRAINT_NAME_TEMPLATE)' "${config}")"
+    GLOBAL_CHECK_CONSTRAINT_NAME_TEMPLATE="$(yq '.lifecycle.partition.constraint.naming.check.template // strenv(GLOBAL_CONSTRAINT_NAME_TEMPLATE)' "${config}")"
+    GLOBAL_EXCLUSION_CONSTRAINT_NAME_TEMPLATE="$(yq '.lifecycle.partition.constraint.naming.exclusion.template // strenv(GLOBAL_CONSTRAINT_NAME_TEMPLATE)' "${config}")"
+
+    GLOBAL_PARTITION_STORAGE_MODE="$(yq '.lifecycle.partition.storage.mode // strenv(DEFAULT_STORAGE_MODE)' "${config}")"
+    GLOBAL_PARTITION_STORAGE_PARAMETERS="$(yq -o=json '.lifecycle.partition.storage.parameters // (strenv(DEFAULT_STORAGE_PARAMETERS) | fromjson)' "${config}")"
+
+    GLOBAL_DETACH_ONLY="$(yq '.lifecycle.partition.retention.detach_only // strenv(DEFAULT_DETACH_ONLY)' "${config}")"
+    GLOBAL_DETACH_FIRST="$(yq '.lifecycle.partition.retention.detach_first // strenv(DEFAULT_DETACH_FIRST)' "${config}")"
+    GLOBAL_DETACH_CONCURRENTLY="$(yq '.lifecycle.partition.retention.detach_concurrently // strenv(DEFAULT_DETACH_CONCURRENTLY)' "${config}")"
+
+    export GLOBAL_PARTITION_TABLESPACE GLOBAL_INDEX_TABLESPACE GLOBAL_PARTITION_SCHEMA \
+           GLOBAL_PARTITION_NAME_TEMPLATE GLOBAL_PAST GLOBAL_FUTURE GLOBAL_INTERVAL GLOBAL_START_TIMESTAMP GLOBAL_RETENTION \
+           GLOBAL_DEFAULT_PARTITION_NAME_TEMPLATE GLOBAL_CREATE_DEFAULT_PARTITION GLOBAL_SKIP_OVERLAPPING GLOBAL_PARTITION_STORAGE_PARAMETERS \
+           GLOBAL_PARTITION_STORAGE_MODE GLOBAL_IDEMPOTENT GLOBAL_DESCRIPTION_MAKE GLOBAL_DESCRIPTION_EXPIRE GLOBAL_OUTPUT_FILE_TEMPLATE \
+           GLOBAL_INDEX_NAME_TEMPLATE GLOBAL_CONSTRAINT_NAME_TEMPLATE \
+           GLOBAL_PRIMARY_KEY_CONSTRAINT_NAME_TEMPLATE \
+           GLOBAL_UNIQUE_CONSTRAINT_NAME_TEMPLATE GLOBAL_FOREIGN_KEY_CONSTRAINT_NAME_TEMPLATE \
+           GLOBAL_CHECK_CONSTRAINT_NAME_TEMPLATE GLOBAL_EXCLUSION_CONSTRAINT_NAME_TEMPLATE \
+           GLOBAL_TRIGGER_NAME_TEMPLATE \
+           GLOBAL_DETACH_ONLY GLOBAL_DETACH_FIRST GLOBAL_DETACH_CONCURRENTLY
+
+    directory="$(yq '.lifecycle.directory // strenv(DIRECTORY)' "${config}")"
+    timezone="$(yq '.lifecycle.timezone // strenv(DEFAULT_TIMEZONE)' "${config}")"
+
+    # Store failed table names, per phase.
+    declare -A make_failed_tables=()
+    declare -A expire_failed_tables=()
+    declare -A generated_output_files=()
+
+    # Staging area.
+    temp_migration_directory="$(mktemp -d)"
+    temp_error_directory="$(mktemp -d)"
+
+    trap cleanup EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+
+    # Stage current migrations in staging area.
+    echo "INFO: Staging current migrations"
+    cp -a "${directory}/." "${temp_migration_directory}/"
+
+    # Setup infrastructure.
+    echo "INFO: Setting up infrastructure"
+    pgp-setup-infrastructure
+
+    # Make and expire phases always both run against every table, regardless of
+    # per-table failures in either phase, so one misconfigured table can never
+    # prevent generation or expiration for the rest of the lifecycle.
+    echo "INFO: Making partitions"
+    make_partitions "${config}"
+
+    echo "INFO: Expiring partitions"
+    expire_partitions "${config}"
 
     cp -rf "${temp_migration_directory}/." "${directory}/"
 
-    if [ "${#failed_tables[@]}" -gt 0 ]; then
-        echo "ERROR: failed for ${#failed_tables[@]} table(s):" >&2
-        for table in "${!failed_tables[@]}"; do
-            echo "  '${table}': ${failed_tables[${table}]}" >&2
-        done
+    if [[ "${#make_failed_tables[@]}" -gt 0 || "${#expire_failed_tables[@]}" -gt 0 ]]; then
+        if [[ "${#make_failed_tables[@]}" -gt 0 ]]; then
+            echo "ERROR: making partitions failed for ${#make_failed_tables[@]} table(s):" >&2
+            for table in "${!make_failed_tables[@]}"; do
+                echo "  '${table}': ${make_failed_tables[${table}]}" >&2
+            done
+        fi
+        if [[ "${#expire_failed_tables[@]}" -gt 0 ]]; then
+            echo "ERROR: expiring partitions failed for ${#expire_failed_tables[@]} table(s):" >&2
+            for table in "${!expire_failed_tables[@]}"; do
+                echo "  '${table}': ${expire_failed_tables[${table}]}" >&2
+            done
+        fi
         exit 1
     fi
 
@@ -562,21 +705,21 @@ EOF
 
 }
 
-function run_make_partitions {
+function run_lifecycle {
     if [[ -d "${config_path}" ]]; then
         echo "INFO: Applying configs from ${config_path}"
 
         find "${config_path}" -type f \( -iname "*.yaml" -o -iname "*.yml" \) \
         | sort \
         | while IFS= read -r config; do
-            make_partitions "${config}"
+            run_lifecycle_for_config "${config}"
         done
 
         echo "INFO: Applied configs from ""${config_path}"""
     else
-        make_partitions "${config_path}"
+        run_lifecycle_for_config "${config_path}"
         echo "INFO: Applied config ""${config_path}"""
     fi
 }
 
-run_make_partitions "${config_path}"
+run_lifecycle "${config_path}"

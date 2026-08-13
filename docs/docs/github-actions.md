@@ -96,7 +96,7 @@ jobs:
     timeout-minutes: 30
 
     container:
-      image: ghcr.io/bolajiwahab/pgpartium:0.5.0
+      image: ghcr.io/bolajiwahab/pgpartix:0.5.0
       options: --user root
 
     env:
@@ -125,15 +125,10 @@ jobs:
 
       # A command may publish valid tables and still return 1 for other tables.
       # Preserve that partial progress long enough to open/update the PR.
-      - name: Generate missing partitions
-        id: make
+      - name: Run partition lifecycle
+        id: lifecycle
         continue-on-error: true
-        run: pgp-make-partitions -c partition-lifecycle.yaml
-
-      - name: Generate expired partitions
-        id: expire
-        continue-on-error: true
-        run: pgp-expire-partitions -c partition-lifecycle.yaml
+        run: pgp-run-lifecycle -c partition-lifecycle.yaml
 
       - name: Create or update partition-maintenance PR
         if: ${{ always() && steps.start.outcome == 'success' }}
@@ -148,7 +143,7 @@ jobs:
       # Keep the workflow visibly failed when any table failed, even though
       # successful migrations were still proposed in the PR.
       - name: Report generation failure
-        if: ${{ always() && (steps.make.outcome == 'failure' || steps.expire.outcome == 'failure') }}
+        if: ${{ always() && steps.lifecycle.outcome == 'failure' }}
         run: |
           echo "One or more partition tables failed generation" >&2
           exit 1
@@ -164,9 +159,9 @@ pgpartix handles tables independently. If nine tables generate correctly and one
 
 Without `continue-on-error`, GitHub Actions would stop before `gh-create-pr`, throwing away the practical value of that partial result. The workflow therefore:
 
-1. records make and expire outcomes;
-2. creates or updates the PR with every valid migration;
-3. ends in a failed state when either generator reported a problem.
+1. records the lifecycle command's outcome;
+2. creates or updates the PR with every valid migration, from both the make and expire phases;
+3. ends in a failed state when the generator reported a problem in either phase.
 
 The PR remains useful, while alerts and branch-protection checks still show that operator attention is required.
 
@@ -207,9 +202,7 @@ When an authoritative non-production catalog is already available, install the P
         run: pgp-start
 
       - name: Generate lifecycle migrations
-        run: |
-          pgp-make-partitions -c partition-lifecycle.yaml
-          pgp-expire-partitions -c partition-lifecycle.yaml
+        run: pgp-run-lifecycle -c partition-lifecycle.yaml
 ```
 
 Use a read-only database role where practical. pgpartix installs helper functions into the selected database through `pgp-setup-infrastructure`, so the role must be permitted to create or replace objects in the `pgpartix` schema.

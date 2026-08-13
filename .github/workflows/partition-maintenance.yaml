@@ -124,15 +124,10 @@ jobs:
 
       # A command may publish valid tables and still return 1 for other tables.
       # Preserve that partial progress long enough to open/update the PR.
-      - name: Generate missing partitions
-        id: make
+      - name: Run partition lifecycle
+        id: lifecycle
         continue-on-error: true
-        run: pgp-make-partitions -c "${{ inputs.config }}"
-
-      - name: Generate expired partitions
-        id: expire
-        continue-on-error: true
-        run: pgp-expire-partitions -c "${{ inputs.config }}"
+        run: pgp-run-lifecycle -c "${{ inputs.config }}"
 
       - name: Create or update partition-maintenance PR
         if: ${{ always() && steps.start.outcome == 'success' }}
@@ -147,7 +142,7 @@ jobs:
       # Keep the run visibly failed when any table failed, even though
       # successful migrations were still proposed in the PR.
       - name: Report generation failure
-        if: ${{ always() && (steps.make.outcome == 'failure' || steps.expire.outcome == 'failure') }}
+        if: ${{ always() && steps.lifecycle.outcome == 'failure' }}
         run: |
           echo "One or more partition tables failed generation" >&2
           exit 1

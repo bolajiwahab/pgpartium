@@ -15,7 +15,7 @@ The packaged container supplies PostgreSQL setup utilities, the pgpartix CLIs, p
 ## Install the image
 
 ```bash
-docker pull ghcr.io/bolajiwahab/pgpartium:0.5.0
+docker pull ghcr.io/bolajiwahab/pgpartix:0.8.0
 ```
 
 The container starts as an unprivileged user. Run it as root when using `pgp-start`, because that command installs the requested PostgreSQL packages and may create a local cluster.
@@ -40,11 +40,10 @@ docker run --rm --user root \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_INIT_DIR=examples/quick-start/initdir \
-  ghcr.io/bolajiwahab/pgpartium:0.5.0 \
+  ghcr.io/bolajiwahab/pgpartix:0.8.0 \
   bash -lc '
     pgp-start &&
-    pgp-make-partitions -c examples/quick-start/partition-lifecycle.yaml &&
-    pgp-expire-partitions -c examples/quick-start/partition-lifecycle.yaml
+    pgp-run-lifecycle -c examples/quick-start/partition-lifecycle.yaml
   '
 ```
 
@@ -87,11 +86,10 @@ docker run --rm --user root \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_INIT_DIR=migrations/initdir \
-  ghcr.io/bolajiwahab/pgpartium:0.5.0 \
+  ghcr.io/bolajiwahab/pgpartix:0.5.0 \
   bash -lc '
     pgp-start &&
-    pgp-make-partitions -c partition-lifecycle.yaml &&
-    pgp-expire-partitions -c partition-lifecycle.yaml
+    pgp-run-lifecycle -c partition-lifecycle.yaml
   '
 ```
 
@@ -112,11 +110,10 @@ docker run --rm --user root \
   --env PGP_HOST="$PGP_HOST" \
   --env PGP_PORT="$PGP_PORT" \
   --env PGP_DATABASE="$PGP_DATABASE" \
-  ghcr.io/bolajiwahab/pgpartium:0.5.0 \
+  ghcr.io/bolajiwahab/pgpartix:0.5.0 \
   bash -lc '
     pgp-start &&
-    pgp-make-partitions -c partition-lifecycle.yaml &&
-    pgp-expire-partitions -c partition-lifecycle.yaml
+    pgp-run-lifecycle -c partition-lifecycle.yaml
   '
 ```
 
@@ -124,7 +121,7 @@ The connection role must be able to inspect the application catalog, creates a d
 
 ## Review the output
 
-`pgp-make-partitions` produces DDL for missing desired ranges. `pgp-expire-partitions` produces detach and/or drop DDL for ranges outside the retention period.
+`pgp-run-lifecycle` produces DDL for missing desired ranges, then detach and/or drop DDL for ranges outside the retention period.
 
 Before applying generated migrations:
 
@@ -145,10 +142,10 @@ Generated migrations are ordinary repository files. pgpartix does not require a 
 - schedule a script with cron, a systemd timer, or an infrastructure scheduler on a VM or runner, then commit and push using that environment's credentials;
 - use the bundled GitHub helper to maintain a dedicated pull request automatically.
 
-Whichever model is used, preserve the generator exit statuses. A lifecycle command can publish valid files for successful tables and still exit nonzero because another table failed. Review or publish the successful files as appropriate, while keeping the overall run visibly failed for operator attention.
+Whichever model is used, preserve the generator exit status. The lifecycle command can publish valid files for successful tables and still exit nonzero because another table failed. Review or publish the successful files as appropriate, while keeping the overall run visibly failed for operator attention.
 
 ## Optional GitHub automation
 
-After local generation is stable, the [GitHub Actions guide](github-actions.md) provides one ready-made scheduling and publication option. It explains how to create a least-privileged GitHub App and use the bundled `gh-create-pr` command to create or refresh a maintenance PR. The lifecycle generators themselves remain independent of GitHub and can be wrapped by other providers or infrastructure.
+After local generation is stable, the [GitHub Actions guide](github-actions.md) provides one ready-made scheduling and publication option. It explains how to create a least-privileged GitHub App and use the bundled `gh-create-pr` command to create or refresh a maintenance PR. The lifecycle generator itself remains independent of GitHub and can be wrapped by other providers or infrastructure.
 
 For command syntax and environment variables, see the [CLI reference](cli-reference.md).
