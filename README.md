@@ -80,11 +80,11 @@ See [Getting started](docs/docs/getting-started.md) for external database mode, 
 
 The [documentation index](docs/docs/README.md) routes each task to a focused guide:
 
-- [Getting started](docs/docs/getting-started.md)—installation, catalog setup, and first generation.
-- [Configuration reference](docs/docs/configuration.md)—all creation, expiration, naming, template, storage, and override options.
-- [Optional GitHub Actions automation](docs/docs/github-actions.md)—GitHub App setup, short-lived tokens, scheduling, PR reconciliation, security, and troubleshooting.
-- [CLI reference](docs/docs/cli-reference.md)—commands, environment variables, examples, and exit behavior.
-- [Annotated configuration](config.sample.yaml)—a complete example using the current schema.
+- [Getting started](docs/docs/getting-started.md) — installation, catalog setup, and first generation.
+- [Configuration reference](docs/docs/configuration.md) — all creation, expiration, naming, template, storage, and override options.
+- [Optional GitHub Actions automation](docs/docs/github-actions.md) — GitHub App setup, short-lived tokens, scheduling, PR reconciliation, security, and troubleshooting.
+- [CLI reference](docs/docs/cli-reference.md) — commands, environment variables, examples, and exit behavior.
+- [Annotated configuration](config.sample.yaml) — a complete example using the current schema.
 - [Generated JSON Schema reference](https://bolajiwahab.github.io/pgpartix/schema.html).
 
 ## Included commands
