@@ -19,17 +19,17 @@ on:  # yamllint disable-line rule:truthy
         required: true
         type: string
       pg_major_version:
-        description: PostgreSQL major version to start for the ephemeral cluster. Ignored when init_dir is empty.
+        description: PostgreSQL major version to install, and to start the cluster with in ephemeral mode.
         required: false
         type: string
         default: "17"
-      no_cluster:
-        description: Set to "1" to skip starting an ephemeral cluster and connect to an external database instead.
+      mode:
+        description: Set to "external" to skip starting an ephemeral cluster and connect to an external database instead (see db_* inputs).
         required: false
         type: string
-        default: ""
+        default: ephemeral
       init_dir:
-        description: Initialization directory applied to an ephemeral, in-job PostgreSQL cluster. Leave empty to connect to an external database with db_* inputs instead.
+        description: Initialization directory applied to the ephemeral, in-job PostgreSQL cluster. Only used in ephemeral mode.
         required: false
         type: string
         default: ""
@@ -103,7 +103,7 @@ jobs:
 
     env:
       PGP_INIT_DIR: ${{ inputs.init_dir }}
-      NO_CLUSTER: ${{ inputs.no_cluster }}
+      PGP_MODE: ${{ inputs.mode }}
       PGP_PG_MAJOR_VERSION: ${{ inputs.pg_major_version }}
       PGP_HOST: ${{ inputs.db_host }}
       PGP_PORT: ${{ inputs.db_port }}

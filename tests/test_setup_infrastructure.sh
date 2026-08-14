@@ -15,6 +15,6 @@ source "${BATS_TEST_DIRNAME}/conftest.sh"
 @test "pgp-setup-infrastructure rejects unknown options" {
     run pgp-setup-infrastructure -z
 
-    [ "${status}" -eq 1 ]
+    [ "${status}" -eq 2 ]
     grep -Fq "Set up infrastructure." <<< "${output}"
 }

@@ -56,6 +56,6 @@ source "${BATS_TEST_DIRNAME}/conftest.sh"
 @test "pgp-get-migration-filename rejects unknown options" {
     run pgp-get-migration-filename -z
 
-    [ "${status}" -eq 1 ]
+    [ "${status}" -eq 2 ]
     grep -Fq "Helper to generate a migration filename." <<< "${output}"
 }

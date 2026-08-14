@@ -28,12 +28,13 @@ export PGP_DATABASE=application_catalog
 
 ## `pgp-start`
 
-Installs a PostgreSQL major version and psql client. Unless `NO_CLUSTER=1` is set, it creates and starts a local cluster and optionally applies an initialization directory.
+Installs a PostgreSQL major version and psql client. In `ephemeral` mode (the default), it also creates and starts a local cluster and optionally applies an initialization directory. In `external` mode, it only installs the runtime, so the target database must already exist (see the [database environment](#database-environment) variables).
 
 ```text
 OPTIONS:
   -v  PostgreSQL major version (default: 14, at least 14)
-  -i  Initialization directory (optional; supports .sh, .sql, .sql.gz)
+  -m  Mode: ephemeral or external (default: ephemeral)
+  -i  Initialization directory (optional; supports .sh, .sql, .sql.gz); ephemeral mode only
   -h  Show help
 ```
 
@@ -42,10 +43,10 @@ The equivalent environment variables are:
 | Variable | Default | Description |
 | --- | --- | --- |
 | `PGP_PG_MAJOR_VERSION` | `14` | PostgreSQL major version used when `-v` is omitted. |
-| `PGP_INIT_DIR` | None | Initialization directory used when `-i` is omitted; optional. |
+| `PGP_MODE` | `ephemeral` | Mode used when `-m` is omitted: `ephemeral` or `external`. |
+| `PGP_INIT_DIR` | None | Initialization directory used when `-i` is omitted; ephemeral mode only. |
 | `PGP_CLUSTER_NAME` | `pgpartix` | Name assigned to a locally created cluster. |
 | `PGP_CREATE_OPTIONS` | None | Additional options passed when creating the cluster. |
-| `NO_CLUSTER` | Unset | When set, install the PostgreSQL runtime without creating a cluster. |
 
 Examples:
 
@@ -57,7 +58,7 @@ PGP_PG_MAJOR_VERSION=17 \
 PGP_INIT_DIR=migrations/initdir \
 pgp-start
 
-NO_CLUSTER=1 pgp-start
+pgp-start -m external
 ```
 
 Initialization files are processed in sorted order. Executable `.sh` files are run, non-executable `.sh` files are sourced, `.sql` files are passed to `psql`, and `.sql.gz` files are decompressed into `psql`.

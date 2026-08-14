@@ -104,7 +104,7 @@ docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_PG_MAJOR_VERSION=17 \
-  --env NO_CLUSTER=1 \
+  --env PGP_MODE=external \
   --env PGP_USER="$PGP_USER" \
   --env PGP_PASSWORD="$PGP_PASSWORD" \
   --env PGP_HOST="$PGP_HOST" \

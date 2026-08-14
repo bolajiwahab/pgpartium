@@ -14,27 +14,35 @@ usage()
 
     OPTIONS:
       -v  the postgres version to use (Default: ${PGP_MIN_POSTGRES_VERSION}, must be at least ${PGP_MIN_POSTGRES_VERSION})
+      -m  the mode to use (Default: ephemeral, options: ephemeral, external)
       -i  the init directory to apply (Optional) (supports .sh, .sql and .sql.gz)
       -h  show this help message.
 
     SAMPLE USAGE:
         ${0##*/} -i initdir
         ${0##*/} -v 17 -i initdir
+        ${0##*/} -v 17 -m ephemeral -i initdir
 EOF
 }
 
-while getopts "v:i:h" option
-do
+while getopts "v:m:i:h" option; do
     case "${option}" in
         v)
             pg_major_version="${OPTARG}"
             ;;
+        m)
+            PGP_MODE="${OPTARG}"
+            ;;
         i)
             init_dir="${OPTARG}"
             ;;
-        h | *)
+        h)
             usage
             exit 0
+            ;;
+        *)
+            usage >&2
+            exit 2
             ;;
     esac
 done
@@ -45,9 +53,10 @@ configure_database_environment
 
 export PGP_CLUSTER_NAME="${PGP_CLUSTER_NAME:-pgpartix}"
 
-pg_major_version=${pg_major_version:-${PGP_PG_MAJOR_VERSION:-${PGP_MIN_POSTGRES_VERSION}}}
+pg_major_version="${pg_major_version:-${PGP_PG_MAJOR_VERSION:-${PGP_MIN_POSTGRES_VERSION}}}"
+pgp_mode="${PGP_MODE:-ephemeral}"
 init_dir=${init_dir:-${PGP_INIT_DIR:-}}
-export PGP_PG_MAJOR_VERSION="${pg_major_version}"
+# export PGP_PG_MAJOR_VERSION="${pg_major_version}"
 
 if (( pg_major_version < PGP_MIN_POSTGRES_VERSION )); then
   echo "Error: PostgreSQL major version must be at least ${PGP_MIN_POSTGRES_VERSION}" >&2
@@ -57,51 +66,74 @@ fi
 # Install PostgreSQL
 sudo apt.postgresql.org.sh -i -p -v "${pg_major_version}"
 
-if [[ -z ${NO_CLUSTER+yes} ]]; then
-    echo "INFO: Creating PostgreSQL cluster ${PGP_CLUSTER_NAME} for PostgreSQL ${pg_major_version}"
+case "${pgp_mode}" in
+    ephemeral)
+        echo "INFO: Creating PostgreSQL cluster ${PGP_CLUSTER_NAME} for PostgreSQL ${pg_major_version}"
 
-    # shellcheck disable=SC2086 # Allow word splitting for additional options
-    sudo pg_createcluster --start "${pg_major_version}" "${PGP_CLUSTER_NAME}" --port="${PGPORT:-5432}" ${PGP_CREATE_OPTIONS:-} -- -A trust
+        # shellcheck disable=SC2086 # Allow word splitting for additional options
+        sudo pg_createcluster --start \
+            "${pg_major_version}" \
+            "${PGP_CLUSTER_NAME}" \
+            --port="${PGPORT:-5432}" \
+            ${PGP_CREATE_OPTIONS:-} \
+            -- -A trust
 
-    # Ensure the provided init directory exists and is a directory
-    if [[ -n "${init_dir}" && ! -d "${init_dir}" ]]; then
-        echo "The provided init directory ${init_dir} does not exist or is not a directory" >&2
-        exit 1
-    fi
+        if [[ -n "${init_dir}" && ! -d "${init_dir}" ]]; then
+            echo "ERROR: The provided init directory '${init_dir}' does not exist or is not a directory." >&2
+            exit 1
+        fi
 
-    if [[ -d "${init_dir}" ]]; then
-        echo "INFO: Applying init scripts from ${init_dir}"
+        if [[ -d "${init_dir}" ]]; then
+            echo "INFO: Applying init scripts from ${init_dir}"
 
-        find "${init_dir}" -type f \( -iname "*.sh" -o -iname "*.sql" -o -iname "*.sql.gz" \) \
-        | sort \
-        | while IFS= read -r file; do
-            case "${file}" in
-                *.sh)
-                    if [[ -x "${file}" ]]; then
-                        "${file}"
-                    else
-                        # shellcheck source=/dev/null
-                        . "${file}"
-                    fi
-                    ;;
-                *.sql)
-                    psql --username=postgres \
-                        --dbname=postgres \
-                        --variable "ON_ERROR_STOP=1" \
-                        --quiet \
-                        --no-psqlrc -f "${file}"
-                    ;;
-                *.sql.gz)
-                    gunzip -c "${file}" | psql \
-                        --username=postgres \
-                        --dbname=postgres \
-                        --variable "ON_ERROR_STOP=1" \
-                        --quiet \
-                        --no-psqlrc
-                    ;;
-            esac
-        done
+            find "${init_dir}" -type f \
+                \( -iname "*.sh" -o -iname "*.sql" -o -iname "*.sql.gz" \) \
+                | sort \
+                | while IFS= read -r file; do
+                    case "${file}" in
+                        *.sh)
+                            if [[ -x "${file}" ]]; then
+                                "${file}"
+                            else
+                                # shellcheck source=/dev/null
+                                . "${file}"
+                            fi
+                            ;;
+                        *.sql)
+                            # KCOV_EXCL_START
+                            psql \
+                                --username=postgres \
+                                --dbname=postgres \
+                                --variable "ON_ERROR_STOP=1" \
+                                --quiet \
+                                --no-psqlrc \
+                                -f "${file}"
+                            # KCOV_EXCL_STOP
+                            ;;
+                        *.sql.gz)
+                            # KCOV_EXCL_START
+                            gunzip -c "${file}" |
+                                psql \
+                                    --username=postgres \
+                                    --dbname=postgres \
+                                    --variable "ON_ERROR_STOP=1" \
+                                    --quiet \
+                                    --no-psqlrc
+                            # KCOV_EXCL_STOP
+                            ;;
+                    esac
+                done
 
-        echo "INFO: Applied init scripts from ""${init_dir}"""
-    fi
-fi
+            echo "INFO: Applied init scripts from ""${init_dir}"""
+        fi
+        ;;
+
+    external)
+        echo "INFO: Using external PostgreSQL database"
+        ;;
+
+    *)
+        echo "ERROR: Invalid PGP_MODE '${pgp_mode}'. Expected 'ephemeral' or 'external'." >&2
+        exit 2
+        ;;
+esac

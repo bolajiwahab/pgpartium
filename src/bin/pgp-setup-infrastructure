@@ -19,14 +19,14 @@ EOF
 
 while getopts "h" option; do
     case "${option}" in
-    h)
-        usage
-        exit 0
-        ;;
-    ?)
-        usage
-        exit 1
-        ;;
+        h)
+            usage
+            exit 0
+            ;;
+        *)
+            usage >&2
+            exit 2
+            ;;
     esac
 done
 

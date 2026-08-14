@@ -22,23 +22,23 @@ EOF
 
 while getopts "t:d:m:h" option; do
     case "${option}" in
-    t)
-        template="${OPTARG}"
-        ;;
-    d)
-        directory="${OPTARG}"
-        ;;
-    m)
-        description="${OPTARG}"
-        ;;
-    h)
-        usage
-        exit 0
-        ;;
-    ?)
-        usage
-        exit 1
-        ;;
+        t)
+            template="${OPTARG}"
+            ;;
+        d)
+            directory="${OPTARG}"
+            ;;
+        m)
+            description="${OPTARG}"
+            ;;
+        h)
+            usage
+            exit 0
+            ;;
+        *)
+            usage >&2
+            exit 2
+            ;;
     esac
 done
 
