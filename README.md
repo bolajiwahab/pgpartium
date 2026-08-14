@@ -55,7 +55,7 @@ pgpartix stops at generated migration files. How those files are committed, revi
 Pull the image:
 
 ```bash
-docker pull ghcr.io/bolajiwahab/pgpartix:0.8.0
+docker pull ghcr.io/bolajiwahab/pgpartix:0.9.0
 ```
 
 Then run the checked-in [quick-start example](examples/quick-start), which creates an ephemeral PostgreSQL cluster, loads a partitioned table, and generates both creation and expiration migrations:
@@ -65,7 +65,7 @@ docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_INIT_DIR=examples/quick-start/initdir \
-  ghcr.io/bolajiwahab/pgpartix:0.8.0 \
+  ghcr.io/bolajiwahab/pgpartix:0.9.0 \
   bash -lc '
     pgp-start &&
     pgp-run-lifecycle -c examples/quick-start/partition-lifecycle.yaml
