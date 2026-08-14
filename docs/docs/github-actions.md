@@ -27,6 +27,10 @@ The pgpartix image includes the GitHub CLI. `pgp-gh-create-pr` uses `git` and `g
 
 For GitHub users, this avoids requiring a separate PR action with a second configuration model. The same short-lived GitHub App installation token authenticates checkout, branch push, PR lookup, PR creation, and PR updates. Other environments can ignore `pgp-gh-create-pr` and use their native repository or merge-request tooling.
 
+## Running as root
+
+The image runs as a non-root user by default. When using it as a GitHub Actions job container, set `container.options: --user root`, as shown in the [complete scheduled workflow](#complete-scheduled-workflow) below. GitHub requires Docker actions and job containers to be run by the default Docker user (root) in order to be able to access the `GITHUB_WORKSPACE` directory; see [`USER` reference](https://docs.github.com/en/actions/reference/workflows-and-actions/dockerfile-support#user) in GitHub's documentation. This requirement is specific to running the image as a job/action container - a plain `docker run` (see [Getting started](getting-started.md)) does not need it.
+
 ## Recommended authentication: a dedicated GitHub App
 
 A dedicated App gives partition lifecycle its own visible identity, can be installed only on selected repositories, and can be restricted to the two repository permissions it needs. It also avoids a long-lived personal access token.
@@ -99,6 +103,8 @@ jobs:
 
     container:
       image: ghcr.io/bolajiwahab/pgpartix:0.8.0
+      # See "Running as root" below.
+      options: --user root
 
     env:
       PGP_INIT_DIR: migrations/initdir
@@ -144,8 +150,8 @@ jobs:
         run: |
           pgp-gh-create-pr \
             -b partition-lifecycle \
-            -t chore: partition lifecycle \
-            -m chore: partition lifecycle \
+            -t "chore: partition lifecycle" \
+            -m "chore: partition lifecycle" \
             -n "${{ steps.app-token.outputs.app-slug }}[bot]" \
             -e "${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
 
