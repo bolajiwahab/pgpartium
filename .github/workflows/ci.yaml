@@ -6,9 +6,13 @@ on:  # yamllint disable-line rule:truthy
   push:
     branches:
       - main
+
   pull_request:
     branches:
       - main
+
+  schedule:
+    - cron: "0 0 * * *"  # Run daily at midnight UTC
 
 jobs:
   pre-commit:
@@ -37,6 +41,7 @@ jobs:
           - 16
           - 17
           - 18
+          - 19
     name: Run tests on PostgreSQL ${{ matrix.postgresql }}
     steps:
       - name: Checkout repository
