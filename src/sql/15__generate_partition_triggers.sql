@@ -43,8 +43,8 @@ AS $BODY$
                        '{parent_table_name}',   p_parent_table_name,
                        '{partition_schema}',    p_partition_schema,
                        '{partition_name}',      p_partition_name,
-                       '{trigger_event}',       template_triggers.trigger_event,
-                       '{event_timing}',        template_triggers.event_timing,
+                       '{trigger_event}',       lower(template_triggers.trigger_event),
+                       '{event_timing}',        lower(template_triggers.event_timing),
                        '{trigger_function_schema}', template_triggers.trigger_function_schema,
                        '{trigger_function_name}', template_triggers.trigger_function_name,
                        '{ordinal}',             CASE template_triggers.ordinal

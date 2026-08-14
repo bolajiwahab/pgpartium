@@ -10,6 +10,5 @@ lifecycle:
         interval: 1 mon
         start_timestamp: 2025-03-01T00:00:00+00:00
         default:
-          create: true
           naming:
             template: "{parent_table_schema}__{parent_table_name}__default"

@@ -1,11 +1,11 @@
 # Configuration reference
 
-pgpartix reads one YAML file or every `.yaml` and `.yml` file in a directory. The same configuration drives both sides of the lifecycle:
+pgpartix reads one YAML file or every `.yaml` and `.yml` file in a directory. The same configuration drives both phases of the lifecycle, run by a single command, `pgp-run-lifecycle`:
 
-- `pgp-make-partitions` generates DDL for partitions that should exist.
-- `pgp-expire-partitions` generates DDL for partitions whose upper bounds have passed the retention window.
+- its make phase generates DDL for partitions that should exist;
+- its expire phase generates DDL for partitions whose upper bounds have passed the retention window.
 
-Neither command applies the generated lifecycle migration to the source database. They inspect the PostgreSQL database and write reviewable SQL files for the repository's normal migration process.
+Neither phase applies the generated lifecycle migration to the source database. They inspect the PostgreSQL database and write reviewable SQL files for the repository's normal migration process.
 
 ## Minimal configuration
 
@@ -28,9 +28,11 @@ lifecycle:
 
 The output directory must exist before the command runs. The partitioned tables, configured schemas, tablespaces, and optional template tables must also exist in the database being inspected.
 
+Always quote naming, description, and output filename template values that include `{...}` placeholders, as shown above. YAML treats a leading `{` as the start of a flow mapping, so an unquoted value such as `template: {parent_table_schema}__{parent_table_name}__YYYY_MM` fails to parse as the intended string.
+
 ## Inheritance and overrides
 
-Options under `lifecycle` apply to all tables. A table can override `description`, `output_file_template`, or individual `partition` options.
+Options under `lifecycle` apply to all tables. A table can override `description`, `output.file.naming.template`, or individual `partition` options.
 
 ```yaml
 lifecycle:
@@ -64,7 +66,7 @@ Overrides are resolved per field, including explicit `false` values. In the exam
 | `lifecycle.timezone` | IANA timezone | `Etc/UTC` | Global | Time context used for partition bounds and expiration calculations. |
 | `lifecycle.description.make` | string | `Make partitions for {parent_table_schema}.{parent_table_name}` | Global or table | Description used when naming creation migrations and composing the PR body. |
 | `lifecycle.description.expire` | string | `Expire partitions for {parent_table_schema}.{parent_table_name}` | Global or table | Description used when naming expiration migrations and composing the PR body. |
-| `lifecycle.output_file_template` | string | `pgpartix_output.sql` | Global or table | Template for the generated migration filename. |
+| `lifecycle.output.file.naming.template` | string | `pgpartix_output.sql` | Global or table | Template for the generated migration filename. |
 | `lifecycle.idempotent` | boolean | `false` | Global or table | Add supported `IF NOT EXISTS`, `CREATE OR REPLACE` to generated DDL. |
 | `lifecycle.partition` | object | none | Global or table | Creation, replication, storage, and expiration behavior. |
 | `lifecycle.tables` | array | required | Global | Parent tables whose lifecycle should be evaluated. |
@@ -76,14 +78,14 @@ Overrides are resolved per field, including explicit `false` values. In the exam
 | `schema` | Yes | Schema of the partitioned table. |
 | `name` | Yes | Name of the partitioned table. |
 | `description` | No | Per-table `make` and/or `expire` descriptions. |
-| `output_file_template` | No | Per-table migration filename template. |
+| `output.file.naming.template` | No | Per-table migration filename template. |
 | `idempotent` | No | Per-table override for `lifecycle.idempotent`. |
 | `partition` | No | Per-table overrides for partition options. |
 | `template` | No | Object or symbolic source used to replicate constraints, indexes, and triggers. |
 
 ## Output filenames
 
-`output_file_template` supports the following placeholders:
+`output.file.naming.template` supports the following placeholders:
 
 | Placeholder | Meaning |
 | --- | --- |
@@ -105,14 +107,17 @@ The descriptions themselves support `{parent_table_schema}` and `{parent_table_n
 lifecycle:
   description:
     make: "Make partitions for {parent_table_schema}_{parent_table_name}"
-  output_file_template: "V{integer:4}__{description}.{direction}.sql"
+  output:
+    file:
+      naming:
+        template: "V{integer:4}__{description}.{direction}.sql"
 ```
 
-Multiple successful tables may target one filename, depending on the provided `output_file_template`. pgpartix formats each table's SQL independently and appends the successful results in configuration order. A failed table does not discard successful output and does not contribute partial SQL. The command still exits nonzero and reports every failed table so automation remains visibly unhealthy.
+Multiple successful tables may target one filename, depending on the provided `output.file.naming.template`. pgpartix formats each table's SQL independently and appends the successful results in configuration order. A failed table does not discard successful output and does not contribute partial SQL. The command still exits nonzero and reports every failed table so automation remains visibly unhealthy.
 
 ## Partition creation options
 
-These options are consumed primarily by `pgp-make-partitions`.
+These options are consumed by the make phase of `pgp-run-lifecycle`.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -120,10 +125,11 @@ These options are consumed primarily by `pgp-make-partitions`.
 | `partition.schema` | string | parent schema | Schema in which new partitions are created. |
 | `partition.tablespace` | string | `null` | Tablespace for new partitions. |
 | `partition.interval` | positive PostgreSQL interval | `null` | Interval between lower and upper bounds. Generation is skipped for a table when this is omitted, globally and on the table. |
-| `partition.start_timestamp` | RFC 3339 timestamp, `NOW`, or `LATEST_PARTITION` | `null` | Initial point used to generate the series of desired partitions. |
+| `partition.start_timestamp` | RFC 3339 timestamp, `NOW`, or `LATEST_PARTITION` | `NOW` | Initial point used to generate the series of desired partitions. |
 | `partition.past` | nonnegative integer | `0` | Number of intervals before the resolved start point to include. |
 | `partition.future` | nonnegative integer | `0` | Number of intervals beyond the current time to include. |
-| `partition.default.naming.template` | string | `null` | Creates a default partition with this name when one does not exist. |
+| `partition.default.create` | boolean | `false` | Whether to create a DEFAULT partition when one does not already exist. |
+| `partition.default.naming.template` | string | `{parent_table_schema}__{parent_table_name}__default` | Name used for the DEFAULT partition when `partition.default.create` is `true`. |
 | `partition.retention.interval` | interval | `null` | Filters creation candidates whose upper bounds fall outside the retention window. Also drives expiration. |
 | `partition.skip_overlapping` | boolean | `false` | Skip partitions whose bounds will overlap existing partitions instead of generating conflicting DDL. |
 
@@ -149,11 +155,11 @@ Use a naming pattern whose precision distinguishes every configured interval. A 
 
 ### Start timestamps and existing partitions
 
-- `NOW` starts from the current timestamp in `lifecycle.timezone`.
+- `NOW` starts from the current timestamp in `lifecycle.timezone`. This is the default, so omitting `partition.start_timestamp` entirely is enough to get started.
 - An RFC 3339 value provides a stable explicit start point.
 - `LATEST_PARTITION` uses the upper bound of the most recent attached partition and fails clearly when no such partition exists.
 
-The SQL generator also considers the current latest upper bound, avoids exact existing bounds, and generates only missing ranges.
+Whenever the target table already has an attached partition, its upper bound always overrides `partition.start_timestamp`, regardless of which of the above three forms was configured. This means a fixed RFC 3339 value or `NOW` only matters for the table's first run; every subsequent run picks up from the latest existing partition instead, so generation always moves forward from where partitions were last created and never re-evaluates or rewinds the start point. For both `NOW` and an explicit RFC 3339 value, the make phase checks for an existing latest partition first and logs which one it used, so this override is always visible rather than silent; the configured value is only actually used when the table has no partitions yet.
 
 ### Supported parent tables
 
@@ -281,7 +287,7 @@ Trigger enabled/disabled state is preserved regardless of naming.
 
 ## Expiration options
 
-These options are consumed by `pgp-expire-partitions`.
+These options are consumed by the expire phase of `pgp-run-lifecycle`.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -303,7 +309,7 @@ PostgreSQL does not support `DETACH PARTITION IF EXISTS`. With `idempotent: true
 
 ## Connection environment
 
-Both lifecycle commands read:
+The lifecycle command reads:
 
 | Variable | Purpose |
 | --- | --- |
@@ -313,7 +319,7 @@ Both lifecycle commands read:
 | `PGP_PORT` | PostgreSQL port. |
 | `PGP_DATABASE` | Database containing the partitioned tables. |
 
-The commands default these values to `postgres`, `postgres`, `localhost`, `5432`, and `postgres` respectively for the disposable local cluster. Local-cluster users do not need to define them. External databases must override every value explicitly; see [Database environment](cli-reference.md#database-environment).
+The command defaults these values to `postgres`, `postgres`, `localhost`, `5432`, and `postgres` respectively for the disposable local cluster. Local-cluster users do not need to define them. External databases must override every value explicitly; see [Database environment](cli-reference.md#database-environment).
 
 Pass a directory to `-c` to process multiple configuration files in sorted filename order.
 
@@ -331,4 +337,4 @@ This gives local and automated runs useful partial progress without disguising f
 
 ## Complete example
 
-See [`config.sample.yaml`](../../config.sample.yaml) for a current, annotated configuration containing global defaults, table overrides, naming templates, storage behavior, template replication, and expiration modes. The schema is available at [schema](https://bolajiwahab.github.io/pgpartium/schema.html).
+See [`config.sample.yaml`](../../config.sample.yaml) for a current, annotated configuration containing global defaults, table overrides, naming templates, storage behavior, template replication, and expiration modes. The schema is available at [schema](https://bolajiwahab.github.io/pgpartix/schema.html).

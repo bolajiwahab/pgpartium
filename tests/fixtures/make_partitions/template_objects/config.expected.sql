@@ -6,12 +6,12 @@ CREATE TABLE test.test__transactions__2025_04
     )
     FOR VALUES FROM ('2025-04-01 00:00:00+00') TO ('2025-05-01 00:00:00+00');
 
-CREATE UNIQUE INDEX
+CREATE UNIQUE INDEX test__transactions__2025_04_account_id_status_idx
     ON test.test__transactions__2025_04 (account_id, status)
   WITH (fillfactor = '80', deduplicate_items = 'false')
  WHERE status = CAST('active' AS text);
 
-CREATE INDEX
+CREATE INDEX test__transactions__2025_04_expr_idx
     ON test.test__transactions__2025_04 ((lower(status)));
 
 CREATE TRIGGER test__transactions__2025_04_log_change

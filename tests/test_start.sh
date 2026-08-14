@@ -37,7 +37,7 @@ source "${BATS_TEST_DIRNAME}/conftest.sh"
         pgp-start
 
     [ "${status}" -eq 0 ]
-    grep -Fq -- "-i -v 14" "${apt_marker}"
+    grep -Fq -- "-i -p -v 14" "${apt_marker}"
     grep -Fq -- "--start 14 pgpartix --port=5432" "${cluster_marker}"
 }
 

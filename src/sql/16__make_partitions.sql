@@ -7,6 +7,7 @@ CREATE OR REPLACE FUNCTION pgpartix.make_partitions (
   , p_past integer DEFAULT 0
   , p_future integer DEFAULT 0
   , p_default_partition_name_template text DEFAULT NULL
+  , p_create_default_partition boolean DEFAULT FALSE
   , p_partition_schema text DEFAULT NULL
   , p_partition_tablespace text DEFAULT NULL
   , p_partition_storage_mode text DEFAULT 'override'
@@ -54,6 +55,11 @@ BEGIN
 
     IF p_interval IS NOT NULL AND p_partition_name_template IS NULL THEN
         RAISE 'partition name template is required when partition interval is specified'
+        USING ERRCODE = 'invalid_parameter_value';
+    END IF;
+
+    IF p_create_default_partition AND p_default_partition_name_template IS NULL THEN
+        RAISE 'default partition naming template is required when creating a default partition'
         USING ERRCODE = 'invalid_parameter_value';
     END IF;
 
@@ -263,7 +269,7 @@ BEGIN
                  , NULL AS lower_bound
                  , NULL AS upper_bound
                  , 'DEFAULT' AS partition_clause
-             WHERE p_default_partition_name_template IS NOT NULL
+             WHERE p_create_default_partition
                AND NOT EXISTS (
                    SELECT NULL
                      FROM pgpartix.get_default_partition(p_table_schema => p_table_schema, p_table_name => p_table_name)

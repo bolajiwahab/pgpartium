@@ -1,7 +1,7 @@
 # pgpartix
 
-[![CI](https://github.com/bolajiwahab/pgpartium/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/bolajiwahab/pgpartium/actions/workflows/ci.yaml)
-[![release](https://github.com/bolajiwahab/pgpartium/actions/workflows/release.yaml/badge.svg)](https://github.com/bolajiwahab/pgpartium/actions/workflows/release.yaml)
+[![CI](https://github.com/bolajiwahab/pgpartix/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/bolajiwahab/pgpartix/actions/workflows/ci.yaml)
+[![release](https://github.com/bolajiwahab/pgpartix/actions/workflows/release.yaml/badge.svg)](https://github.com/bolajiwahab/pgpartix/actions/workflows/release.yaml)
 
 pgpartix is a PostgreSQL partition-lifecycle migration generator. It inspects a PostgreSQL database and writes migrations for partitions that should be created or expired.
 
@@ -55,21 +55,20 @@ pgpartix stops at generated migration files. How those files are committed, revi
 Pull the image:
 
 ```bash
-docker pull ghcr.io/bolajiwahab/pgpartium:0.5.0
+docker pull ghcr.io/bolajiwahab/pgpartix:0.8.0
 ```
 
 Then run the checked-in [quick-start example](examples/quick-start), which creates an ephemeral PostgreSQL cluster, loads a partitioned table, and generates both creation and expiration migrations:
 
 ```bash
-docker run --rm --user root \
+docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_INIT_DIR=examples/quick-start/initdir \
-  ghcr.io/bolajiwahab/pgpartium:0.5.0 \
+  ghcr.io/bolajiwahab/pgpartix:0.8.0 \
   bash -lc '
     pgp-start &&
-    pgp-make-partitions -c examples/quick-start/partition-lifecycle.yaml &&
-    pgp-expire-partitions -c examples/quick-start/partition-lifecycle.yaml
+    pgp-run-lifecycle -c examples/quick-start/partition-lifecycle.yaml
   '
 ```
 
@@ -86,24 +85,23 @@ The [documentation index](docs/docs/README.md) routes each task to a focused gui
 - [Optional GitHub Actions automation](docs/docs/github-actions.md)—GitHub App setup, short-lived tokens, scheduling, PR reconciliation, security, and troubleshooting.
 - [CLI reference](docs/docs/cli-reference.md)—commands, environment variables, examples, and exit behavior.
 - [Annotated configuration](config.sample.yaml)—a complete example using the current schema.
-- [Generated JSON Schema reference](https://bolajiwahab.github.io/pgpartium/schema.html).
+- [Generated JSON Schema reference](https://bolajiwahab.github.io/pgpartix/schema.html).
 
 ## Included commands
 
 | Command | Purpose |
 | --- | --- |
 | `pgp-start` | Install PostgreSQL tooling, optionally create a cluster, and apply schema initialization files. |
-| `pgp-make-partitions` | Generate migrations for missing desired partitions. |
-| `pgp-expire-partitions` | Generate detach/drop migrations for expired partitions. |
+| `pgp-run-lifecycle` | Generate migrations for missing desired partitions, then detach/drop migrations for expired ones. |
 | `pgp-setup-infrastructure` | Install the SQL functions used to inspect and render lifecycle DDL. |
 | `pgp-get-migration-filename` | Resolve migration filename templates. |
-| `gh-create-pr` | Optionally create or update a GitHub partition-maintenance PR. |
+| `pgp-gh-create-pr` | Optionally create or update a GitHub partition-lifecycle PR. |
 
 Use the [CLI reference](docs/docs/cli-reference.md) for syntax and operational behavior.
 
 ## Contributing and support
 
-See the [contributing guide](docs/docs/contributing.md). Use [GitHub issues](https://github.com/bolajiwahab/pgpartium/issues) for bugs, features, and usage questions.
+See the [contributing guide](docs/docs/contributing.md). Use [GitHub issues](https://github.com/bolajiwahab/pgpartix/issues) for bugs, features, and usage questions.
 
 ## License
 

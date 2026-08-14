@@ -35,7 +35,7 @@
             "default": null
         },
         "description": {
-            "description": "A description of the partition lifecycle, available for use as {description} in output_file_template.",
+            "description": "A description of the partition lifecycle, available for use as {description} in output.file.naming.template.",
             "type": "object",
             "properties": {
                 "make": {
@@ -52,16 +52,37 @@
             "minProperties": 1,
             "additionalProperties": false
         },
-        "output_file_template": {
-            "$ref": "#/definitions/name",
-            "description": "Template for generating the output file name.",
-            "examples": [
-                "V{integer}__{description}.sql",
-                "V{integer:3}__{description}.sql",
-                "{timestamp}__{description}.sql",
-                "{epoch}_{description}.up.sql"
-            ],
-            "default": "pgpartix_output.sql"
+        "output": {
+            "type": "object",
+            "description": "Output configuration.",
+            "properties": {
+                "file": {
+                    "type": "object",
+                    "description": "Output file configuration.",
+                    "properties": {
+                        "naming": {
+                            "$ref": "#/definitions/naming",
+                            "description": "Output file naming configuration.",
+                            "properties": {
+                                "template": {
+                                    "description": "Template for generating the output file name.",
+                                    "examples": [
+                                        "V{integer}__{description}.sql",
+                                        "V{integer:3}__{description}.sql",
+                                        "{timestamp}__{description}.sql",
+                                        "{epoch}_{description}.up.sql"
+                                    ],
+                                    "default": "pgpartix_output.sql"
+                                }
+                            }
+                        }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false
+                }
+            },
+            "minProperties": 1,
+            "additionalProperties": false
         },
         "timezone": {
             "$ref": "#/definitions/name",
@@ -198,6 +219,11 @@
                     "type": "object",
                     "description": "Default partition configuration.",
                     "properties": {
+                        "create": {
+                            "description": "Whether to create a DEFAULT partition when one does not already exist.",
+                            "type": "boolean",
+                            "default": false
+                        },
                         "naming": {
                             "$ref": "#/definitions/naming",
                             "description": "Default partition naming configuration.",
@@ -206,7 +232,8 @@
                                     "description": "Template for naming default partition.",
                                     "examples": [
                                         "{parent_schema}__{parent_name}__default"
-                                    ]
+                                    ],
+                                    "default": "{parent_table_schema}__{parent_table_name}__default"
                                 }
                             }
                         }
@@ -398,8 +425,8 @@
                 "timezone": {
                     "$ref": "#/definitions/timezone"
                 },
-                "output_file_template": {
-                    "$ref": "#/definitions/output_file_template"
+                "output": {
+                    "$ref": "#/definitions/output"
                 },
                 "idempotent": {
                     "$ref": "#/definitions/idempotent"
@@ -425,8 +452,8 @@
                             "description": {
                                 "$ref": "#/definitions/description"
                             },
-                            "output_file_template": {
-                                "$ref": "#/definitions/output_file_template"
+                            "output": {
+                                "$ref": "#/definitions/output"
                             },
                             "idempotent": {
                                 "$ref": "#/definitions/idempotent"

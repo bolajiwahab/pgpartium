@@ -7,33 +7,35 @@ For the GitHub Actions integration:
 1. A scheduled GitHub Actions workflow inspects the current PostgreSQL schema.
 2. pgpartix calculates the partitions that should be created or expired.
 3. It writes ordinary migration files into the application repository.
-4. `gh-create-pr` creates or refreshes one dedicated maintenance pull request.
+4. `pgp-gh-create-pr` creates or refreshes one dedicated lifecycle pull request.
 5. The repository's normal SQL linting, migration validation, review, approval, and deployment process handles the change.
 
 The workflow does not silently mutate production. It turns generated lifecycle DDL into a reviewable GitHub pull request, while the repository's normal controls decide when the migration is deployed.
 
 ## Why the image includes `gh`
 
-The pgpartix image includes the GitHub CLI. `gh-create-pr` uses `git` and `gh` to provide a small reconciliation loop:
+The pgpartix image includes the GitHub CLI. `pgp-gh-create-pr` uses `git` and `gh` to provide a small reconciliation loop:
 
 - exit without creating a PR when no migration changed;
-- create or reset `pgpartix/<branch>` from the current default branch;
+- create or reset `pgpartix/<branch>` from the repository state already checked out in the job;
 - commit all generated migration changes;
 - force-update that dedicated automation branch;
 - create a PR when none exists;
 - update the existing open PR body on later scheduled runs.
 
-For GitHub users, this avoids requiring a separate PR action with a second configuration model. The same short-lived GitHub App installation token authenticates checkout, branch push, PR lookup, PR creation, and PR updates. Other environments can ignore `gh-create-pr` and use their native repository or merge-request tooling.
+`pgp-gh-create-pr` is designed to run inside a CI job against a repository `actions/checkout` has already placed at the correct base branch - it branches from the current `HEAD` rather than fetching or resetting to a remote ref itself, and it also requires a Git committer identity to already be configured (see [PR lifecycle and branch behavior](#pr-lifecycle-and-branch-behavior)). It is not intended for ad hoc local invocation.
+
+For GitHub users, this avoids requiring a separate PR action with a second configuration model. The same short-lived GitHub App installation token authenticates checkout, branch push, PR lookup, PR creation, and PR updates. Other environments can ignore `pgp-gh-create-pr` and use their native repository or merge-request tooling.
 
 ## Recommended authentication: a dedicated GitHub App
 
-A dedicated App gives partition maintenance its own visible identity, can be installed only on selected repositories, and can be restricted to the two repository permissions it needs. It also avoids a long-lived personal access token.
+A dedicated App gives partition lifecycle its own visible identity, can be installed only on selected repositories, and can be restricted to the two repository permissions it needs. It also avoids a long-lived personal access token.
 
 Using an App token is operationally important for automation-created changes. GitHub documents that most events created with the repository `GITHUB_TOKEN` do not start new workflow runs, while a GitHub App installation token can trigger the expected follow-on events. See [Triggering a workflow](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
 
 ### 1. Register the App
 
-Create a GitHub App owned by the organization or account that owns the target repository. A name such as `Acme Partition Maintenance` makes the PR actor easy to recognize.
+Create a GitHub App owned by the organization or account that owns the target repository. A name such as `Acme Partition lifecycle` makes the PR actor easy to recognize.
 
 Recommended registration settings:
 
@@ -68,11 +70,11 @@ The current official token action uses the Client ID, which is distinct from the
 
 ## Complete scheduled workflow
 
-Create `.github/workflows/partition-maintenance.yaml`:
+Create `.github/workflows/partition-lifecycle.yaml`:
 
 ```yaml
 ---
-name: Partition maintenance
+name: Partition lifecycle
 
 on:
   workflow_dispatch:
@@ -80,9 +82,9 @@ on:
     # GitHub schedules use UTC. Weekdays at 04:30 UTC.
     - cron: "30 4 * * 1-5"
 
-# Do not let two schedules rewrite the same maintenance branch concurrently.
+# Do not let two schedules rewrite the same lifecycle branch concurrently.
 concurrency:
-  group: partition-maintenance
+  group: partition-lifecycle
   cancel-in-progress: false
 
 # The App token performs repository writes. Keep GITHUB_TOKEN read-only.
@@ -91,19 +93,18 @@ permissions:
   packages: read
 
 jobs:
-  partition-maintenance:
+  partition-lifecycle:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     container:
-      image: ghcr.io/bolajiwahab/pgpartium:0.5.0
-      options: --user root
+      image: ghcr.io/bolajiwahab/pgpartix:0.8.0
 
     env:
       PGP_INIT_DIR: migrations/initdir
 
     steps:
-      - name: Create partition-maintenance App token
+      - name: Create partition-lifecycle App token
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
@@ -112,6 +113,12 @@ jobs:
           # Omitting owner/repositories scopes the token to this repository.
           permission-contents: write
           permission-pull-requests: write
+
+      - name: Get App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
 
       - name: Check out repository as the App
         uses: actions/checkout@v5
@@ -125,30 +132,27 @@ jobs:
 
       # A command may publish valid tables and still return 1 for other tables.
       # Preserve that partial progress long enough to open/update the PR.
-      - name: Generate missing partitions
-        id: make
+      - name: Run partition lifecycle
+        id: lifecycle
         continue-on-error: true
-        run: pgp-make-partitions -c partition-lifecycle.yaml
+        run: pgp-run-lifecycle -c partition-lifecycle.yaml
 
-      - name: Generate expired partitions
-        id: expire
-        continue-on-error: true
-        run: pgp-expire-partitions -c partition-lifecycle.yaml
-
-      - name: Create or update partition-maintenance PR
+      - name: Create or update partition-lifecycle PR
         if: ${{ always() && steps.start.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          gh-create-pr \
-            -b partition-maintenance \
-            -t "chore: maintain PostgreSQL partitions" \
-            -m "chore: maintain PostgreSQL partitions"
+          pgp-gh-create-pr \
+            -b partition-lifecycle \
+            -t chore: partition lifecycle \
+            -m chore: partition lifecycle \
+            -n "${{ steps.app-token.outputs.app-slug }}[bot]" \
+            -e "${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
 
       # Keep the workflow visibly failed when any table failed, even though
       # successful migrations were still proposed in the PR.
       - name: Report generation failure
-        if: ${{ always() && (steps.make.outcome == 'failure' || steps.expire.outcome == 'failure') }}
+        if: ${{ always() && steps.lifecycle.outcome == 'failure' }}
         run: |
           echo "One or more partition tables failed generation" >&2
           exit 1
@@ -162,11 +166,11 @@ Pin action references to commit SHAs if that is required by your supply-chain po
 
 pgpartix handles tables independently. If nine tables generate correctly and one fails, the nine valid outputs are published and the CLI exits `1` with the failed table's PostgreSQL error.
 
-Without `continue-on-error`, GitHub Actions would stop before `gh-create-pr`, throwing away the practical value of that partial result. The workflow therefore:
+Without `continue-on-error`, GitHub Actions would stop before `pgp-gh-create-pr`, throwing away the practical value of that partial result. The workflow therefore:
 
-1. records make and expire outcomes;
-2. creates or updates the PR with every valid migration;
-3. ends in a failed state when either generator reported a problem.
+1. records the lifecycle command's outcome;
+2. creates or updates the PR with every valid migration, from both the make and expire phases;
+3. ends in a failed state when the generator reported a problem in either phase.
 
 The PR remains useful, while alerts and branch-protection checks still show that operator attention is required.
 
@@ -207,9 +211,7 @@ When an authoritative non-production catalog is already available, install the P
         run: pgp-start
 
       - name: Generate lifecycle migrations
-        run: |
-          pgp-make-partitions -c partition-lifecycle.yaml
-          pgp-expire-partitions -c partition-lifecycle.yaml
+        run: pgp-run-lifecycle -c partition-lifecycle.yaml
 ```
 
 Use a read-only database role where practical. pgpartix installs helper functions into the selected database through `pgp-setup-infrastructure`, so the role must be permitted to create or replace objects in the `pgpartix` schema.
@@ -235,21 +237,24 @@ Keep `workflow_dispatch` enabled. It provides a safe manual reconciliation after
 
 By default:
 
-- the branch is `pgpartix/partition-maintenance`;
-- the title and commit message are `chore: partition maintenance`;
+- the branch is `pgpartix/partition-lifecycle`;
+- the title and commit message are `chore: partition lifecycle`;
 - the repository's remote default branch is used as the PR base;
-- a later run force-refreshes the automation branch from the latest base;
+- a later run force-refreshes the automation branch from whatever base `actions/checkout` placed the job on (a fresh checkout each run, so effectively the latest base);
 - an existing open PR from that branch is updated rather than duplicated;
 - the PR body lists tables for which make/expire output was produced;
-- no Git changes means no commit, push, or PR.
+- no Git changes means no commit, push, or PR;
+- a Git committer identity must already be configured, either via `-n`/`-e` or by the calling environment — the command exits with an error otherwise.
 
-Customize the branch, PR title, and commit message:
+Customize the branch, PR title, and commit message from within the workflow step:
 
 ```bash
-gh-create-pr \
+pgp-gh-create-pr \
   -b database-partitions \
   -t "chore(db): maintain partitions" \
-  -m "chore(db): regenerate partition lifecycle migrations"
+  -m "chore(db): regenerate partition lifecycle migrations" \
+  -n "${{ steps.app-token.outputs.app-slug }}[bot]" \
+  -e "${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
 ```
 
 The `pgpartix/` prefix is added automatically to the supplied branch name.
@@ -268,7 +273,7 @@ Treat the resulting PR like any other database migration:
 - keep the App installation limited to required repositories;
 - audit App-created PRs and token failures separately from human activity.
 
-If branch protection requires signed commits or a different author identity, configure that policy before enabling the schedule. `gh-create-pr` currently writes the commit as `github-actions[bot]`; GitHub records the branch push and PR API activity under the dedicated App installation.
+`pgp-gh-create-pr` never configures a Git identity on its own; the container has none by default, so pass `-n`/`-e` to attribute commits to the GitHub App installation, as shown above (`${{ steps.app-token.outputs.app-slug }}[bot]`), so the commit author matches the identity GitHub already records for the branch push and PR API activity. Without `-n`/`-e` (and no identity otherwise configured in the job), the command exits with an error rather than committing under an unconfigured or unexpected identity. If branch protection requires signed commits, configure that policy before enabling the schedule.
 
 ## Troubleshooting
 
@@ -282,7 +287,7 @@ Ensure checkout received `${{ steps.app-token.outputs.token }}` and did not fall
 
 ### `gh` is not authenticated
 
-Set `GH_TOKEN` on the `gh-create-pr` step. The GitHub CLI automatically reads this environment variable; see the [`gh pr create` manual](https://cli.github.com/manual/gh_pr_create).
+Set `GH_TOKEN` on the `pgp-gh-create-pr` step. The GitHub CLI automatically reads this environment variable; see the [`gh pr create` manual](https://cli.github.com/manual/gh_pr_create).
 
 ### PR checks do not run
 

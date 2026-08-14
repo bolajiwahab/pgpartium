@@ -95,7 +95,7 @@
             <div class="card-body pl-5">
 
     <span class="badge badge-dark value-type">Type: object</span><br/>
-<span class="description">A description of the partition lifecycle, available for use as {description} in output_file_template.</span>
+<span class="description">A description of the partition lifecycle, available for use as {description} in output.file.naming.template.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
         
@@ -194,41 +194,121 @@
         </div>
     </div>
 </div>
-<div class="accordion" id="accordionlifecycle_output_file_template">
+<div class="accordion" id="accordionlifecycle_output">
     <div class="card">
-        <div class="card-header" id="headinglifecycle_output_file_template">
+        <div class="card-header" id="headinglifecycle_output">
             <h2 class="mb-0">
-                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_output_file_template"
-                        aria-expanded="" aria-controls="lifecycle_output_file_template" onclick="setAnchor('#lifecycle_output_file_template')"><span class="property-name">output_file_template</span></button>
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_output"
+                        aria-expanded="" aria-controls="lifecycle_output" onclick="setAnchor('#lifecycle_output')"><span class="property-name">output</span></button>
             </h2>
         </div>
 
-        <div id="lifecycle_output_file_template"
-             class="collapse property-definition-div" aria-labelledby="headinglifecycle_output_file_template"
-             data-parent="#accordionlifecycle_output_file_template">
+        <div id="lifecycle_output"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_output"
+             data-parent="#accordionlifecycle_output">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: object</span><br/>
+<span class="description">Output configuration.</span>
+
+     <span class="badge badge-info no-additional">No Additional Properties</span>
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordionlifecycle_output_file">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_output_file">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_output_file"
+                        aria-expanded="" aria-controls="lifecycle_output_file" onclick="setAnchor('#lifecycle_output_file')"><span class="property-name">file</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_output_file"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_output_file"
+             data-parent="#accordionlifecycle_output_file">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: object</span><br/>
+<span class="description">Output file configuration.</span> <span class="badge badge-info no-additional">No Additional Properties</span>
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordionlifecycle_output_file_naming">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_output_file_naming">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_output_file_naming"
+                        aria-expanded="" aria-controls="lifecycle_output_file_naming" onclick="setAnchor('#lifecycle_output_file_naming')"><span class="property-name">naming</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_output_file_naming"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_output_file_naming"
+             data-parent="#accordionlifecycle_output_file_naming">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: object</span><br/>
+<span class="description">Output file naming configuration.</span>
+
+     <span class="badge badge-info no-additional">No Additional Properties</span>
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordionlifecycle_output_file_naming_template">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_output_file_naming_template">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_output_file_naming_template"
+                        aria-expanded="" aria-controls="lifecycle_output_file_naming_template" onclick="setAnchor('#lifecycle_output_file_naming_template')"><span class="property-name">template</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_output_file_naming_template"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_output_file_naming_template"
+             data-parent="#accordionlifecycle_output_file_naming_template">
             <div class="card-body pl-5">
 
     <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "pgpartix_output.sql"</span><br/>
 <span class="description">Template for generating the output file name.</span>
 
-    
-
-    <span class="pattern-value" id="lifecycle_output_file_template_pattern">Must match regular expression: <code>^\S+$</code></span>
+    <span class="pattern-value" id="lifecycle_output_file_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_output_file_template_minLength">Must be at least <code>1</code> characters long</span></p>
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_output_file_naming_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Examples:</div>
-<br/><div id="lifecycle_output_file_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">V{integer}__{description}.sql</span>
+<br/><div id="lifecycle_output_file_naming_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">V{integer}__{description}.sql</span>
 </pre></div>
-</div><div id="lifecycle_output_file_template_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">V{integer:3}__{description}.sql</span>
+</div><div id="lifecycle_output_file_naming_template_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">V{integer:3}__{description}.sql</span>
 </pre></div>
-</div><div id="lifecycle_output_file_template_ex3" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">timestamp</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">__{description}.sql</span>
+</div><div id="lifecycle_output_file_naming_template_ex3" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">timestamp</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">__{description}.sql</span>
 </pre></div>
-</div><div id="lifecycle_output_file_template_ex4" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">epoch</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">_{description}.up.sql</span>
+</div><div id="lifecycle_output_file_naming_template_ex4" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">epoch</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">_{description}.up.sql</span>
 </pre></div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+        </div>
+    </div>
 </div>
             </div>
         </div>
@@ -684,6 +764,32 @@
         
 
         
+<div class="accordion" id="accordionlifecycle_partition_default_create">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_partition_default_create">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_partition_default_create"
+                        aria-expanded="" aria-controls="lifecycle_partition_default_create" onclick="setAnchor('#lifecycle_partition_default_create')"><span class="property-name">create</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_partition_default_create"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_partition_default_create"
+             data-parent="#accordionlifecycle_partition_default_create">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
+<span class="description">Whether to create a DEFAULT partition when one does not already exist.</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
 <div class="accordion" id="accordionlifecycle_partition_default_naming">
     <div class="card">
         <div class="card-header" id="headinglifecycle_partition_default_naming">
@@ -722,7 +828,7 @@
              data-parent="#accordionlifecycle_partition_default_naming_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{parent_table_schema}__{parent_table_name}__default"</span><br/>
 <span class="description">Template for naming default partition.</span>
 
     <span class="pattern-value" id="lifecycle_partition_default_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
@@ -1617,7 +1723,7 @@
             <div class="card-body pl-5">
 
     <span class="badge badge-dark value-type">Type: object</span><br/>
-<span class="description">A description of the partition lifecycle, available for use as {description} in output_file_template.</span>
+<span class="description">A description of the partition lifecycle, available for use as {description} in output.file.naming.template.</span>
 
      <span class="badge badge-info no-additional">No Additional Properties</span>
         
@@ -1686,41 +1792,121 @@
         </div>
     </div>
 </div>
-<div class="accordion" id="accordionlifecycle_tables_items_output_file_template">
+<div class="accordion" id="accordionlifecycle_tables_items_output">
     <div class="card">
-        <div class="card-header" id="headinglifecycle_tables_items_output_file_template">
+        <div class="card-header" id="headinglifecycle_tables_items_output">
             <h2 class="mb-0">
-                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_output_file_template"
-                        aria-expanded="" aria-controls="lifecycle_tables_items_output_file_template" onclick="setAnchor('#lifecycle_tables_items_output_file_template')"><span class="property-name">output_file_template</span></button>
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_output"
+                        aria-expanded="" aria-controls="lifecycle_tables_items_output" onclick="setAnchor('#lifecycle_tables_items_output')"><span class="property-name">output</span></button>
             </h2>
         </div>
 
-        <div id="lifecycle_tables_items_output_file_template"
-             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_output_file_template"
-             data-parent="#accordionlifecycle_tables_items_output_file_template">
+        <div id="lifecycle_tables_items_output"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_output"
+             data-parent="#accordionlifecycle_tables_items_output">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: object</span><br/>
+<span class="description">Output configuration.</span>
+
+     <span class="badge badge-info no-additional">No Additional Properties</span>
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordionlifecycle_tables_items_output_file">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_tables_items_output_file">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_output_file"
+                        aria-expanded="" aria-controls="lifecycle_tables_items_output_file" onclick="setAnchor('#lifecycle_tables_items_output_file')"><span class="property-name">file</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_tables_items_output_file"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_output_file"
+             data-parent="#accordionlifecycle_tables_items_output_file">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: object</span><br/>
+<span class="description">Output file configuration.</span> <span class="badge badge-info no-additional">No Additional Properties</span>
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordionlifecycle_tables_items_output_file_naming">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_tables_items_output_file_naming">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_output_file_naming"
+                        aria-expanded="" aria-controls="lifecycle_tables_items_output_file_naming" onclick="setAnchor('#lifecycle_tables_items_output_file_naming')"><span class="property-name">naming</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_tables_items_output_file_naming"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_output_file_naming"
+             data-parent="#accordionlifecycle_tables_items_output_file_naming">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: object</span><br/>
+<span class="description">Output file naming configuration.</span>
+
+     <span class="badge badge-info no-additional">No Additional Properties</span>
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordionlifecycle_tables_items_output_file_naming_template">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_tables_items_output_file_naming_template">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_output_file_naming_template"
+                        aria-expanded="" aria-controls="lifecycle_tables_items_output_file_naming_template" onclick="setAnchor('#lifecycle_tables_items_output_file_naming_template')"><span class="property-name">template</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_tables_items_output_file_naming_template"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_output_file_naming_template"
+             data-parent="#accordionlifecycle_tables_items_output_file_naming_template">
             <div class="card-body pl-5">
 
     <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "pgpartix_output.sql"</span><br/>
 <span class="description">Template for generating the output file name.</span>
 
-    
-
-    <span class="pattern-value" id="lifecycle_tables_items_output_file_template_pattern">Must match regular expression: <code>^\S+$</code></span>
+    <span class="pattern-value" id="lifecycle_tables_items_output_file_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
         
 
         
-        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_output_file_template_minLength">Must be at least <code>1</code> characters long</span></p>
+        <p><span class="badge badge-light restriction min-length-restriction" id="lifecycle_tables_items_output_file_naming_template_minLength">Must be at least <code>1</code> characters long</span></p>
 
         <br/>
 <div class="badge badge-secondary">Examples:</div>
-<br/><div id="lifecycle_tables_items_output_file_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">V{integer}__{description}.sql</span>
+<br/><div id="lifecycle_tables_items_output_file_naming_template_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">V{integer}__{description}.sql</span>
 </pre></div>
-</div><div id="lifecycle_tables_items_output_file_template_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">V{integer:3}__{description}.sql</span>
+</div><div id="lifecycle_tables_items_output_file_naming_template_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">V{integer:3}__{description}.sql</span>
 </pre></div>
-</div><div id="lifecycle_tables_items_output_file_template_ex3" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">timestamp</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">__{description}.sql</span>
+</div><div id="lifecycle_tables_items_output_file_naming_template_ex3" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">timestamp</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">__{description}.sql</span>
 </pre></div>
-</div><div id="lifecycle_tables_items_output_file_template_ex4" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">epoch</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">_{description}.up.sql</span>
+</div><div id="lifecycle_tables_items_output_file_naming_template_ex4" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="p p-Indicator">{</span><span class="nv">epoch</span><span class="p p-Indicator">}</span><span class="l l-Scalar l-Scalar-Plain">_{description}.up.sql</span>
 </pre></div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+        </div>
+    </div>
 </div>
             </div>
         </div>
@@ -2176,6 +2362,32 @@
         
 
         
+<div class="accordion" id="accordionlifecycle_tables_items_partition_default_create">
+    <div class="card">
+        <div class="card-header" id="headinglifecycle_tables_items_partition_default_create">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#lifecycle_tables_items_partition_default_create"
+                        aria-expanded="" aria-controls="lifecycle_tables_items_partition_default_create" onclick="setAnchor('#lifecycle_tables_items_partition_default_create')"><span class="property-name">create</span></button>
+            </h2>
+        </div>
+
+        <div id="lifecycle_tables_items_partition_default_create"
+             class="collapse property-definition-div" aria-labelledby="headinglifecycle_tables_items_partition_default_create"
+             data-parent="#accordionlifecycle_tables_items_partition_default_create">
+            <div class="card-body pl-5">
+
+    <span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
+<span class="description">Whether to create a DEFAULT partition when one does not already exist.</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
 <div class="accordion" id="accordionlifecycle_tables_items_partition_default_naming">
     <div class="card">
         <div class="card-header" id="headinglifecycle_tables_items_partition_default_naming">
@@ -2214,7 +2426,7 @@
              data-parent="#accordionlifecycle_tables_items_partition_default_naming_template">
             <div class="card-body pl-5">
 
-    <span class="badge badge-dark value-type">Type: string</span><br/>
+    <span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "{parent_table_schema}__{parent_table_name}__default"</span><br/>
 <span class="description">Template for naming default partition.</span>
 
     <span class="pattern-value" id="lifecycle_tables_items_partition_default_naming_template_pattern">Must match regular expression: <code>^\S+$</code></span>
