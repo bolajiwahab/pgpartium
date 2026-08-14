@@ -102,7 +102,7 @@ jobs:
     timeout-minutes: 30
 
     container:
-      image: ghcr.io/bolajiwahab/pgpartix:0.8.0
+      image: ghcr.io/bolajiwahab/pgpartix:0.9.0
       # See "Running as root" below.
       options: --user root
 

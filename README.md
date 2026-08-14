@@ -55,7 +55,7 @@ pgpartix stops at generated migration files. How those files are committed, revi
 Pull the image:
 
 ```bash
-docker pull ghcr.io/bolajiwahab/pgpartix:0.8.0
+docker pull ghcr.io/bolajiwahab/pgpartix:0.9.0
 ```
 
 Then run the checked-in [quick-start example](examples/quick-start), which creates an ephemeral PostgreSQL cluster, loads a partitioned table, and generates both creation and expiration migrations:
@@ -65,7 +65,7 @@ docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_INIT_DIR=examples/quick-start/initdir \
-  ghcr.io/bolajiwahab/pgpartix:0.8.0 \
+  ghcr.io/bolajiwahab/pgpartix:0.9.0 \
   bash -lc '
     pgp-start &&
     pgp-run-lifecycle -c examples/quick-start/partition-lifecycle.yaml
@@ -80,11 +80,11 @@ See [Getting started](docs/docs/getting-started.md) for external database mode, 
 
 The [documentation index](docs/docs/README.md) routes each task to a focused guide:
 
-- [Getting started](docs/docs/getting-started.md) — installation, catalog setup, and first generation.
-- [Configuration reference](docs/docs/configuration.md) — all creation, expiration, naming, template, storage, and override options.
-- [Optional GitHub Actions automation](docs/docs/github-actions.md) — GitHub App setup, short-lived tokens, scheduling, PR reconciliation, security, and troubleshooting.
-- [CLI reference](docs/docs/cli-reference.md) — commands, environment variables, examples, and exit behavior.
-- [Annotated configuration](config.sample.yaml) — a complete example using the current schema.
+- [Getting started](docs/docs/getting-started.md) - installation, catalog setup, and first generation.
+- [Configuration reference](docs/docs/configuration.md) - all creation, expiration, naming, template, storage, and override options.
+- [Optional GitHub Actions automation](docs/docs/github-actions.md) - GitHub App setup, short-lived tokens, scheduling, PR reconciliation, security, and troubleshooting.
+- [CLI reference](docs/docs/cli-reference.md) - commands, environment variables, examples, and exit behavior.
+- [Annotated configuration](config.sample.yaml) - a complete example using the current schema.
 - [Generated JSON Schema reference](https://bolajiwahab.github.io/pgpartix/schema.html).
 
 ## Included commands

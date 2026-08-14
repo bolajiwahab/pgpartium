@@ -15,7 +15,7 @@ The packaged container supplies PostgreSQL setup utilities, the pgpartix CLIs, p
 ## Install the image
 
 ```bash
-docker pull ghcr.io/bolajiwahab/pgpartix:0.8.0
+docker pull ghcr.io/bolajiwahab/pgpartix:0.9.0
 ```
 
 The container starts as an unprivileged user. `pgp-start` uses passwordless `sudo` internally for the steps that install the requested PostgreSQL packages and create a local cluster, so it does not need to be run as root.
@@ -40,7 +40,7 @@ docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_INIT_DIR=examples/quick-start/initdir \
-  ghcr.io/bolajiwahab/pgpartix:0.8.0 \
+  ghcr.io/bolajiwahab/pgpartix:0.9.0 \
   bash -lc '
     pgp-start &&
     pgp-run-lifecycle -c examples/quick-start/partition-lifecycle.yaml
@@ -86,7 +86,7 @@ docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_INIT_DIR=migrations/initdir \
-  ghcr.io/bolajiwahab/pgpartix:0.8.0 \
+  ghcr.io/bolajiwahab/pgpartix:0.9.0 \
   bash -lc '
     pgp-start &&
     pgp-run-lifecycle -c partition-lifecycle.yaml
@@ -110,7 +110,7 @@ docker run --rm \
   --env PGP_HOST="$PGP_HOST" \
   --env PGP_PORT="$PGP_PORT" \
   --env PGP_DATABASE="$PGP_DATABASE" \
-  ghcr.io/bolajiwahab/pgpartix:0.8.0 \
+  ghcr.io/bolajiwahab/pgpartix:0.9.0 \
   bash -lc '
     pgp-start &&
     pgp-run-lifecycle -c partition-lifecycle.yaml
