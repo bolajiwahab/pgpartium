@@ -8,8 +8,6 @@ services:
       target: test
     container_name: test
     tty: true
-    # volumes:
-    #   - ./coverage:/src/coverage
     environment:
       PGP_PG_MAJOR_VERSION: ${PGP_PG_MAJOR_VERSION:-17}
       PGP_INIT_DIR: ${PGP_INIT_DIR:-tests/fixtures/initdir}
