@@ -337,4 +337,4 @@ This gives local and automated runs useful partial progress without disguising f
 
 ## Complete example
 
-See [`config.sample.yaml`](../../config.sample.yaml) for a current, annotated configuration containing global defaults, table overrides, naming templates, storage behavior, template replication, and expiration modes. The schema is available at [schema](https://bolajiwahab.github.io/pgpartix/schema.html).
+See [`config.sample.yaml`](config.sample.yaml) for a current, annotated configuration containing global defaults, table overrides, naming templates, storage behavior, template replication, and expiration modes. The schema is available at [schema](schema.html).
