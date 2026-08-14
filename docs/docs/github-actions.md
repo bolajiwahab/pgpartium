@@ -98,7 +98,7 @@ jobs:
     timeout-minutes: 30
 
     container:
-      image: ghcr.io/bolajiwahab/pgpartix:0.5.0
+      image: ghcr.io/bolajiwahab/pgpartix:0.8.0
 
     env:
       PGP_INIT_DIR: migrations/initdir

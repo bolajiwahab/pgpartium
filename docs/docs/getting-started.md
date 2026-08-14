@@ -86,7 +86,7 @@ docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_INIT_DIR=migrations/initdir \
-  ghcr.io/bolajiwahab/pgpartix:0.5.0 \
+  ghcr.io/bolajiwahab/pgpartix:0.8.0 \
   bash -lc '
     pgp-start &&
     pgp-run-lifecycle -c partition-lifecycle.yaml
@@ -110,7 +110,7 @@ docker run --rm \
   --env PGP_HOST="$PGP_HOST" \
   --env PGP_PORT="$PGP_PORT" \
   --env PGP_DATABASE="$PGP_DATABASE" \
-  ghcr.io/bolajiwahab/pgpartix:0.5.0 \
+  ghcr.io/bolajiwahab/pgpartix:0.8.0 \
   bash -lc '
     pgp-start &&
     pgp-run-lifecycle -c partition-lifecycle.yaml

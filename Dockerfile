@@ -16,7 +16,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends gh \
     # Install yq
     && wget --quiet "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_amd64" --output-document=/usr/bin/yq \
-    && chmod +x /usr/bin/yq\
+    && chmod +x /usr/bin/yq \
     # Configure git, ensure it can operate on the mounted working directory,
     # and exclude the local formatting cache globally from commits.
     && git config --system --add safe.directory '*' \
