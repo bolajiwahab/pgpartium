@@ -94,7 +94,6 @@ jobs:
 
     container:
       image: ${{ inputs.image }}:${{ inputs.image_tag }}
-      options: --user root
 
     env:
       PGP_INIT_DIR: ${{ inputs.init_dir }}

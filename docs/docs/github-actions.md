@@ -99,7 +99,6 @@ jobs:
 
     container:
       image: ghcr.io/bolajiwahab/pgpartix:0.5.0
-      options: --user root
 
     env:
       PGP_INIT_DIR: migrations/initdir

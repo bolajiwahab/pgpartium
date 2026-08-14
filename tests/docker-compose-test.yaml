@@ -7,7 +7,6 @@ services:
       dockerfile: Dockerfile
       target: test
     container_name: test
-    user: root
     tty: true
     volumes:
       - ./coverage:/src/coverage

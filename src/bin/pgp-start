@@ -55,13 +55,13 @@ if (( pg_major_version < PGP_MIN_POSTGRES_VERSION )); then
 fi
 
 # Install PostgreSQL
-apt.postgresql.org.sh -i -v "${pg_major_version}"
+sudo apt.postgresql.org.sh -i -p -v "${pg_major_version}"
 
 if [[ -z ${NO_CLUSTER+yes} ]]; then
     echo "INFO: Creating PostgreSQL cluster ${PGP_CLUSTER_NAME} for PostgreSQL ${pg_major_version}"
 
     # shellcheck disable=SC2086 # Allow word splitting for additional options
-    pg_createcluster --start "${pg_major_version}" "${PGP_CLUSTER_NAME}" --port="${PGPORT:-5432}" ${PGP_CREATE_OPTIONS:-} -- -A trust
+    sudo pg_createcluster --start "${pg_major_version}" "${PGP_CLUSTER_NAME}" --port="${PGPORT:-5432}" ${PGP_CREATE_OPTIONS:-} -- -A trust
 
     # Ensure the provided init directory exists and is a directory
     if [[ -n "${init_dir}" && ! -d "${init_dir}" ]]; then
@@ -87,7 +87,7 @@ if [[ -z ${NO_CLUSTER+yes} ]]; then
                 *.sql)
                     psql --username=postgres \
                         --dbname=postgres \
-                        -v "ON_ERROR_STOP=1" \
+                        --variable "ON_ERROR_STOP=1" \
                         --quiet \
                         --no-psqlrc -f "${file}"
                     ;;
@@ -95,7 +95,7 @@ if [[ -z ${NO_CLUSTER+yes} ]]; then
                     gunzip -c "${file}" | psql \
                         --username=postgres \
                         --dbname=postgres \
-                        -v "ON_ERROR_STOP=1" \
+                        --variable "ON_ERROR_STOP=1" \
                         --quiet \
                         --no-psqlrc
                     ;;

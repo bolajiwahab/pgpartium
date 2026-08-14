@@ -344,9 +344,9 @@ EOF
                     --tuples-only \
                     --no-align \
                     --quiet \
-                    -v "ON_ERROR_STOP=1" \
-                    -v table_schema="${template_table_schema}" \
-                    -v table_name="${template_table_name}" \
+                    --variable "ON_ERROR_STOP=1" \
+                    --variable table_schema="${template_table_schema}" \
+                    --variable table_name="${template_table_name}" \
                     <<EOF
 SELECT pgpartix.table_exists(p_table_schema => :'table_schema', p_table_name => :'table_name');
 EOF
@@ -509,15 +509,15 @@ function expire_partitions() {
                  --tuples-only \
                  --no-align \
                  --quiet \
-                 -v "ON_ERROR_STOP=1" \
-                 -v table_schema="${table_schema}" \
-                 -v table_name="${table_name}" \
-                 -v retention="${retention}" \
-                 -v detach_only="${detach_only}" \
-                 -v detach_first="${detach_first}" \
-                 -v detach_concurrently="${detach_concurrently}" \
-                 -v idempotent="${idempotent}" \
-                 -v timezone="${timezone}" \
+                 --variable "ON_ERROR_STOP=1" \
+                 --variable table_schema="${table_schema}" \
+                 --variable table_name="${table_name}" \
+                 --variable retention="${retention}" \
+                 --variable detach_only="${detach_only}" \
+                 --variable detach_first="${detach_first}" \
+                 --variable detach_concurrently="${detach_concurrently}" \
+                 --variable idempotent="${idempotent}" \
+                 --variable timezone="${timezone}" \
                  --output="${table_output_file}" \
             2>"${error_file}" \
             <<EOF

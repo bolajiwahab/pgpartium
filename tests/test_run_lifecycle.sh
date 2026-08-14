@@ -54,7 +54,7 @@ function run_config_file() {
 
     if [[ -f "${setup_file}" ]]; then
         psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${setup_file}"
-        pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+        sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
     fi
 
     pgp-run-lifecycle -c "${config_file}"
@@ -114,7 +114,7 @@ function run_expire_config_directory() {
     trap 'cleanup_expire_config_directory "${fixture}" "${test_db}"' ERR INT TERM
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
-    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+    sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
 
     pgp-run-lifecycle -c "${fixture}/configs"
 
@@ -150,7 +150,7 @@ function run_expire_config_directory() {
 
     rm -f "${result}"
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
-    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+    sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
 
     run env \
         -u PGP_USER \
@@ -368,7 +368,7 @@ YAML
     local result="${fixture}/pgpartix_output.sql"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
-    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+    sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
 
     run pgp-run-lifecycle -c "${fixture}/config.yaml"
 
@@ -400,7 +400,7 @@ YAML
     chmod +x "${fake_bin}/pgrubic"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
-    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+    sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
 
     run env PATH="${fake_bin}:${PATH}" pgp-run-lifecycle -c "${fixture}/config.yaml"
 
@@ -432,7 +432,7 @@ YAML
     chmod +x "${fake_bin}/pgrubic"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
-    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+    sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
 
     run env PATH="${fake_bin}:${PATH}" pgp-run-lifecycle -c "${fixture}/config.yaml"
 
@@ -457,7 +457,7 @@ YAML
     local fixture="tests/fixtures/make_partitions/shared_output_file"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
-    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+    sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
 
     run run_config_directory "${fixture}"
 
@@ -482,7 +482,7 @@ YAML
     local test_db="pgpartix_expire_global_test_$$"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
-    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+    sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
 
     pgp-run-lifecycle -c "${fixture}/config.yaml"
 
@@ -504,7 +504,7 @@ YAML
     local run_status
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
-    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+    sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
 
     pgp-run-lifecycle -c "${fixture}/config.yaml"
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${result}"
@@ -525,7 +525,7 @@ YAML
     local run_status
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
-    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+    sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
 
     run pgp-run-lifecycle -c "${fixture}/config.yaml"
     run_status="${status}"
@@ -583,7 +583,7 @@ YAML
     local result="${fixture}/pgpartix_output.sql"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
-    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+    sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
 
     run pgp-run-lifecycle -c "${fixture}/now.yaml"
 
@@ -599,7 +599,7 @@ YAML
     local result="${fixture}/pgpartix_output.sql"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
-    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+    sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
 
     run pgp-run-lifecycle -c "${fixture}/now.yaml"
 
@@ -615,7 +615,7 @@ YAML
     local result="${fixture}/pgpartix_output.sql"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
-    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+    sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
 
     run pgp-run-lifecycle -c "${fixture}/value.yaml"
 
@@ -631,7 +631,7 @@ YAML
     local result="${fixture}/pgpartix_output.sql"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
-    pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+    sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
 
     run pgp-run-lifecycle -c "${fixture}/value.yaml"
 

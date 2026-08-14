@@ -61,7 +61,7 @@ docker pull ghcr.io/bolajiwahab/pgpartix:0.5.0
 Then run the checked-in [quick-start example](examples/quick-start), which creates an ephemeral PostgreSQL cluster, loads a partitioned table, and generates both creation and expiration migrations:
 
 ```bash
-docker run --rm --user root \
+docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_INIT_DIR=examples/quick-start/initdir \

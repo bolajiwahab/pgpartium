@@ -18,7 +18,7 @@ The packaged container supplies PostgreSQL setup utilities, the pgpartix CLIs, p
 docker pull ghcr.io/bolajiwahab/pgpartix:0.8.0
 ```
 
-The container starts as an unprivileged user. Run it as root when using `pgp-start`, because that command installs the requested PostgreSQL packages and may create a local cluster.
+The container starts as an unprivileged user. `pgp-start` uses passwordless `sudo` internally for the steps that install the requested PostgreSQL packages and create a local cluster, so it does not need to be run as root.
 
 ## Run the checked-in example
 
@@ -36,7 +36,7 @@ examples/quick-start
 From the repository root, run:
 
 ```bash
-docker run --rm --user root \
+docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_INIT_DIR=examples/quick-start/initdir \
@@ -82,7 +82,7 @@ Example repository layout:
 For an application repository, the equivalent command is:
 
 ```bash
-docker run --rm --user root \
+docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_INIT_DIR=migrations/initdir \
@@ -100,7 +100,7 @@ The generated SQL appears in `migrations/partitions` on the host.
 Use an existing non-production database when it is the authoritative representation of the schema. Install only the PostgreSQL client runtime, then supply connection settings:
 
 ```bash
-docker run --rm --user root \
+docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_PG_MAJOR_VERSION=17 \
