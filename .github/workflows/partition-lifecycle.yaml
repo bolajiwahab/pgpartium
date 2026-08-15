@@ -5,8 +5,8 @@ name: Partition lifecycle (reusable)
 on:  # yamllint disable-line rule:truthy
   workflow_call:
     inputs:
-      runner:
-        description: Runner selection
+      runs_on:
+        description: Runner to run the job on. Defaults to ubuntu-latest.
         required: false
         type: string
         default: ubuntu-latest
@@ -88,7 +88,7 @@ permissions:
 
 jobs:
   partition-lifecycle:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs_on }}
     timeout-minutes: 30
 
     # Do not let two runs (e.g. a schedule and a manual dispatch) rewrite the
