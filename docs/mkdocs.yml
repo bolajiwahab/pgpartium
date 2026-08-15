@@ -12,8 +12,8 @@ plugins:
 theme:
   variant: classic
   name: material
-  logo: assets/logo.png
-  favicon: assets/logo.png
+  logo: assets/favicon.svg
+  favicon: assets/favicon.svg
   features:
     - navigation.sections
     - navigation.indexes
