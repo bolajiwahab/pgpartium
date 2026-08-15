@@ -11,9 +11,8 @@ description: PostgreSQL partition lifecycle automation
 search_enabled: true
 nav_enabled: true
 gh_edit_link: true
-color_scheme: dark
 
-logo: "assets/pgpartix.png"
+# logo: "assets/pgpartix.png"
 favicon_ico: "assets/favicon.ico"
 
 relative_links:
