@@ -1,5 +1,6 @@
 ---
-remote_theme: just-the-docs/just-the-docs
+# remote_theme: just-the-docs/just-the-docs
+theme: jekyll-theme-primer
 
 plugins:
   - jekyll-remote-theme
