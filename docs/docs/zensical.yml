@@ -1,0 +1,11 @@
+---
+site:
+  name: pgpartix
+  description: Partition Lifecycle Management for PostgreSQL
+  url: https://bolajiwahab.github.io/pgpartix
+
+  favicon: favicon.ico
+  logo: assets/images/logo.png
+
+docs:
+  dir: docs
