@@ -1,0 +1,47 @@
+---
+# yamllint disable rule:line-length
+# Integration test for PGP_MODE=external: runs pgp-run-lifecycle against a
+# dedicated PostgreSQL container (not the ephemeral cluster pgp-start
+# manages), the way an application's own external database would be reached.
+#
+# Usage: ./tests/run-integration-test.sh
+services:
+  postgres:
+    image: postgres:${PGP_PG_MAJOR_VERSION:-17}
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - ../examples/quick-start/initdir:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  pgpartix:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: runtime
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGP_MODE: external
+      PGP_PG_MAJOR_VERSION: ${PGP_PG_MAJOR_VERSION:-17}
+      PGP_HOST: postgres
+      PGP_PORT: "5432"
+      PGP_USER: postgres
+      PGP_PASSWORD: postgres
+      PGP_DATABASE: postgres
+    volumes:
+      - ..:/repository
+    working_dir: /repository
+    command:
+      - bash
+      - -lc
+      - |
+        pgp-start &&
+        pgp-run-lifecycle -c examples/quick-start/partition-lifecycle.yaml

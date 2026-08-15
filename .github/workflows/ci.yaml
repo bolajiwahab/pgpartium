@@ -49,7 +49,16 @@ jobs:
 
       - name: Run tests
         run: |
-          PGP_PG_MAJOR_VERSION=${{ matrix.postgresql }} ./tests/run-tests.sh
+          PGP_PG_MAJOR_VERSION=${{ matrix.postgresql }} tests/run-tests.sh
+
+  integration-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Run integration test
+        run: tests/run-integration-test.sh
 
   ensure-up-to-date-schema-doc:
     runs-on: ubuntu-latest
