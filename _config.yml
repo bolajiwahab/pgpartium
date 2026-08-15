@@ -1,0 +1,13 @@
+---
+plugins:
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: true
+include:
+  - cli-reference.md
+  - index.md
+  - contributing.md
+  - configuration.md
+  - getting-started.md
+  - github-actions.md
