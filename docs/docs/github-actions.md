@@ -168,6 +168,38 @@ The [`actions/create-github-app-token`](https://github.com/actions/create-github
 
 Pin action references to commit SHAs if that is required by your supply-chain policy. Version tags are used above for readability.
 
+## Calling the reusable workflow directly
+
+The steps above are exactly what `.github/workflows/partition-lifecycle.yaml` in this repository implements as a reusable workflow. Instead of duplicating them, call it directly from a much smaller caller workflow:
+
+```yaml
+---
+name: Partition lifecycle
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 4 * * 1-5"
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  partition-lifecycle:
+    uses: bolajiwahab/pgpartix/.github/workflows/partition-lifecycle.yaml@main
+    with:
+      config: partition-lifecycle.yaml
+      image_tag: "0.9.0"
+      pg_major_version: "17"
+      init_dir: migrations/initdir
+      app_client_id: ${{ vars.PGPARTIX_APP_CLIENT_ID }}
+    secrets:
+      app_private_key: ${{ secrets.PGPARTIX_APP_PRIVATE_KEY }}
+```
+
+Pin `@main` to a release tag or commit SHA for reproducibility, matching the pinned `image_tag`. See the `inputs`/`secrets` block of [`partition-lifecycle.yaml`](https://github.com/bolajiwahab/pgpartix/blob/main/.github/workflows/partition-lifecycle.yaml) for the full list, including `mode` and the `db_*` external-database inputs, and `branch`/`title`/`commit_message` for customizing the automation branch and PR.
+
 ## Why generation uses `continue-on-error`
 
 pgpartix handles tables independently. If nine tables generate correctly and one fails, the nine valid outputs are published and the CLI exits `1` with the failed table's PostgreSQL error.

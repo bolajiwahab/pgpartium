@@ -5,6 +5,11 @@ name: Partition lifecycle (reusable)
 on:  # yamllint disable-line rule:truthy
   workflow_call:
     inputs:
+      runs_on:
+        description: Runner to run the job on. Defaults to ubuntu-latest.
+        required: false
+        type: string
+        default: ubuntu-latest
       config:
         description: Path to the pgpartix lifecycle configuration file or directory, relative to the checked-out repository.
         required: true
@@ -83,7 +88,7 @@ permissions:
 
 jobs:
   partition-lifecycle:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs_on }}
     timeout-minutes: 30
 
     # Do not let two runs (e.g. a schedule and a manual dispatch) rewrite the
@@ -133,7 +138,6 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
-          persist-credentials: false
 
       - name: Start PostgreSQL and load the application schema
         id: start
