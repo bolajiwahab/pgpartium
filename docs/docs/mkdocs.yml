@@ -1,4 +1,11 @@
 ---
+site_name: pgpartix
+site_description: Partition Lifecycle Management for PostgreSQL
+site_url: https://bolajiwahab.github.io/pgpartix
+
+repo_url: https://github.com/bolajiwahab/pgpartix
+repo_name: pgpartix
+
 site:
   name: pgpartix
   description: Partition Lifecycle Management for PostgreSQL
