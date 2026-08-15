@@ -9,6 +9,9 @@ title: pgpartix
 description: PostgreSQL partition lifecycle automation
 
 search_enabled: true
+nav_enabled: true
+gh_edit_link: true
+color_scheme: dark
 
 relative_links:
   enabled: true
