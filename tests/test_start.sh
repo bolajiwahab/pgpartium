@@ -41,6 +41,47 @@ source "${BATS_TEST_DIRNAME}/conftest.sh"
     grep -Fq -- "--start 14 pgpartix --port=5432" "${cluster_marker}"
 }
 
+@test "pgp-start rejects unknown options" {
+    run pgp-start -z
+
+    [ "${status}" -eq 2 ]
+    grep -Fq "Installs major PostgreSQL version" <<< "${output}"
+}
+
+@test "pgp-start supports external database mode" {
+    local stub_directory="${BATS_TEST_TMPDIR}/bin"
+    local cluster_marker="${BATS_TEST_TMPDIR}/cluster.marker"
+
+    mkdir -p "${stub_directory}"
+    printf '#!/bin/bash\nexit 0\n' > "${stub_directory}/apt.postgresql.org.sh"
+    printf "#!/bin/bash\nprintf '%%s' \"\$*\" > \"\${CLUSTER_MARKER}\"\n" > "${stub_directory}/pg_createcluster"
+    chmod +x "${stub_directory}/apt.postgresql.org.sh" "${stub_directory}/pg_createcluster"
+
+    run env \
+        PATH="${stub_directory}:${PATH}" \
+        CLUSTER_MARKER="${cluster_marker}" \
+        pgp-start -m external
+
+    [ "${status}" -eq 0 ]
+    grep -Fq "INFO: Using external PostgreSQL database" <<< "${output}"
+    [ ! -e "${cluster_marker}" ]
+}
+
+@test "pgp-start rejects an invalid mode" {
+    local stub_directory="${BATS_TEST_TMPDIR}/bin"
+
+    mkdir -p "${stub_directory}"
+    printf '#!/bin/bash\nexit 0\n' > "${stub_directory}/apt.postgresql.org.sh"
+    chmod +x "${stub_directory}/apt.postgresql.org.sh"
+
+    run env \
+        PATH="${stub_directory}:${PATH}" \
+        pgp-start -m bogus
+
+    [ "${status}" -eq 2 ]
+    grep -Fq "Invalid PGP_MODE 'bogus'" <<< "${output}"
+}
+
 @test "pgp-start rejects unsupported PostgreSQL versions" {
     run pgp-start -v 13
 

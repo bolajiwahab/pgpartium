@@ -24,32 +24,32 @@ target_dir="."
 
 while getopts "C:b:t:m:n:e:h" option; do
     case "${option}" in
-    C)
-        target_dir="${OPTARG}"
-        ;;
-    b)
-        branch="${OPTARG}"
-        ;;
-    t)
-        title="${OPTARG}"
-        ;;
-    m)
-        commit_msg="${OPTARG}"
-        ;;
-    n)
-        committer_name="${OPTARG}"
-        ;;
-    e)
-        committer_email="${OPTARG}"
-        ;;
-    h)
-        usage
-        exit 0
-        ;;
-    *)
-        usage >&2
-        exit 2
-        ;;
+        C)
+            target_dir="${OPTARG}"
+            ;;
+        b)
+            branch="${OPTARG}"
+            ;;
+        t)
+            title="${OPTARG}"
+            ;;
+        m)
+            commit_msg="${OPTARG}"
+            ;;
+        n)
+            committer_name="${OPTARG}"
+            ;;
+        e)
+            committer_email="${OPTARG}"
+            ;;
+        h)
+            usage
+            exit 0
+            ;;
+        *)
+            usage >&2
+            exit 2
+            ;;
     esac
 done
 

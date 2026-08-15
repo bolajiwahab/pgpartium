@@ -213,7 +213,7 @@ When an authoritative non-production catalog is already available, install the P
       # App token and checkout steps omitted here.
       - name: Install PostgreSQL client runtime
         env:
-          NO_CLUSTER: 1
+          PGP_MODE: external
         run: pgp-start
 
       - name: Generate lifecycle migrations
