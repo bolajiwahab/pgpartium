@@ -11,6 +11,9 @@ on:  # yamllint disable-line rule:truthy
       - "[0-9]+.[0-9]+.[0-9]+b[0-9]+"
       - "[0-9]+.[0-9]+.[0-9]+rc[0-9]+"
 
+env:
+  DEFAULT_PYTHON_VERSION: 3.12
+
 permissions:
   contents: read
   pages: write
@@ -22,25 +25,46 @@ jobs:
       name: github-pages
     runs-on: ubuntu-latest
     steps:
+      # - name: Checkout repository
+      #   uses: actions/checkout@v7
+
+      # - name: Configure Git Credentials
+      #   run: |
+      #     git config user.name github-actions[bot]
+      #     git config user.email github-actions[bot]@users.noreply.github.com
+
+      # - name: Setup Pages
+      #   uses: actions/configure-pages@v6
+
+      # - name: Build with Jekyll
+      #   uses: actions/jekyll-build-pages@v1.0.13
+      #   with:
+      #     source: docs/docs
+
+      # - name: Upload artifact
+      #   uses: actions/upload-pages-artifact@v5
+
+      # - name: Deploy to GitHub Pages
+      #   id: deployment
+      #   uses: actions/deploy-pages@v5
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
       - name: Checkout repository
         uses: actions/checkout@v7
-
-      - name: Configure Git Credentials
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email github-actions[bot]@users.noreply.github.com
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v6
-
-      - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1.0.13
+      - name: Set up Python
+        uses: actions/setup-python@v7
         with:
-          source: docs/docs
-
-      - name: Upload artifact
+          python-version: ${{ env.DEFAULT_PYTHON_VERSION }}
+      - name: Install dependencies
+        run: pip install --no-cache-dir --upgrade pip zensical
+      - name: Build site
+        working-directory: ./docs
+        run: zensical build --clean
+      - name: Upload site artifact
         uses: actions/upload-pages-artifact@v5
-
+        with:
+          path: docs/site
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v5
+        id: deployment
