@@ -75,6 +75,7 @@ The current official token action uses the Client ID, which is distinct from the
 ## Complete scheduled workflow
 
 Create `.github/workflows/partition-lifecycle.yaml`:
+{% raw %}
 
 ```yaml
 ---
@@ -163,6 +164,8 @@ jobs:
           echo "One or more partition tables failed generation" >&2
           exit 1
 ```
+
+{% endraw %}
 
 The [`actions/create-github-app-token`](https://github.com/actions/create-github-app-token) action creates a short-lived installation token, masks it, and revokes it when the job completes. `actions/checkout` stores that token for HTTPS Git operations, while `GH_TOKEN` lets `gh pr` use the same App identity.
 
