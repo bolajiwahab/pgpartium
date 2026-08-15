@@ -15,3 +15,5 @@ lifecycle:
     - schema: public
       name: transactions
       idempotent: true
+    - schema: public
+      name: loan

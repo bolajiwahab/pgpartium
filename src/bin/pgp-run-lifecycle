@@ -24,17 +24,17 @@ EOF
 
 while getopts "c:h" option; do
     case "${option}" in
-    c)
-        config_path="${OPTARG}"
-        ;;
-    h)
-        usage
-        exit 0
-        ;;
-    *)
-        usage >&2
-        exit 2
-        ;;
+        c)
+            config_path="${OPTARG}"
+            ;;
+        h)
+            usage
+            exit 0
+            ;;
+        *)
+            usage >&2
+            exit 2
+            ;;
     esac
 done
 
@@ -102,13 +102,6 @@ function make_partitions() {
         description="${description//\{parent_table_schema\}/$table_schema}"
         description="${description//\{parent_table_name\}/$table_name}"
 
-        partition_schema="$(yq '.partition.schema // strenv(GLOBAL_PARTITION_SCHEMA)' <<< "${table}")"
-        # If no schema is provided either in the partition config or in the global config, default to table schema.
-        if [[ "${partition_schema}" == "null" ]]; then
-            echo "INFO: Partition schema not provided. Defaulting to table schema '${table_schema}'"
-            partition_schema="${table_schema}"
-        fi
-
         partition_interval="$(yq '.partition.interval // strenv(GLOBAL_INTERVAL)' <<< "${table}")"
         partition_name_template="$(yq '.partition.naming.template // strenv(GLOBAL_PARTITION_NAME_TEMPLATE)' <<< "${table}")"
 
@@ -168,6 +161,13 @@ function make_partitions() {
         output_filename="$(pgp-get-migration-filename -t "${output_file_template}" -d "${temp_migration_directory}" -m "${description}")"
 
         echo "INFO: Making partitions for ${table_schema}.${table_name}"
+
+        partition_schema="$(yq '.partition.schema // strenv(GLOBAL_PARTITION_SCHEMA)' <<< "${table}")"
+        # If no schema is provided either in the partition config or in the global config, default to table schema.
+        if [[ "${partition_schema}" == "null" ]]; then
+            echo "INFO: Partition schema not provided. Defaulting to parent schema '${table_schema}'"
+            partition_schema="${table_schema}"
+        fi
 
         partition_start_timestamp="$(yq '.partition.start_timestamp // strenv(GLOBAL_START_TIMESTAMP)' <<< "${table}")"
 
