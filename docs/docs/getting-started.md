@@ -1,3 +1,8 @@
+---
+title: Getting started
+nav_order: 2
+---
+
 # Getting started
 
 pgpartix inspects a PostgreSQL database and writes migration files for missing and expired partitions. It does not apply those lifecycle migrations to the source database. The intended output is a repository change reviewed and deployed through the application's existing migration process.

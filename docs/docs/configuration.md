@@ -1,3 +1,8 @@
+---
+title: Configuration reference
+nav_order: 3
+---
+
 # Configuration reference
 
 pgpartix reads one YAML file or every `.yaml` and `.yml` file in a directory. The same configuration drives both phases of the lifecycle, run by a single command, `pgp-run-lifecycle`:
