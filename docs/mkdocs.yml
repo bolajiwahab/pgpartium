@@ -1,0 +1,113 @@
+---
+site_name: pgpartix
+site_description: Partition Lifecycle Management for PostgreSQL
+site_url: https://bolajiwahab.github.io/pgpartix
+
+repo_url: https://github.com/bolajiwahab/pgpartix
+repo_name: pgpartix
+
+plugins:
+  - search
+
+theme:
+  variant: classic
+  name: material
+  logo: assets/favicon.svg
+  favicon: assets/favicon.svg
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.expand
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.footer
+    - toc.integrate
+    - toc.follow
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+  hide:
+    - toc
+  icon:
+    repo: fontawesome/brands/git-alt
+  language: en
+  palette:
+
+    - media: "(prefers-color-scheme)"
+      scheme: default
+      toggle:
+        icon: material/lightbulb-auto
+        name: Switch to light mode
+      primary: teal
+      accent: blue
+
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+      primary: teal
+      accent: blue
+
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to system preference
+      primary: teal
+      accent: blue
+
+markdown_extensions:
+  - toc:
+      permalink: "#"
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.arithmatex:
+      generic: true
+  - footnotes
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.mark
+  - attr_list
+
+nav:
+  - Introduction: index.md
+  - Getting started: getting-started.md
+  - Configuration: configuration.md
+  - Github Actions: github-actions.md
+  - Annotated configuration: config.sample.yaml
+  - Schema reference: schema.html
+  - Command line reference: cli-reference.md
+  - Contributing: contributing.md
+  - License: license.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/bolajiwahab
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/wahab-bolaji
+    - icon: fontawesome/brands/dev
+      link: https://dev.to/bolajiwahab
+
+extra_css:
+  - css/extra.css
+
+# site:
+#   name: pgpartix
+#   description: Partition Lifecycle Management for PostgreSQL
+#   url: https://bolajiwahab.github.io/pgpartix
+
+#   favicon: favicon.ico
+#   logo: assets/images/logo.png
+
+# docs:
+#   dir: docs
