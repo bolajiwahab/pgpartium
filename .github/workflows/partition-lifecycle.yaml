@@ -5,6 +5,11 @@ name: Partition lifecycle (reusable)
 on:  # yamllint disable-line rule:truthy
   workflow_call:
     inputs:
+      runner:
+        description: Runner selection
+        required: false
+        type: string
+        default: ubuntu-latest
       config:
         description: Path to the pgpartix lifecycle configuration file or directory, relative to the checked-out repository.
         required: true
