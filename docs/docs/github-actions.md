@@ -1,8 +1,3 @@
----
-title: Automating lifecycle PRs with GitHub Actions
-nav_order: 4
----
-
 # Automating lifecycle PRs with GitHub Actions
 
 GitHub Actions is an optional convenience integration for teams that want a Dependabot- or Renovate-like experience. The core pgpartix workflow ends after generating deterministic migration files; those files can instead be reviewed and committed locally, published by another CI/CD provider, or scheduled from a VM or other infrastructure.
