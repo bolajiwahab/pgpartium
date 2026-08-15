@@ -13,8 +13,8 @@ nav_enabled: true
 gh_edit_link: true
 color_scheme: dark
 
-logo: "assets/favicon.svg"
-favicon_ico: "assets/favicon.svg"
+# logo: "assets/favicon.svg"
+favicon_ico: "assets/favicon.ico"
 
 relative_links:
   enabled: true
