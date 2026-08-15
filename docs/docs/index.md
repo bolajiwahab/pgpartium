@@ -1,4 +1,6 @@
-# pgpartix documentation
+---
+title: pgpartix documentation
+---
 
 pgpartix generates reviewable PostgreSQL partition-lifecycle migrations. Users can commit them locally, integrate them with any CI/CD or scheduling environment, or use the optional GitHub pull-request helper.
 
