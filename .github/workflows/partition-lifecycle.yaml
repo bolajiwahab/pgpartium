@@ -133,7 +133,6 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
-          persist-credentials: false
 
       - name: Start PostgreSQL and load the application schema
         id: start
