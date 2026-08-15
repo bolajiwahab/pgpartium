@@ -31,7 +31,7 @@ services:
     # The image runs as a non-root user by default. /repository is a bind
     # mount of the host directory, owned by whatever user checked it out (the
     # CI runner's own user, or the local developer) - not the image's
-    # pgpuser - so writes like pgrubic's .pgrubic_cache need root here.
+    # pgpuser - so writes need root here.
     user: root
     environment:
       PGP_MODE: external
