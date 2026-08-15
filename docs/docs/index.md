@@ -25,5 +25,3 @@ Each guide has one purpose:
 | [Configuration](configuration.md) | You need to understand or change lifecycle behavior. |
 | [GitHub Actions](github-actions.md) | You want the optional scheduled GitHub PR workflow. |
 | [CLI reference](cli-reference.md) | You need command syntax, environment requirements, or failure semantics. |
-
-The project [README](../../README.md) remains a concise overview and entry point.

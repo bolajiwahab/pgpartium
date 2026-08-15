@@ -1,6 +1,15 @@
 ---
+remote_theme: just-the-docs/just-the-docs
+
 plugins:
+  - jekyll-remote-theme
   - jekyll-relative-links
+
+title: pgpartix
+description: PostgreSQL partition lifecycle automation
+
+search_enabled: true
+
 relative_links:
   enabled: true
   collections: true
