@@ -6,13 +6,13 @@ site_url: https://bolajiwahab.github.io/pgpartix
 repo_url: https://github.com/bolajiwahab/pgpartix
 repo_name: pgpartix
 
-site:
-  name: pgpartix
-  description: Partition Lifecycle Management for PostgreSQL
-  url: https://bolajiwahab.github.io/pgpartix
+# site:
+#   name: pgpartix
+#   description: Partition Lifecycle Management for PostgreSQL
+#   url: https://bolajiwahab.github.io/pgpartix
 
-  favicon: favicon.ico
-  logo: assets/images/logo.png
+#   favicon: favicon.ico
+#   logo: assets/images/logo.png
 
-docs:
-  dir: docs
+# docs:
+#   dir: docs
