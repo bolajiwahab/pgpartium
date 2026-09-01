@@ -1,6 +1,6 @@
 # Automating lifecycle PRs with GitHub Actions
 
-GitHub Actions is an optional convenience integration for teams that want a Dependabot- or Renovate-like experience. The core pgpartix workflow ends after generating deterministic migration files; those files can instead be reviewed and committed locally, published by another CI/CD provider, or scheduled from a VM or other infrastructure.
+GitHub Actions can provide a Dependabot- or Renovate-like workflow. Other CI systems or scheduled hosts can publish the same generated migrations.
 
 For the GitHub Actions integration:
 
@@ -10,7 +10,7 @@ For the GitHub Actions integration:
 4. `pgp-gh-create-pr` creates or refreshes one dedicated lifecycle pull request.
 5. The repository's normal SQL linting, migration validation, review, approval, and deployment process handles the change.
 
-The workflow does not silently mutate production. It turns generated lifecycle DDL into a reviewable GitHub pull request, while the repository's normal controls decide when the migration is deployed.
+The workflow creates a reviewable PR; the repository's normal controls decide when to deploy it.
 
 ## Why the image includes `gh`
 

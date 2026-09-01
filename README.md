@@ -8,15 +8,13 @@
 
 pgpartix is a PostgreSQL partition-lifecycle migration generator. It inspects a PostgreSQL database and writes migrations for partitions that should be created or expired.
 
-pgpartix can be used:
+Run it:
 
 - locally, with generated migration files reviewed and committed by the developer;
 - from an existing CI/CD system;
 - from a scheduled process on any machine that can reach the database and repository.
 
-The bundled GitHub helper optionally provides a Dependabot- or Renovate-like pull-request experience.
-
-pgpartix only writes migration files. It never applies the generated migrations to a database.
+The optional GitHub helper provides a Dependabot- or Renovate-like pull-request workflow. pgpartix writes migrations but never applies them.
 
 ## What it provides
 
@@ -30,6 +28,10 @@ pgpartix only writes migration files. It never applies the generated migrations 
 - Optional GitHub PR reconciliation through the bundled `gh` CLI.
 - Support for dedicated, least-privileged GitHub App authentication when that integration is used.
 - PostgreSQL 14 and newer.
+
+## Getting Started
+
+For more, see the [documentation](https://pgpartix.azellar.com).
 
 ## How it works
 
@@ -51,14 +53,12 @@ missing future partitions   expired partitions
             review and deploy
 ```
 
-pgpartix stops at generated migration files. How those files are committed, reviewed, and deployed remains under the user's repository and infrastructure controls.
-
 ## Quick start
 
 Pull the image:
 
 ```bash
-docker pull ghcr.io/bolajiwahab/pgpartix:0.9.0
+docker pull ghcr.io/bolajiwahab/pgpartix:latest
 ```
 
 Then run the checked-in [quick-start example](examples/quick-start), which creates an ephemeral PostgreSQL cluster, loads a partitioned table, and generates both creation and expiration migrations:
@@ -77,18 +77,7 @@ docker run --rm \
 
 `pgp-start` defaults to PostgreSQL 14 and supplies the local cluster connection settings. The only database setup input in this example is the initialization directory. It can contain `.sql`, `.sql.gz`, and `.sh` files, including scripts that invoke the application's existing schema or migration tooling. `--workdir /repository` is required because the image otherwise runs from `/src`, while the configuration and output paths are relative to the mounted repository. Generated SQL is written to `examples/quick-start/migrations/pgpartix_output.sql`; apply generated lifecycle migrations only through the application's normal migration process.
 
-See [Getting started](docs/docs/getting-started.md) for external database mode, prerequisites, and output validation.
-
-## Documentation
-
-The [documentation index](docs/docs/README.md) routes each task to a focused guide:
-
-- [Getting started](docs/docs/getting-started.md) - installation, catalog setup, and first generation.
-- [Configuration reference](docs/docs/configuration.md) - all creation, expiration, naming, template, storage, and override options.
-- [Optional GitHub Actions automation](docs/docs/github-actions.md) - GitHub App setup, short-lived tokens, scheduling, PR reconciliation, security, and troubleshooting.
-- [CLI reference](docs/docs/cli-reference.md) - commands, environment variables, examples, and exit behavior.
-- [Annotated configuration](config.sample.yaml) - a complete example using the current schema.
-- [Generated JSON Schema reference](https://bolajiwahab.github.io/pgpartix/schema.html).
+See [Getting started](docs/docs/getting-started.md) for prerequisites, external database mode, and output validation.
 
 ## Included commands
 
