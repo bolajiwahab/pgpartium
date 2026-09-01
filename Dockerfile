@@ -1,6 +1,8 @@
 FROM python:3.14-slim-bookworm@sha256:23c59390fc717bf09f9336908199a0ae75d9c4264bf296123f94ad772fea3b52 AS build
 
+# renovate: datasource=github-releases depName=mikefarah/yq
 ARG YQ_VERSION=4.45.1
+ARG YQ_PLATFORM=linux_amd64
 
 ENV LC_ALL=C.UTF-8 LANG=C.UTF-8
 
@@ -15,7 +17,7 @@ RUN apt-get update \
     && apt-get update \
     && apt-get install -y --no-install-recommends gh \
     # Install yq
-    && wget --quiet "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_amd64" --output-document=/usr/bin/yq \
+    && wget --quiet "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_${YQ_PLATFORM}" --output-document=/usr/bin/yq \
     && chmod +x /usr/bin/yq \
     # Configure git, ensure it can operate on the mounted working directory,
     # and exclude the local formatting cache globally from commits.
