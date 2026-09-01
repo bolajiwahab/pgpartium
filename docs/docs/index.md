@@ -17,6 +17,6 @@ pgpartix generates reviewable PostgreSQL partition-lifecycle migrations. Users c
 ## Reference
 
 - [CLI reference](cli-reference.md) - commands, environment variables, exit behavior, and examples.
-- [Annotated configuration](config.sample.yaml) - a complete configuration using the current schema.
-- [Generated JSON Schema reference](schema.html) - machine-derived option documentation.
+- [Annotated configuration sample](config.sample.yaml) - a complete configuration using the current schema.
+- [Schema reference](schema.html) - current schema.
 - [Contributing](contributing.md) - development environment, testing, and contribution workflow.
