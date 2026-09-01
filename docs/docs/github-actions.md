@@ -102,7 +102,7 @@ jobs:
     timeout-minutes: 30
 
     container:
-      image: ghcr.io/bolajiwahab/pgpartix:0.9.0
+      image: ghcr.io/bolajiwahab/pgpartix:latest
       # See "Running as root" below.
       options: --user root
 
@@ -190,7 +190,7 @@ jobs:
     uses: bolajiwahab/pgpartix/.github/workflows/partition-lifecycle.yaml@main
     with:
       config: partition-lifecycle.yaml
-      image_tag: "0.9.0"
+      image_tag: "latest"
       pg_major_version: "17"
       init_dir: migrations/initdir
       app_client_id: ${{ vars.PGPARTIX_APP_CLIENT_ID }}
