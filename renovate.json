@@ -2,5 +2,38 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+ARG YQ_VERSION=(?<currentValue>\\S+)"
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Group dependencies declared in Dockerfiles",
+      "matchManagers": [
+        "dockerfile",
+        "custom.regex"
+      ],
+      "matchFileNames": [
+        "Dockerfile"
+      ],
+      "groupName": "docker updates",
+      "groupSlug": "docker-updates"
+    },
+    {
+      "description": "Group dependencies declared in Python requirements files",
+      "matchManagers": [
+        "pip_requirements"
+      ],
+      "groupName": "python updates",
+      "groupSlug": "python-updates"
+    }
   ]
 }
