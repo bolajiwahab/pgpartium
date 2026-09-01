@@ -34,6 +34,15 @@
       ],
       "groupName": "python updates",
       "groupSlug": "python-updates"
+    },
+    {
+      "description": "Group dependencies declared in GitHub Actions workflows",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github actions updates",
+      "groupSlug": "github-actions-updates",
+      "pinDigests": true
     }
   ]
 }
