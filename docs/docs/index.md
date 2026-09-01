@@ -17,17 +17,6 @@ pgpartix generates reviewable PostgreSQL partition-lifecycle migrations. Users c
 ## Reference
 
 - [CLI reference](cli-reference.md) - commands, environment variables, exit behavior, and examples.
-- [Annotated configuration](config.sample.yaml) - a complete configuration using the current schema.
-- [Generated JSON Schema reference](schema.html) - machine-derived option documentation.
+- [Annotated configuration sample](config.sample.yaml) - a complete configuration using the current schema.
+- [Schema reference](schema.html) - current schema.
 - [Contributing](contributing.md) - development environment, testing, and contribution workflow.
-
-## Documentation boundaries
-
-Each guide has one purpose:
-
-| Guide | Use it when |
-| --- | --- |
-| [Getting started](getting-started.md) | You are evaluating or installing pgpartix. |
-| [Configuration](configuration.md) | You need to understand or change lifecycle behavior. |
-| [GitHub Actions](github-actions.md) | You want the optional scheduled GitHub PR workflow. |
-| [CLI reference](cli-reference.md) | You need command syntax, environment requirements, or failure semantics. |

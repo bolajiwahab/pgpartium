@@ -1,6 +1,6 @@
 # Getting started
 
-pgpartix inspects a PostgreSQL database and writes migration files for missing and expired partitions. It does not apply those lifecycle migrations to the source database. The intended output is a repository change reviewed and deployed through the application's existing migration process.
+pgpartix inspects a PostgreSQL database and writes migration files for missing and expired partitions. Review and deploy them through the application's existing migration process; pgpartix does not apply them.
 
 ## Requirements
 
@@ -15,7 +15,7 @@ The packaged container supplies PostgreSQL setup utilities, the pgpartix CLIs, p
 ## Install the image
 
 ```bash
-docker pull ghcr.io/bolajiwahab/pgpartix:0.9.0
+docker pull ghcr.io/bolajiwahab/pgpartix:latest
 ```
 
 The container starts as an unprivileged user. `pgp-start` uses passwordless `sudo` internally for the steps that install the requested PostgreSQL packages and create a local cluster, so it does not need to be run as root.
@@ -40,7 +40,7 @@ docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_INIT_DIR=examples/quick-start/initdir \
-  ghcr.io/bolajiwahab/pgpartix:0.9.0 \
+  ghcr.io/bolajiwahab/pgpartix:latest \
   bash -lc '
     pgp-start &&
     pgp-run-lifecycle -c examples/quick-start/partition-lifecycle.yaml
@@ -49,7 +49,7 @@ docker run --rm \
 
 `pgp-start` defaults to PostgreSQL 14 and supplies the local cluster connection settings. `PGP_INIT_DIR` is the only database setup input here and loads the example schema. `--workdir /repository` makes repository-relative configuration and output paths resolve inside the mounted host directory. The generated migration appears at `examples/quick-start/migrations/pgpartix_output.sql` on the host.
 
-To adapt the example, copy its configuration and initialization layout into the application repository. Change `lifecycle.directory`, the configured tables, and the initialization SQL or scripts to match the application's schema migration setup. The output directory must already exist. For all available options, inheritance rules, and naming placeholders, use the [configuration reference](configuration.md) and [annotated sample](../../config.sample.yaml).
+To adapt the example, copy its configuration and initialization layout into the application repository. Change `lifecycle.directory`, the configured tables, and the initialization SQL or scripts to match the application's schema migration setup. The output directory must already exist. For all available options, inheritance rules, and naming placeholders, use the [configuration reference](https://pgpartix.azellar.com/configuration) and [annotated sample](https://pgpartix.azellar.com/config.sample.yaml).
 
 ## Choose a database source
 
@@ -65,7 +65,7 @@ This is the recommended mode for local evaluation and automated environments. Pr
 - `.sql` files;
 - `.sql.gz` files.
 
-The directory is the extension point for recreating the application's schema. It may contain plain or compressed SQL, executable scripts, sourced scripts, or scripts that invoke the application's existing migration tool. This lets each repository bring its own schema setup logic without supplying connection settings for the local cluster.
+Use the initialization directory to recreate the application's schema. Scripts may invoke the application's existing migration tool, so no local-cluster connection settings are needed.
 
 Example repository layout:
 
@@ -86,7 +86,7 @@ docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_INIT_DIR=migrations/initdir \
-  ghcr.io/bolajiwahab/pgpartix:0.9.0 \
+  ghcr.io/bolajiwahab/pgpartix:latest \
   bash -lc '
     pgp-start &&
     pgp-run-lifecycle -c partition-lifecycle.yaml
@@ -110,7 +110,7 @@ docker run --rm \
   --env PGP_HOST="$PGP_HOST" \
   --env PGP_PORT="$PGP_PORT" \
   --env PGP_DATABASE="$PGP_DATABASE" \
-  ghcr.io/bolajiwahab/pgpartix:0.9.0 \
+  ghcr.io/bolajiwahab/pgpartix:latest \
   bash -lc '
     pgp-start &&
     pgp-run-lifecycle -c partition-lifecycle.yaml
@@ -135,17 +135,17 @@ pgpartix formats each table independently. If one table fails, valid output from
 
 ## Choose how to publish the result
 
-Generated migrations are ordinary repository files. pgpartix does not require a particular Git provider or publication workflow. Common operating models include:
+Generated migrations are ordinary repository files. Publish them by:
 
 - run locally, review the files, then use the normal `git add`, `git commit`, and `git push` workflow;
 - invoke the lifecycle commands from an existing GitHub, GitLab, Jenkins, or other CI/CD pipeline;
 - schedule a script with cron, a systemd timer, or an infrastructure scheduler on a VM or runner, then commit and push using that environment's credentials;
 - use the bundled GitHub helper to maintain a dedicated pull request automatically.
 
-Whichever model is used, preserve the generator exit status. The lifecycle command can publish valid files for successful tables and still exit nonzero because another table failed. Review or publish the successful files as appropriate, while keeping the overall run visibly failed for operator attention.
+Preserve the generator exit status: it can produce valid files for successful tables while returning nonzero for another table. Keep the run visibly failed even if you publish the successful output.
 
 ## Optional GitHub automation
 
-After local generation is stable, the [GitHub Actions guide](github-actions.md) provides one ready-made scheduling and publication option. It explains how to create a least-privileged GitHub App and use the bundled `pgp-gh-create-pr` command to create or refresh a lifecycle PR. The lifecycle generator itself remains independent of GitHub and can be wrapped by other providers or infrastructure.
+The [GitHub Actions guide](github-actions.md) shows how to schedule generation and create or refresh a PR with a least-privileged GitHub App.
 
 For command syntax and environment variables, see the [CLI reference](cli-reference.md).

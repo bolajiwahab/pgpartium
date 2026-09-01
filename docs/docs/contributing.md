@@ -1,11 +1,10 @@
 # Contributing
 
-Thank you for your interest in contributing to pgpartix!.
-Contributions are welcome, whether they are bug reports, feature requests, code improvements, documentation updates, or new features. Contributions are welcome in form of Pull Requests. This guide will help you get started with the contributing process.
+Bug reports, feature requests, code changes, and documentation improvements are welcome through GitHub issues and pull requests.
 
 ## Development
 
-**pgpartix** is packaged as a Docker image. The image is built on the Debian Bookworm Slim base and installs PostgreSQL using the official PostgreSQL APT repository. Its development is based on **Bash** and **SQL**. For development, you will also need **pre-commit**.
+**pgpartix** is packaged as a Docker image. It is developed with **Bash** and **SQL**. For development, you will **Docker** need **pre-commit**.
 
 1. Install **pre-commit**:
 
@@ -13,7 +12,7 @@ Contributions are welcome, whether they are bug reports, feature requests, code 
     python3.12 -m pip install --upgrade pre-commit
     ```
 
-2. Set up git hook scripts
+2. Install the Git hooks:
 
     ```console
     pre-commit install
@@ -29,7 +28,7 @@ Contributions are welcome, whether they are bug reports, feature requests, code 
 │   ├── schema.json               # JSON Schema for lifecycle configuration files
 │   └── createcluster.conf        # Debian pg_createcluster defaults for the image
 ├── docs                          # Schema doc tooling (schema_doc_generator.sh, schema_doc.yaml)
-│   └── docs                      # All published guides (see docs/docs/README.md for the index),
+│   └── docs                      # Published guides (index.md is the index),
 │                                    plus the generated schema.html — this is the GitHub Pages root
 ├── examples                      # End-to-end configuration examples
 ├── tests                         # Bats integration tests and fixtures
@@ -53,8 +52,8 @@ Contributions are welcome, whether they are bug reports, feature requests, code 
 
 pgpartix has two main components:
 
-1. **The Binaries:** These are the various commands that helps in the generation of migration files for making and expiring partitions.
-2. **The Database Functions:** These are the various functions that are used to generate DDL for making and expiring partitions.
+1. **The Binaries:** The `src/bin` commands orchestrate lifecycle generation.
+2. **The Database Functions:** Functions in `src/sql` inspect PostgreSQL and render the DDL for lifecycle generation
 
 ## Testing
 
@@ -89,17 +88,17 @@ PGP_PG_MAJOR_VERSION=<POSTGRES_MAJOR_VERSION> ./tests/run-tests.sh
 
 ## Documentation
 
-Schema definition is presented as `html` through [json-schema-for-human](https://pypi.org/project/json-schema-for-humans/). To update the generated html after changes to the underlying schema definition, use:
+The schema reference is generated with [json-schema-for-humans](https://pypi.org/project/json-schema-for-humans/). After changing `src/schema.json`, run:
 
 ```bash
 ./docs/schema_doc_generator.sh
 ```
 
-The changes can be previewed through a browser.
+Preview `docs/docs/schema.html` in a browser.
 
 ## Release
 
-To create a new release, do the following:
+To create a release:
 
 ```bash
 git checkout -B Release
