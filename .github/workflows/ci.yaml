@@ -34,52 +34,17 @@ jobs:
       - name: Install and run pre-commit
         uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd  # v3.0.1
 
-  build-test-image:
-    runs-on: ubuntu-latest
-    name: Build test image
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e  # v4
-
-      - name: Populate test image cache
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a  # v7
-        with:
-          context: .
-          target: test
-          cache-from: type=gha,scope=pgpartix-test
-          cache-to: type=gha,scope=pgpartix-test,mode=max
-
   coverage:
-    needs: build-test-image
     runs-on: ubuntu-latest
     name: Run coverage on default PostgreSQL
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e  # v4
-
-      - name: Load test image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a  # v7
-        with:
-          context: .
-          target: test-postgres
-          load: true
-          tags: tests-test:latest
-          cache-from: |
-            type=gha,scope=pgpartix-test
-            type=gha,scope=pgpartix-test-postgres-default
-          cache-to: type=gha,scope=pgpartix-test-postgres-default,mode=max
-
       - name: Run coverage
-        run: PGP_SKIP_BUILD=true tests/run-coverage.sh
+        run: tests/run-coverage.sh
 
   test-postgres:
-    needs: build-test-image
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -96,26 +61,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e  # v4
-
-      - name: Load test image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a  # v7
-        with:
-          context: .
-          target: test-postgres
-          build-args: PGP_PG_MAJOR_VERSION=${{ matrix.postgresql }}
-          load: true
-          tags: tests-test:latest
-          cache-from: |
-            type=gha,scope=pgpartix-test
-            type=gha,scope=pgpartix-test-postgres-${{ matrix.postgresql }}
-          cache-to: type=gha,scope=pgpartix-test-postgres-${{ matrix.postgresql }},mode=max
-
       - name: Run tests on PostgreSQL ${{ matrix.postgresql }}
         env:
           PGP_PG_MAJOR_VERSION: ${{ matrix.postgresql }}
-          PGP_SKIP_BUILD: "true"
         run: tests/run-tests.sh
 
   integration-test:
