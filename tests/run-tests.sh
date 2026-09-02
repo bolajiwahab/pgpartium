@@ -2,9 +2,11 @@
 
 set -euo pipefail
 
-compose_file="tests/docker-compose-test.yaml"
+if [[ -f /.dockerenv ]]; then
+    pgp-start
+    exec bats tests/test_*.sh
+fi
 
-docker compose -f ${compose_file} build --no-cache
-docker compose -f ${compose_file} down -v --remove-orphans
-docker compose -f ${compose_file} up --force-recreate --abort-on-container-exit --quiet-pull --remove-orphans test
-docker compose -f ${compose_file} down -v --remove-orphans
+export PGP_TEST_COMMAND=tests/run-tests.sh
+
+exec tests/run-coverage.sh

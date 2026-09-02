@@ -40,9 +40,10 @@ Bug reports, feature requests, code changes, and documentation improvements are 
 │   ├── test_expire_partitions.sh
 │   ├── test_get_migration_filename.sh
 │   ├── test_setup_infrastructure.sh
-│   ├── test_start.sh
-│   ├── run-tests.sh              # Builds the test image and runs the suite in Docker
-│   ├── run-coverage.sh           # Runs bats under kcov and enforces MIN_COVERAGE
+│   ├── test_pgp_start.sh
+│   ├── run-tests.sh              # Runs the Bats suite in Docker
+│   ├── run-coverage.sh           # Builds the test image and runs coverage in Docker
+│   ├── coverage.sh               # Runs Bats under kcov and enforces MIN_COVERAGE
 │   └── docker-compose-test.yaml
 ├── tools                         # Repo lifecycle scripts (schema doc freshness check)
 └── config.sample.yaml            # Complete annotated configuration reference
@@ -72,15 +73,15 @@ A fixture directory can contain:
 
 The test runner diffs the generated file against `*.expected.sql` and then applies the generated SQL to a throwaway database to confirm it is valid, executable DDL - not just textually correct.
 
-`tests/coverage` collects `kcov` output from `run-coverage.sh`, which is what `docker-compose-test.yaml` runs inside the container; `run-tests.sh` is the entry point that builds the image and drives that container.
+`tests/run-coverage.sh` runs the test suite with coverage using the default PostgreSQL version.
 
 To run tests, use:
 
 ```bash
-./tests/run-tests.sh
+./tests/run-coverage.sh
 ```
 
-To run tests for a specific postgres version, use:
+To run the tests for a specific PostgreSQL version without coverage:
 
 ```bash
 PGP_PG_MAJOR_VERSION=<POSTGRES_MAJOR_VERSION> ./tests/run-tests.sh
