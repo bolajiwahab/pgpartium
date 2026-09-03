@@ -99,8 +99,8 @@ ARG PGP_PG_MAJOR_VERSION=17
 
 USER root
 
-# Cache the large PostgreSQL toolchain in the version-specific test image
-# instead of downloading it every time the test container starts.
+# Cache PostgreSQL in the version-specific test image
+# rather than downloading it every time the test container starts.
 # pgp-start still exercises its normal installation path, but installation is
 # a no-op in this test-only image because PostgreSQL is already present.
 RUN apt.postgresql.org.sh -i -p -v "${PGP_PG_MAJOR_VERSION}" \
