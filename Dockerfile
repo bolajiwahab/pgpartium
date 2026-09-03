@@ -21,7 +21,7 @@ RUN apt-get update \
     && yq_binary="yq_${TARGETOS}_${TARGETARCH}" \
     && wget --quiet "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/${yq_binary}" --output-document=/usr/bin/yq \
     && wget --quiet "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/checksums" --output-document=/tmp/yq-checksums \
-    && yq_sha256="$(awk -v binary="${yq_binary}" '$1 == binary {print $19}' /tmp/yq-checksums)" \
+    && yq_sha256="$(awk -v binary="${yq_binary}" '$2 == binary {print $1}' /tmp/yq-checksums)" \
     && test -n "${yq_sha256}" \
     && echo "${yq_sha256}  /usr/bin/yq" | sha256sum --check --strict \
     && rm /tmp/yq-checksums \
