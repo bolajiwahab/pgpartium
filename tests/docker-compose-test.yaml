@@ -5,9 +5,9 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
-      target: test
-    container_name: test
-    tty: true
+      target: test-postgres
+      args:
+        PGP_PG_MAJOR_VERSION: ${PGP_PG_MAJOR_VERSION:-17}
     environment:
       PGP_PG_MAJOR_VERSION: ${PGP_PG_MAJOR_VERSION:-17}
       PGP_INIT_DIR: ${PGP_INIT_DIR:-tests/fixtures/initdir}
@@ -16,7 +16,6 @@ services:
       PGP_HOST: ${PGP_HOST:-localhost}
       PGP_PORT: ${PGP_PORT:-5432}
       PGP_DATABASE: ${PGP_DATABASE:-postgres}
-      BATS_CORE_VERSION: "v1.13.0"
       PGP_CLUSTER_NAME: pgpartix
       PGUSER: ${PGP_USER:-postgres}
       PGPASSWORD: ${PGP_PASSWORD:-postgres}
@@ -28,4 +27,4 @@ services:
       # and repeatable tests for time-based partitioning logic.
       PGP_CREATE_OPTIONS: --pgoption mock.now=disabled --pgoption search_path=mock,pg_catalog,public
       MIN_COVERAGE: "100"
-    command: ["bash", "tests/run-coverage.sh"]
+    command: ["bash", "${PGP_TEST_COMMAND:-tests/coverage.sh}"]

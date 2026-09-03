@@ -42,7 +42,7 @@ jobs:
         run: pip install --no-cache-dir --upgrade pip -r src/requirements-doc.txt
 
       - name: Build site
-        working-directory: ./docs
+        working-directory: docs
         run: zensical build --clean
 
       - name: Upload site artifact

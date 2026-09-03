@@ -2,6 +2,10 @@
 # yamllint disable rule:line-length
 name: CI
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:  # yamllint disable-line rule:truthy
   push:
     branches:
@@ -21,8 +25,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7
@@ -31,6 +33,16 @@ jobs:
 
       - name: Install and run pre-commit
         uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd  # v3.0.1
+
+  coverage:
+    runs-on: ubuntu-latest
+    name: Run coverage on default PostgreSQL
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
+
+      - name: Run coverage
+        run: tests/run-coverage.sh
 
   test-postgres:
     runs-on: ubuntu-latest
@@ -48,20 +60,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
-        with:
-          fetch-depth: 0
 
-      - name: Run tests
-        run: |
-          PGP_PG_MAJOR_VERSION=${{ matrix.postgresql }} tests/run-tests.sh
+      - name: Run tests on PostgreSQL ${{ matrix.postgresql }}
+        env:
+          PGP_PG_MAJOR_VERSION: ${{ matrix.postgresql }}
+        run: tests/run-tests.sh
 
   integration-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
-        with:
-          fetch-depth: 0
 
       - name: Run integration test
         run: tests/run-integration-test.sh
@@ -71,8 +80,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
-        with:
-          fetch-depth: 0
 
       - name: Ensure schema doc is up to date
         run: tools/ensure_up_to_date_schema_doc.sh

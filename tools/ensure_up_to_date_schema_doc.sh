@@ -9,6 +9,6 @@ if git diff --quiet -- docs/docs/schema.html && [ -z "$(git ls-files --others --
     exit 0
 else
     echo "Schema documentation is not up to date. Ensure schema doc is rebuilt."
-    echo "Run './docs/schema_doc_generator.sh' and commit the changes."
+    echo "Run 'docs/schema_doc_generator.sh' and commit the changes."
     exit 1
 fi

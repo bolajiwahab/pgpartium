@@ -2,7 +2,8 @@ FROM python:3.14-slim-bookworm@sha256:23c59390fc717bf09f9336908199a0ae75d9c4264b
 
 # renovate: datasource=github-releases depName=mikefarah/yq
 ARG YQ_VERSION=4.45.1
-ARG YQ_PLATFORM=linux_amd64
+ARG TARGETOS
+ARG TARGETARCH
 
 ENV LC_ALL=C.UTF-8 LANG=C.UTF-8
 
@@ -17,7 +18,13 @@ RUN apt-get update \
     && apt-get update \
     && apt-get install -y --no-install-recommends gh \
     # Install yq
-    && wget --quiet "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_${YQ_PLATFORM}" --output-document=/usr/bin/yq \
+    && yq_binary="yq_${TARGETOS}_${TARGETARCH}" \
+    && wget --quiet "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/${yq_binary}" --output-document=/usr/bin/yq \
+    && wget --quiet "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/checksums" --output-document=/tmp/yq-checksums \
+    && yq_sha256="$(awk -v binary="${yq_binary}" '$1 == binary {print $19}' /tmp/yq-checksums)" \
+    && test -n "${yq_sha256}" \
+    && echo "${yq_sha256}  /usr/bin/yq" | sha256sum --check --strict \
+    && rm /tmp/yq-checksums \
     && chmod +x /usr/bin/yq \
     # Configure git, ensure it can operate on the mounted working directory,
     # and exclude the local formatting cache globally from commits.
@@ -42,7 +49,7 @@ RUN useradd --uid 10001 --home-dir /src --create-home --shell /bin/bash ${PGP_OS
        } > /etc/sudoers.d/${PGP_OS_USER} \
     && chmod 0440 /etc/sudoers.d/${PGP_OS_USER}
 
-ADD https://salsa.debian.org/postgresql/postgresql-common/-/raw/master/pgdg/apt.postgresql.org.sh /usr/local/bin/
+ADD https://salsa.debian.org/postgresql/postgresql-common/-/raw/06f0ef8f6d30a2f6f272498c37db3689dfb8696d/pgdg/apt.postgresql.org.sh /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/apt.postgresql.org.sh
 
@@ -61,9 +68,8 @@ CMD ["/bin/bash"]
 FROM build AS test
 
 ARG BATS_VERSION=1.14.0
+ARG BATS_SHA256=bb537b70b15b732f6d8827dd6578e3d8ce166636ce1f18ea9a074184fcce9177
 ARG KCOV_VERSION=43+dfsg-1~bpo12+1
-
-COPY --chown=${PGP_OS_USER}:${PGP_OS_USER} tests tests
 
 # Install test dependencies: kcov and bats
 RUN echo "deb http://deb.debian.org/debian bookworm-backports main" \
@@ -73,11 +79,33 @@ RUN echo "deb http://deb.debian.org/debian bookworm-backports main" \
          -t bookworm-backports \
          "kcov=${KCOV_VERSION}" \
     && rm -rf /var/lib/apt/lists/* \
-    && wget -qO- \
+    && wget --quiet \
         "https://github.com/bats-core/bats-core/archive/refs/tags/v${BATS_VERSION}.tar.gz" \
-    | tar -xz \
-    && ./bats-core-${BATS_VERSION}/install.sh /usr/local \
+        --output-document=/tmp/bats-core.tar.gz \
+    && echo "${BATS_SHA256}  /tmp/bats-core.tar.gz" | sha256sum --check --strict \
+    && tar -xzf /tmp/bats-core.tar.gz \
+    && rm /tmp/bats-core.tar.gz \
+    && bats-core-${BATS_VERSION}/install.sh /usr/local \
     && rm -rf bats-core-${BATS_VERSION}
+
+# Test changes should not invalidate the dependency-installation layer.
+COPY --chown=${PGP_OS_USER}:${PGP_OS_USER} tests tests
+
+USER ${PGP_OS_USER}
+
+FROM test AS test-postgres
+
+ARG PGP_PG_MAJOR_VERSION=17
+
+USER root
+
+# Cache PostgreSQL in the version-specific test image
+# rather than downloading it every time the test container starts.
+# pgp-start still exercises its normal installation path, but installation is
+# a no-op in this test-only image because PostgreSQL is already present.
+RUN apt.postgresql.org.sh -i -p -v "${PGP_PG_MAJOR_VERSION}" \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/true /usr/local/bin/apt.postgresql.org.sh
 
 USER ${PGP_OS_USER}
 
