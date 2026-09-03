@@ -75,16 +75,16 @@ The test runner diffs the generated file against `*.expected.sql` and then appli
 
 `tests/run-coverage.sh` runs the test suite with coverage using the default PostgreSQL version.
 
-To run tests, use:
+To check coverage, use:
 
 ```bash
-./tests/run-coverage.sh
+tests/run-coverage.sh
 ```
 
-To run the tests for a specific PostgreSQL version without coverage:
+To run the tests for a specific PostgreSQL version:
 
 ```bash
-PGP_PG_MAJOR_VERSION=<POSTGRES_MAJOR_VERSION> ./tests/run-tests.sh
+PGP_PG_MAJOR_VERSION=<POSTGRES_MAJOR_VERSION> tests/run-tests.sh
 ```
 
 ## Documentation
@@ -92,7 +92,7 @@ PGP_PG_MAJOR_VERSION=<POSTGRES_MAJOR_VERSION> ./tests/run-tests.sh
 The schema reference is generated with [json-schema-for-humans](https://pypi.org/project/json-schema-for-humans/). After changing `src/schema.json`, run:
 
 ```bash
-./docs/schema_doc_generator.sh
+docs/schema_doc_generator.sh
 ```
 
 Preview `docs/docs/schema.html` in a browser.
