@@ -28,7 +28,7 @@ on:  # yamllint disable-line rule:truthy
         description: External database host.
         required: false
         type: string
-        default: localhost
+        default: ""
       db_port:
         description: External database port.
         required: false
