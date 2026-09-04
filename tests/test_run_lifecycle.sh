@@ -343,19 +343,6 @@ function run_expire_config_directory() {
 }
 
 @test "pgp-run-lifecycle processes a config directory" {
-    local fixture="tests/fixtures/make_partitions/shared_output_file"
-
-    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
-    pg_ctl reload
-
-    run run_config_directory "${fixture}"
-
-    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/teardown.sql"
-
-    [ "${status}" -eq 0 ]
-}
-
-@test "pgp-run-lifecycle processes an expire config directory" {
     local fixture="tests/fixtures/expire_partitions/config_directory"
 
     run run_expire_config_directory "${fixture}"
@@ -532,35 +519,15 @@ function run_expire_config_directory() {
 }
 
 @test "pgp-run-lifecycle reports a clear error when LATEST_PARTITION has no latest partition" {
-    local config="${BATS_TEST_TMPDIR}/missing-latest-partition.yaml"
-    local result="${BATS_TEST_TMPDIR}/pgpartix_output.sql"
+    local fixture="tests/fixtures/run_lifecycle/missing_latest_partition.yaml"
+    local result="${fixture}/pgpartix_output.sql"
 
-    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 <<SQL
-CREATE TABLE test.transactions (
-    created_at timestamptz NOT NULL
-)
-PARTITION BY RANGE (created_at);
-SQL
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
+    pg_ctl reload
 
-    cat > "${config}" <<YAML
----
-lifecycle:
-  directory: ${BATS_TEST_TMPDIR}
-  tables:
-    - schema: test
-      name: transactions
-      partition:
-        naming:
-          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
-        interval: 1 mon
-        start_timestamp: LATEST_PARTITION
-YAML
+    run pgp-run-lifecycle -c "${fixture}"
 
-    run pgp-run-lifecycle -c "${config}"
-
-    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 <<SQL
-DROP TABLE test.transactions;
-SQL
+    psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/teardown.sql"
 
     [ "${status}" -eq 1 ]
     grep -Fq "No latest partition exists for table test.transactions" <<< "${output}"
