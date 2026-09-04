@@ -92,7 +92,7 @@ jobs:
 
     container:
       image: ${{ inputs.image }}
-      # The image runs as a non-root user by default. GitHub requires Docker
+      # The image runs as an unprivileged user by default. GitHub requires Docker
       # actions to be run by the default Docker user (root) in order to be able to access
       # the GITHUB_WORKSPACE directory which is needed by the workflow.
       # https://docs.github.com/en/actions/reference/workflows-and-actions/dockerfile-support#user

@@ -27,8 +27,7 @@ services:
       - -c
       - |
         if [[ "$${COVERAGE}" == "true" ]]; then
-          exec tests/coverage.sh
+          tests/coverage.sh
           exit 0
         fi
-        pgp-start
-        exec bats tests/test_*.sh
+        pgp-start && bats tests/test_*.sh

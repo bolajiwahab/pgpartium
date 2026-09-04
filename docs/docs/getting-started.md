@@ -12,6 +12,10 @@ pgpartix inspects a PostgreSQL database and writes migration files for missing a
 
 The packaged container supplies PostgreSQL setup utilities, the pgpartix CLIs, pgrubic, Git, and GitHub CLI.
 
+## Persisting migration files onto the host filesystem
+
+To persist migration files generated inside the container onto the host filesystem, a bind mount is used. The bind-mounted directory must be writable so that `pgpartix` can create and persist the generated migration files on the host.
+
 ## Install the image
 
 ```bash
@@ -24,7 +28,9 @@ docker pull ghcr.io/bolajiwahab/pgpartix:latest
 docker pull ghcr.io/bolajiwahab/pgpartix:0.11.0-pg18
 ```
 
-The container starts as an unprivileged user. PostgreSQL is already installed, and `pgp-start` creates the disposable local cluster without root privileges.
+The container starts as an unprivileged user except otherwise overridden with `--user root`, [see](https://docs.docker.com/engine/containers/run/#user).
+
+PostgreSQL is already installed, and `pgp-start` creates the disposable local cluster without root privileges.
 
 ## Run the checked-in example
 
@@ -34,6 +40,7 @@ The repository contains a complete runnable example:
 examples/quick-start
 ├── initdir
 │   └── 01_schema.sql
+│   └── 02_schema.sql
 ├── migrations
 │   └── .gitignore
 └── partition-lifecycle.yaml

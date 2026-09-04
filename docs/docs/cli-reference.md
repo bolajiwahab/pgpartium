@@ -28,7 +28,7 @@ export PGP_DATABASE=application_catalog
 
 ## `pgp-start`
 
-Creates and starts a local PostgreSQL cluster and optionally applies an initialization directory. When using an external database, do not run `pgp-start`; invoke the lifecycle command directly with the [database environment](#database-environment) variables.
+Creates and starts a local PostgreSQL cluster and optionally applies an initialization directory. When using an external database, there is no need to invoke `pgp-start`; invoke the lifecycle command directly with the [database environment](#database-environment) variables.
 
 ```text
 OPTIONS:

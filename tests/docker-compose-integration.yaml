@@ -4,7 +4,7 @@
 # dedicated PostgreSQL container, the way an application's own database would
 # be reached.
 #
-# Usage: ./tests/run-integration-test.sh
+# Usage: tests/run-integration-test.sh
 services:
   postgres:
     image: postgres:${PG_MAJOR_VERSION:-18}
@@ -30,7 +30,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    # The image runs as a non-root user by default. /repository is a bind
+    # The image runs as an unprivileged user by default. /repository is a bind
     # mount of the host directory, owned by whatever user checked it out (the
     # CI runner's own user, or the local developer) - not the image's
     # pgpuser - so writes need root here.
