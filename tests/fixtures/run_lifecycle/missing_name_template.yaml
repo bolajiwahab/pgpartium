@@ -1,0 +1,8 @@
+---
+lifecycle:
+  directory: tests/fixtures/run_lifecycle
+  tables:
+    - schema: test
+      name: transactions
+      partition:
+        interval: 1 mon

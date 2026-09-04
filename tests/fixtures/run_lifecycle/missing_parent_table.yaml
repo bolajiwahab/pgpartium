@@ -1,0 +1,10 @@
+---
+lifecycle:
+  directory: tests/fixtures/run_lifecycle
+  tables:
+    - schema: test
+      name: missing_parent
+      partition:
+        naming:
+          template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"
+        interval: 1 mon

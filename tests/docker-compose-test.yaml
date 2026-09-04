@@ -5,26 +5,29 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
-      target: test-postgres
+      target: test
       args:
-        PGP_PG_MAJOR_VERSION: ${PGP_PG_MAJOR_VERSION:-17}
+        PG_MAJOR_VERSION: ${PG_MAJOR_VERSION:-18}
     environment:
-      PGP_PG_MAJOR_VERSION: ${PGP_PG_MAJOR_VERSION:-17}
       PGP_INIT_DIR: ${PGP_INIT_DIR:-tests/fixtures/initdir}
       PGP_USER: ${PGP_USER:-postgres}
       PGP_PASSWORD: ${PGP_PASSWORD:-postgres}
       PGP_HOST: ${PGP_HOST:-localhost}
       PGP_PORT: ${PGP_PORT:-5432}
       PGP_DATABASE: ${PGP_DATABASE:-postgres}
-      PGP_CLUSTER_NAME: pgpartix
       PGUSER: ${PGP_USER:-postgres}
       PGPASSWORD: ${PGP_PASSWORD:-postgres}
       PGHOST: ${PGP_HOST:-localhost}
       PGPORT: ${PGP_PORT:-5432}
       PGDATABASE: ${PGP_DATABASE:-postgres}
-      # For testing time-sensitive logic, we expose a config option <mock.now> which could be used
-      # to set a fixed timestamp that the mock.now() function will return. This allows us to have consistent
-      # and repeatable tests for time-based partitioning logic.
-      PGP_CREATE_OPTIONS: --pgoption mock.now=disabled --pgoption search_path=mock,pg_catalog,public
+      COVERAGE: ${COVERAGE:-false}
       MIN_COVERAGE: "100"
-    command: ["bash", "${PGP_TEST_COMMAND:-tests/coverage.sh}"]
+    command:
+      - bash
+      - -c
+      - |
+        if [[ "$${COVERAGE}" == "true" ]]; then
+          tests/coverage.sh
+          exit 0
+        fi
+        pgp-start && bats tests/test_*.sh

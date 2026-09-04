@@ -190,15 +190,14 @@ jobs:
     uses: bolajiwahab/pgpartix/.github/workflows/partition-lifecycle.yaml@main
     with:
       config: partition-lifecycle.yaml
-      image_tag: "latest"
-      pg_major_version: "17"
+      image: "ghcr.io/bolajiwahab/pgpartix:0.11.0-pg18"
       init_dir: migrations/initdir
       app_client_id: ${{ vars.PGPARTIX_APP_CLIENT_ID }}
     secrets:
       app_private_key: ${{ secrets.PGPARTIX_APP_PRIVATE_KEY }}
 ```
 
-Pin `@main` to a release tag or commit SHA for reproducibility, matching the pinned `image_tag`. See the `inputs`/`secrets` block of [`partition-lifecycle.yaml`](https://github.com/bolajiwahab/pgpartix/blob/main/.github/workflows/partition-lifecycle.yaml) for the full list, including `mode` and the `db_*` external-database inputs, and `branch`/`title`/`commit_message` for customizing the automation branch and PR.
+Pin `@main` to a release tag or commit SHA for reproducibility, matching the pinned `image`. See the `inputs`/`secrets` block of [`partition-lifecycle.yaml`](https://github.com/bolajiwahab/pgpartix/blob/main/.github/workflows/partition-lifecycle.yaml) for the full list, including the `db_*` external-database inputs, and `branch`/`title`/`commit_message` for customizing the automation branch and PR.
 
 ## Why generation uses `continue-on-error`
 
@@ -230,11 +229,10 @@ This mode has the smallest security surface because GitHub Actions does not conn
 
 ### External database
 
-When an authoritative non-production catalog is already available, install the PostgreSQL client without creating a local cluster, then connect using encrypted Actions secrets:
+When an authoritative non-production catalog is already available, use the matching PostgreSQL image variant without creating a local cluster, then connect using encrypted Actions secrets:
 
 ```yaml
     env:
-      PGP_PG_MAJOR_VERSION: 17
       PGP_USER: ${{ secrets.PGPARTIX_DATABASE_USER }}
       PGP_PASSWORD: ${{ secrets.PGPARTIX_DATABASE_PASSWORD }}
       PGP_HOST: ${{ secrets.PGPARTIX_DATABASE_HOST }}
@@ -243,11 +241,6 @@ When an authoritative non-production catalog is already available, install the P
 
     steps:
       # App token and checkout steps omitted here.
-      - name: Install PostgreSQL client runtime
-        env:
-          PGP_MODE: external
-        run: pgp-start
-
       - name: Generate lifecycle migrations
         run: pgp-run-lifecycle -c partition-lifecycle.yaml
 ```

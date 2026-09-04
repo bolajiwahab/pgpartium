@@ -18,41 +18,29 @@ on:  # yamllint disable-line rule:truthy
         description: Container image to run pgpartix commands in.
         required: false
         type: string
-        default: ghcr.io/bolajiwahab/pgpartix
-      image_tag:
-        description: Image tag to pin, for example "0.9.0".
-        required: true
-        type: string
-      pg_major_version:
-        description: PostgreSQL major version to install, and to start the cluster with in ephemeral mode.
-        required: false
-        type: string
-        default: "17"
-      mode:
-        description: Set to "external" to skip starting an ephemeral cluster and connect to an external database instead (see db_* inputs).
-        required: false
-        type: string
-        default: ephemeral
+        default: ghcr.io/bolajiwahab/pgpartix:latest
       init_dir:
-        description: Initialization directory applied to the ephemeral, in-job PostgreSQL cluster. Only used in ephemeral mode.
+        description: Initialization directory applied to the ephemeral, in-job PostgreSQL cluster when one is created.
         required: false
         type: string
         default: ""
       db_host:
-        description: External database host. Required only when init_dir is empty.
+        description: External database host.
         required: false
         type: string
+        default: ""
       db_port:
-        description: External database port. Used only when init_dir is empty.
+        description: External database port.
         required: false
-        type: string
-        default: "5432"
+        type: number
+        default: 5432
       db_database:
-        description: External database name. Required only when init_dir is empty.
+        description: External database name.
         required: false
         type: string
+        default: postgres
       db_user:
-        description: External database role. Required only when init_dir is empty.
+        description: External database role.
         required: false
         type: string
       app_client_id:
@@ -98,8 +86,8 @@ jobs:
       cancel-in-progress: false
 
     container:
-      image: ${{ inputs.image }}:${{ inputs.image_tag }}
-      # The image runs as a non-root user by default. GitHub requires Docker
+      image: ${{ inputs.image }}
+      # The image runs as an unprivileged user by default. GitHub requires Docker
       # actions to be run by the default Docker user (root) in order to be able to access
       # the GITHUB_WORKSPACE directory which is needed by the workflow.
       # https://docs.github.com/en/actions/reference/workflows-and-actions/dockerfile-support#user
@@ -108,8 +96,6 @@ jobs:
 
     env:
       PGP_INIT_DIR: ${{ inputs.init_dir }}
-      PGP_MODE: ${{ inputs.mode }}
-      PGP_PG_MAJOR_VERSION: ${{ inputs.pg_major_version }}
       PGP_HOST: ${{ inputs.db_host }}
       PGP_PORT: ${{ inputs.db_port }}
       PGP_DATABASE: ${{ inputs.db_database }}
@@ -141,9 +127,11 @@ jobs:
 
       - name: Start PostgreSQL and load the application schema
         id: start
+        if: inputs.db_host == ''
         run: pgp-start
 
-      # A command may publish valid tables and still return 1 for other tables.
+      # A lifecycle run may generate valid migrations for some tables
+      # while returning exit-code 1 because other tables failed.
       # Preserve that partial progress long enough to open/update the PR.
       - name: Run partition lifecycle
         id: lifecycle
@@ -151,7 +139,7 @@ jobs:
         run: pgp-run-lifecycle -c "${{ inputs.config }}"
 
       - name: Create or update partition-lifecycle PR
-        if: ${{ always() && steps.start.outcome == 'success' }}
+        if: ${{ steps.lifecycle.outcome == 'success' || steps.lifecycle.outcome == 'failure' }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
@@ -162,10 +150,10 @@ jobs:
             -n "${{ steps.app-token.outputs.app-slug }}[bot]" \
             -e "${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
 
-      # Keep the run visibly failed when any table failed, even though
-      # successful migrations were still proposed in the PR.
+      # Mark the workflow as failed when one or more tables failed,
+      # even if valid migrations were still proposed in the PR.
       - name: Report generation failure
-        if: ${{ always() && steps.lifecycle.outcome == 'failure' }}
+        if: ${{ steps.lifecycle.outcome == 'failure' }}
         run: |
           echo "One or more partition tables failed generation" >&2
           exit 1

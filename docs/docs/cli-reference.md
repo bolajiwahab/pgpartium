@@ -28,13 +28,11 @@ export PGP_DATABASE=application_catalog
 
 ## `pgp-start`
 
-Installs a PostgreSQL major version and psql client. In `ephemeral` mode (the default), it also creates and starts a local cluster and optionally applies an initialization directory. In `external` mode, it only installs the runtime, so the target database must already exist (see the [database environment](#database-environment) variables).
+Creates and starts a local PostgreSQL cluster and optionally applies an initialization directory. When using an external database, there is no need to invoke `pgp-start`; invoke the lifecycle command directly with the [database environment](#database-environment) variables.
 
 ```text
 OPTIONS:
-  -v  PostgreSQL major version (default: 14, at least 14)
-  -m  Mode: ephemeral or external (default: ephemeral)
-  -i  Initialization directory (optional; supports .sh, .sql, .sql.gz); ephemeral mode only
+  -i  Initialization directory (optional; supports .sh, .sql, .sql.gz)
   -h  Show help
 ```
 
@@ -42,23 +40,12 @@ The equivalent environment variables are:
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `PGP_PG_MAJOR_VERSION` | `14` | PostgreSQL major version used when `-v` is omitted. |
-| `PGP_MODE` | `ephemeral` | Mode used when `-m` is omitted: `ephemeral` or `external`. |
-| `PGP_INIT_DIR` | None | Initialization directory used when `-i` is omitted; ephemeral mode only. |
-| `PGP_CLUSTER_NAME` | `pgpartix` | Name assigned to a locally created cluster. |
-| `PGP_CREATE_OPTIONS` | None | Additional options passed when creating the cluster. |
+| `PGP_INIT_DIR` | None | Initialization directory used when `-i` is omitted. |
 
 Examples:
 
 ```bash
 pgp-start -i migrations/initdir
-pgp-start -v 17 -i migrations/initdir
-
-PGP_PG_MAJOR_VERSION=17 \
-PGP_INIT_DIR=migrations/initdir \
-pgp-start
-
-pgp-start -m external
 ```
 
 Initialization files are processed in sorted order. Executable `.sh` files are run, non-executable `.sh` files are sourced, `.sql` files are passed to `psql`, and `.sql.gz` files are decompressed into `psql`.

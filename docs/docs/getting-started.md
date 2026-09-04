@@ -12,13 +12,25 @@ pgpartix inspects a PostgreSQL database and writes migration files for missing a
 
 The packaged container supplies PostgreSQL setup utilities, the pgpartix CLIs, pgrubic, Git, and GitHub CLI.
 
+## Persisting migration files onto the host filesystem
+
+To persist migration files generated inside the container onto the host filesystem, a bind mount is used. The bind-mounted directory must be writable so that `pgpartix` can create and persist the generated migration files on the host.
+
 ## Install the image
 
 ```bash
 docker pull ghcr.io/bolajiwahab/pgpartix:latest
 ```
 
-The container starts as an unprivileged user. `pgp-start` uses passwordless `sudo` internally for the steps that install the requested PostgreSQL packages and create a local cluster, so it does not need to be run as root.
+`latest` contains the newest pgpartix release and highest stable PostgreSQL major. Pin both versions for reproducible runs, for example:
+
+```bash
+docker pull ghcr.io/bolajiwahab/pgpartix:0.11.0-pg18
+```
+
+The container starts as an unprivileged user except otherwise overridden with `--user root`, [see](https://docs.docker.com/engine/containers/run/#user).
+
+PostgreSQL is already installed, and `pgp-start` creates the disposable local cluster without root privileges.
 
 ## Run the checked-in example
 
@@ -28,6 +40,7 @@ The repository contains a complete runnable example:
 examples/quick-start
 ├── initdir
 │   └── 01_schema.sql
+│   └── 02_schema.sql
 ├── migrations
 │   └── .gitignore
 └── partition-lifecycle.yaml
@@ -47,7 +60,7 @@ docker run --rm \
   '
 ```
 
-`pgp-start` defaults to PostgreSQL 14 and supplies the local cluster connection settings. `PGP_INIT_DIR` is the only database setup input here and loads the example schema. `--workdir /repository` makes repository-relative configuration and output paths resolve inside the mounted host directory. The generated migration appears at `examples/quick-start/migrations/pgpartix_output.sql` on the host.
+`pgp-start` uses the PostgreSQL major bundled in the selected image and supplies the local cluster connection settings. `PGP_INIT_DIR` is the only database setup input here and loads the example schema. `--workdir /repository` makes repository-relative configuration and output paths resolve inside the mounted host directory. The generated migration appears at `examples/quick-start/migrations/pgpartix_output.sql` on the host.
 
 To adapt the example, copy its configuration and initialization layout into the application repository. Change `lifecycle.directory`, the configured tables, and the initialization SQL or scripts to match the application's schema migration setup. The output directory must already exist. For all available options, inheritance rules, and naming placeholders, use the [configuration reference](https://pgpartix.azellar.com/configuration) and [annotated sample](https://pgpartix.azellar.com/config.sample.yaml).
 
@@ -97,24 +110,19 @@ The generated SQL appears in `migrations/partitions` on the host.
 
 ### Existing external database
 
-Use an existing non-production database when it is the authoritative representation of the schema. Install only the PostgreSQL client runtime, then supply connection settings:
+Use an existing non-production database when it is the authoritative representation of the schema. Select the image variant matching the target PostgreSQL major, then supply connection settings:
 
 ```bash
 docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
-  --env PGP_PG_MAJOR_VERSION=17 \
-  --env PGP_MODE=external \
   --env PGP_USER="$PGP_USER" \
   --env PGP_PASSWORD="$PGP_PASSWORD" \
   --env PGP_HOST="$PGP_HOST" \
   --env PGP_PORT="$PGP_PORT" \
   --env PGP_DATABASE="$PGP_DATABASE" \
-  ghcr.io/bolajiwahab/pgpartix:latest \
-  bash -lc '
-    pgp-start &&
-    pgp-run-lifecycle -c partition-lifecycle.yaml
-  '
+  ghcr.io/bolajiwahab/pgpartix:0.11.0-pg18 \
+  pgp-run-lifecycle -c partition-lifecycle.yaml
 ```
 
 The connection role must be able to inspect the application catalog, creates a dedicated schema `pgpartix` for the helper objects, and create or replace helper objects in the `pgpartix` schema. Prefer a non-production database and restrict network and credential access appropriately.
