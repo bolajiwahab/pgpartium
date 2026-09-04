@@ -130,7 +130,6 @@ jobs:
         uses: actions/checkout@v5
         with:
           token: ${{ steps.app-token.outputs.token }}
-          fetch-depth: 0
 
       - name: Start PostgreSQL and load the application schema
         id: start
