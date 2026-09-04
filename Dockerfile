@@ -1,6 +1,6 @@
 ARG PG_MAJOR_VERSION=18
 
-FROM ghcr.io/astral-sh/uv:0.12.1@sha256:cf4eedcaa81655197f625739489effcbe71b61ceb1506f332c3facae5deceded AS uv
+FROM ghcr.io/astral-sh/uv:0.12.10@sha256:2bb3ebca0a796a155094a27773d290c4b074572e6107f171d88d086682fd2500 AS uv
 
 FROM postgres:${PG_MAJOR_VERSION}-trixie AS build
 
