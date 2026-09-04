@@ -18,36 +18,34 @@ on:  # yamllint disable-line rule:truthy
         description: Container image to run pgpartix commands in.
         required: false
         type: string
-        default: ghcr.io/bolajiwahab/pgpartix
-      image_tag:
-        description: Image tag to pin, for example "0.11.0-pg17".
-        required: true
-        type: string
+        default: ghcr.io/bolajiwahab/pgpartix:latest
       mode:
-        description: Set to "external" to skip starting an ephemeral cluster and connect to an external database instead (see db_* inputs).
+        description: Set to "external" to skip creating an ephemeral cluster and connect to an external database instead (see db_* inputs).
         required: false
         type: string
         default: ephemeral
       init_dir:
-        description: Initialization directory applied to the ephemeral, in-job PostgreSQL cluster. Only used in ephemeral mode.
+        description: Initialization directory applied to the ephemeral, in-job PostgreSQL cluster.
         required: false
         type: string
         default: ""
       db_host:
-        description: External database host. Required only when init_dir is empty.
+        description: External database host.
         required: false
         type: string
+        default: localhost
       db_port:
-        description: External database port. Used only when init_dir is empty.
+        description: External database port.
         required: false
-        type: string
-        default: "5432"
+        type: number
+        default: 5432
       db_database:
-        description: External database name. Required only when init_dir is empty.
+        description: External database name.
         required: false
         type: string
+        default: "postgres"
       db_user:
-        description: External database role. Required only when init_dir is empty.
+        description: External database role.
         required: false
         type: string
       app_client_id:
@@ -93,7 +91,7 @@ jobs:
       cancel-in-progress: false
 
     container:
-      image: ${{ inputs.image }}:${{ inputs.image_tag }}
+      image: ${{ inputs.image }}
       # The image runs as a non-root user by default. GitHub requires Docker
       # actions to be run by the default Docker user (root) in order to be able to access
       # the GITHUB_WORKSPACE directory which is needed by the workflow.

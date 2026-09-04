@@ -83,6 +83,7 @@ function create_postgres_stubs() {
         PATH="${path_directory}:/usr/local/bin:/usr/bin:/bin" \
         POSTGRES_BIN_DIR="${stub_directory}" \
         PGDATA="${BATS_TEST_TMPDIR}/data" \
+        PGP_INIT_DIR="" \
         /usr/local/bin/pgp-start
 
     [ "${status}" -eq 0 ]

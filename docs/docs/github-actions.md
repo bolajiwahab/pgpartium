@@ -190,7 +190,7 @@ jobs:
     uses: bolajiwahab/pgpartix/.github/workflows/partition-lifecycle.yaml@main
     with:
       config: partition-lifecycle.yaml
-      image_tag: "0.11.0-pg17"
+      image_tag: "0.11.0-pg18"
       init_dir: migrations/initdir
       app_client_id: ${{ vars.PGPARTIX_APP_CLIENT_ID }}
     secrets:

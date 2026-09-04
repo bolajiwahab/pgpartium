@@ -4,10 +4,10 @@ set -euo pipefail
 
 echo "INFO: Setting up mock timestamp"
 
-psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 <<SQL
-ALTER SYSTEM SET mock.now = 'disabled';
-ALTER SYSTEM SET search_path = mock, pg_catalog, public;
-SQL
+printf '%s\n' \
+    "mock.now = 'disabled'" \
+    "search_path = 'mock, pg_catalog, public'" \
+    >> "${PGDATA}/postgresql.conf"
 
 pg_ctl reload
 

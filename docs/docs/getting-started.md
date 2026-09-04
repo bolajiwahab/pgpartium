@@ -114,7 +114,7 @@ docker run --rm \
   --env PGP_HOST="$PGP_HOST" \
   --env PGP_PORT="$PGP_PORT" \
   --env PGP_DATABASE="$PGP_DATABASE" \
-  ghcr.io/bolajiwahab/pgpartix:0.11.0-pg17 \
+  ghcr.io/bolajiwahab/pgpartix:0.11.0-pg18 \
   pgp-run-lifecycle -c partition-lifecycle.yaml
 ```
 
