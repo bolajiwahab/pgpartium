@@ -20,14 +20,9 @@ on:  # yamllint disable-line rule:truthy
         type: string
         default: ghcr.io/bolajiwahab/pgpartix
       image_tag:
-        description: Image tag to pin, for example "0.9.0".
+        description: Image tag to pin, for example "0.11.0-pg17".
         required: true
         type: string
-      pg_major_version:
-        description: PostgreSQL major version to install, and to start the cluster with in ephemeral mode.
-        required: false
-        type: string
-        default: "17"
       mode:
         description: Set to "external" to skip starting an ephemeral cluster and connect to an external database instead (see db_* inputs).
         required: false
@@ -108,8 +103,6 @@ jobs:
 
     env:
       PGP_INIT_DIR: ${{ inputs.init_dir }}
-      PGP_MODE: ${{ inputs.mode }}
-      PGP_PG_MAJOR_VERSION: ${{ inputs.pg_major_version }}
       PGP_HOST: ${{ inputs.db_host }}
       PGP_PORT: ${{ inputs.db_port }}
       PGP_DATABASE: ${{ inputs.db_database }}
@@ -141,6 +134,7 @@ jobs:
 
       - name: Start PostgreSQL and load the application schema
         id: start
+        if: inputs.mode == 'ephemeral'
         run: pgp-start
 
       # A command may publish valid tables and still return 1 for other tables.
@@ -151,7 +145,7 @@ jobs:
         run: pgp-run-lifecycle -c "${{ inputs.config }}"
 
       - name: Create or update partition-lifecycle PR
-        if: ${{ always() && steps.start.outcome == 'success' }}
+        if: ${{ always() && steps.lifecycle.outcome != 'skipped' && (inputs.mode == 'external' || steps.start.outcome == 'success') }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |

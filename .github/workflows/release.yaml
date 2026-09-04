@@ -12,6 +12,7 @@ on:  # yamllint disable-line rule:truthy
 
 env:
   PACKAGE_NAME: "pgpartix"
+  LATEST_POSTGRESQL_VERSION: "18"
 
 jobs:
   details:
@@ -68,9 +69,13 @@ jobs:
             gh release create ${{ needs.details.outputs.tag_name }} --title ${{ needs.details.outputs.tag_name }} --generate-notes
 
   docker_image_release:
-    name: Publish multi-platform docker image [arch=amd64,arm64]
+    name: Publish PostgreSQL ${{ matrix.postgresql }} image [arch=amd64,arm64]
     needs: [details]
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        postgresql: [14, 15, 16, 17, 18]
     permissions:
       contents: read
       packages: write
@@ -95,16 +100,32 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e  # v4
 
+      - name: Define image tags
+        id: image-tags
+        env:
+          POSTGRESQL: ${{ matrix.postgresql }}
+          RELEASE_TAG: ${{ needs.details.outputs.tag_name }}
+          RELEASE_SUFFIX: ${{ needs.details.outputs.suffix }}
+        run: |
+          {
+            echo "tags<<EOF"
+            echo "ghcr.io/${{ github.repository_owner }}/${{ env.PACKAGE_NAME }}:${RELEASE_TAG}-pg${POSTGRESQL}"
+            if [[ "${POSTGRESQL}" == "${LATEST_POSTGRESQL_VERSION}" && -z "${RELEASE_SUFFIX}" ]]; then
+              echo "ghcr.io/${{ github.repository_owner }}/${{ env.PACKAGE_NAME }}:latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Build and Push Docker Image
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a  # v7
         with:
+          target: runtime
           platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          build-args: PG_MAJOR_VERSION=${{ matrix.postgresql }}
+          cache-from: type=gha,scope=release-pg${{ matrix.postgresql }}
+          cache-to: type=gha,scope=release-pg${{ matrix.postgresql }},mode=max
           push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ env.PACKAGE_NAME }}:${{ needs.details.outputs.tag_name }}
-            ghcr.io/${{ github.repository_owner }}/${{ env.PACKAGE_NAME }}:latest
+          tags: ${{ steps.image-tags.outputs.tags }}
 
       - name: Post Image URL
-        run: echo "Docker image published at ghcr.io/${{ github.repository_owner }}/${{ env.PACKAGE_NAME }}:${{ needs.details.outputs.tag_name }}"
+        run: echo "Docker image published at ghcr.io/${{ github.repository_owner }}/${{ env.PACKAGE_NAME }}:${{ needs.details.outputs.tag_name }}-pg${{ matrix.postgresql }}"

@@ -36,13 +36,15 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
-    name: Run coverage on default PostgreSQL
+    name: Run coverage
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
 
       - name: Run coverage
-        run: tests/run-coverage.sh
+        env:
+          COVERAGE: true
+        run: tests/run-tests.sh
 
   test-postgres:
     runs-on: ubuntu-latest
@@ -55,7 +57,6 @@ jobs:
           - 16
           - 17
           - 18
-          - 19
     name: Run tests on PostgreSQL ${{ matrix.postgresql }}
     steps:
       - name: Checkout repository
@@ -63,7 +64,7 @@ jobs:
 
       - name: Run tests on PostgreSQL ${{ matrix.postgresql }}
         env:
-          PGP_PG_MAJOR_VERSION: ${{ matrix.postgresql }}
+          PG_MAJOR_VERSION: ${{ matrix.postgresql }}
         run: tests/run-tests.sh
 
   integration-test:

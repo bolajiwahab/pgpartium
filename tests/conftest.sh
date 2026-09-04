@@ -2,7 +2,7 @@
 
 function teardown() {
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 <<SQL
-ALTER SYSTEM RESET mock.now;
+ALTER SYSTEM SET mock.now = 'disabled';
 SQL
-    sudo pg_ctlcluster "${PGP_PG_MAJOR_VERSION}" "${PGP_CLUSTER_NAME}" reload
+    pg_ctl reload
 }

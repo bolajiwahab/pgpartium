@@ -190,8 +190,7 @@ jobs:
     uses: bolajiwahab/pgpartix/.github/workflows/partition-lifecycle.yaml@main
     with:
       config: partition-lifecycle.yaml
-      image_tag: "latest"
-      pg_major_version: "17"
+      image_tag: "0.11.0-pg17"
       init_dir: migrations/initdir
       app_client_id: ${{ vars.PGPARTIX_APP_CLIENT_ID }}
     secrets:
@@ -230,11 +229,10 @@ This mode has the smallest security surface because GitHub Actions does not conn
 
 ### External database
 
-When an authoritative non-production catalog is already available, install the PostgreSQL client without creating a local cluster, then connect using encrypted Actions secrets:
+When an authoritative non-production catalog is already available, use the matching PostgreSQL image variant without creating a local cluster, then connect using encrypted Actions secrets:
 
 ```yaml
     env:
-      PGP_PG_MAJOR_VERSION: 17
       PGP_USER: ${{ secrets.PGPARTIX_DATABASE_USER }}
       PGP_PASSWORD: ${{ secrets.PGPARTIX_DATABASE_PASSWORD }}
       PGP_HOST: ${{ secrets.PGPARTIX_DATABASE_HOST }}
@@ -243,11 +241,6 @@ When an authoritative non-production catalog is already available, install the P
 
     steps:
       # App token and checkout steps omitted here.
-      - name: Install PostgreSQL client runtime
-        env:
-          PGP_MODE: external
-        run: pgp-start
-
       - name: Generate lifecycle migrations
         run: pgp-run-lifecycle -c partition-lifecycle.yaml
 ```

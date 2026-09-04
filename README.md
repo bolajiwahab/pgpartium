@@ -68,14 +68,14 @@ docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
   --env PGP_INIT_DIR=examples/quick-start/initdir \
-  ghcr.io/bolajiwahab/pgpartix:0.9.0 \
+  ghcr.io/bolajiwahab/pgpartix:latest \
   bash -lc '
     pgp-start &&
     pgp-run-lifecycle -c examples/quick-start/partition-lifecycle.yaml
   '
 ```
 
-`pgp-start` defaults to PostgreSQL 14 and supplies the local cluster connection settings. The only database setup input in this example is the initialization directory. It can contain `.sql`, `.sql.gz`, and `.sh` files, including scripts that invoke the application's existing schema or migration tooling. `--workdir /repository` is required because the image otherwise runs from `/src`, while the configuration and output paths are relative to the mounted repository. Generated SQL is written to `examples/quick-start/migrations/pgpartix_output.sql`; apply generated lifecycle migrations only through the application's normal migration process.
+`latest` contains the newest pgpartix release and highest stable PostgreSQL major. For reproducible runs, pin both versions with a tag such as `0.11.0-pg18`. The only database setup input in this example is the initialization directory. It can contain `.sql`, `.sql.gz`, and `.sh` files, including scripts that invoke the application's existing schema or migration tooling. `--workdir /repository` is required because the image otherwise runs from `/src`, while the configuration and output paths are relative to the mounted repository. Generated SQL is written to `examples/quick-start/migrations/pgpartix_output.sql`; apply generated lifecycle migrations only through the application's normal migration process.
 
 See [Getting started](docs/docs/getting-started.md) for prerequisites, external database mode, and output validation.
 
@@ -83,7 +83,7 @@ See [Getting started](docs/docs/getting-started.md) for prerequisites, external 
 
 | Command | Purpose |
 | --- | --- |
-| `pgp-start` | Install PostgreSQL tooling, optionally create a cluster, and apply schema initialization files. |
+| `pgp-start` | Start the bundled PostgreSQL cluster and apply schema initialization files. |
 | `pgp-run-lifecycle` | Generate migrations for missing desired partitions, then detach/drop migrations for expired ones. |
 | `pgp-setup-infrastructure` | Install the SQL functions used to inspect and render lifecycle DDL. |
 | `pgp-get-migration-filename` | Resolve migration filename templates. |

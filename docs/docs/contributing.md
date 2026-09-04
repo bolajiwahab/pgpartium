@@ -26,7 +26,6 @@ Bug reports, feature requests, code changes, and documentation improvements are 
 │   ├── bin                       # Binaries (pgp-*)
 │   ├── sql                       # Database functions, numbered by load order
 │   ├── schema.json               # JSON Schema for lifecycle configuration files
-│   └── createcluster.conf        # Debian pg_createcluster defaults for the image
 ├── docs                          # Schema doc tooling (schema_doc_generator.sh, schema_doc.yaml)
 │   └── docs                      # Published guides (index.md is the index),
 │                                    plus the generated schema.html — this is the GitHub Pages root
@@ -42,7 +41,6 @@ Bug reports, feature requests, code changes, and documentation improvements are 
 │   ├── test_setup_infrastructure.sh
 │   ├── test_pgp_start.sh
 │   ├── run-tests.sh              # Runs the Bats suite in Docker
-│   ├── run-coverage.sh           # Builds the test image and runs coverage in Docker
 │   ├── coverage.sh               # Runs Bats under kcov and enforces MIN_COVERAGE
 │   └── docker-compose-test.yaml
 ├── tools                         # Repo lifecycle scripts (schema doc freshness check)
@@ -60,7 +58,7 @@ pgpartix has two main components:
 
 Tests are Bats integration tests driven through the public CLI, run inside the project's Docker image against a disposable PostgreSQL cluster. There is no unit-test layer or pgTAP suite; every SQL function is exercised only through the CLI commands that call it.
 
-Each `test_*.sh` file under `tests/` covers one binary. `test_make_partitions.sh` and `test_expire_partitions.sh` additionally auto-discover every fixture directory under `tests/fixtures/{make_partitions,expire_partitions}/` and run it as its own test case, so adding coverage for a new option is usually just adding a fixture, not editing the `.sh` file.
+Each `test_*.sh` file under `tests/` covers one binary. `test_make_partitions.sh` and `test_expire_partitions.sh` additionally auto-discover every fixture directory under `tests/fixtures/{make_partitions,expire_partitions}/` and run it as its own test case, so adding coverage for a new option is usually just adding a fixture.
 
 A fixture directory can contain:
 
@@ -73,18 +71,18 @@ A fixture directory can contain:
 
 The test runner diffs the generated file against `*.expected.sql` and then applies the generated SQL to a throwaway database to confirm it is valid, executable DDL - not just textually correct.
 
-`tests/run-coverage.sh` runs the test suite with coverage using the default PostgreSQL version.
+`COVERAGE=true tests/run-tests.sh` runs the test suite with coverage using the default PostgreSQL version.
 
 To check coverage, use:
 
 ```bash
-tests/run-coverage.sh
+COVERAGE=true tests/run-tests.sh
 ```
 
 To run the tests for a specific PostgreSQL version:
 
 ```bash
-PGP_PG_MAJOR_VERSION=<POSTGRES_MAJOR_VERSION> tests/run-tests.sh
+PG_MAJOR_VERSION=<POSTGRES_MAJOR_VERSION> tests/run-tests.sh
 ```
 
 ## Documentation
