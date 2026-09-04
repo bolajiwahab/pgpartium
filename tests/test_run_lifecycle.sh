@@ -519,13 +519,13 @@ function run_expire_config_directory() {
 }
 
 @test "pgp-run-lifecycle reports a clear error when LATEST_PARTITION has no latest partition" {
-    local fixture="tests/fixtures/run_lifecycle/missing_latest_partition.yaml"
+    local fixture="tests/fixtures/run_lifecycle"
     local result="${fixture}/pgpartix_output.sql"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
     pg_ctl reload
 
-    run pgp-run-lifecycle -c "${fixture}"
+    run pgp-run-lifecycle -c "${fixture}/missing_latest_partition.yaml"
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/teardown.sql"
 
