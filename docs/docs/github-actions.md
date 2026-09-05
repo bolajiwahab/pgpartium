@@ -1,5 +1,7 @@
 # Automating lifecycle PRs with GitHub Actions
 
+![Lifecycle PR](assets/github_pgpartix_pr.png)
+
 GitHub Actions can provide a Dependabot- or Renovate-like workflow. Other CI systems or scheduled hosts can publish the same generated migrations.
 
 For the GitHub Actions integration:
