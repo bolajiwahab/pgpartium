@@ -1,10 +1,10 @@
 # pgpartix
 
 ![GitHub Release](https://img.shields.io/github/v/release/bolajiwahab/pgpartix)
-![GitHub Container Registry](https://ghcr-badge.egpl.dev/bolajiwahab/pgpartix/tags?color=%2344cc11&ignore=latest&n=3&label=image+tags&trim=)
 [![CI](https://github.com/bolajiwahab/pgpartix/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/bolajiwahab/pgpartix/actions/workflows/ci.yaml)
 [![release](https://github.com/bolajiwahab/pgpartix/actions/workflows/release.yaml/badge.svg)](https://github.com/bolajiwahab/pgpartix/actions/workflows/release.yaml)
 ![GitHub License](https://img.shields.io/github/license/bolajiwahab/pgpartix)
+![GitHub Container Registry](https://ghcr-badge.egpl.dev/bolajiwahab/pgpartix/tags?color=%2344cc11&ignore=latest&n=5&label=image+tags&trim=)
 
 pgpartix generates reviewable PostgreSQL partition-lifecycle migrations. Users can commit them locally, integrate them with any CI/CD or scheduling environment, or use the optional GitHub pull-request helper.
 
