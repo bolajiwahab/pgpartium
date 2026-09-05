@@ -84,7 +84,7 @@ function run_config_directory() {
     expected="${fixture}/pgpartix_output.expected.sql"
     result="${fixture}/pgpartix_output.sql"
 
-    trap 'cleanup "${fixture}" "${test_db} ${result}"' ERR INT TERM
+    trap 'cleanup "${fixture}/teardown.sql" "${test_db}" "${result}"' ERR INT TERM
 
     psql --no-psqlrc --quiet --variable ON_ERROR_STOP=1 --file "${fixture}/setup.sql"
 

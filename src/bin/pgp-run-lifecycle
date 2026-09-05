@@ -437,12 +437,12 @@ EOF
             fi
 
             output_file="${temp_migration_directory}/${output_filename}"
+            # If the output file is already part of the generated output files, we append to it.
             if [[ -n "${generated_output_files[${output_filename}]+_}" ]]; then
                 printf '\n' >> "${output_file}"
                 cat "${table_output_file}" >> "${output_file}"
                 rm "${table_output_file}"
             else
-                rm -f "${output_file}"
                 mv "${table_output_file}" "${output_file}"
                 chmod 644 "${output_file}"
                 generated_output_files["${output_filename}"]=1
@@ -549,12 +549,12 @@ EOF
             fi
 
             output_file="${temp_migration_directory}/${output_filename}"
+            # If the output file is already part of the generated output files, we append to it.
             if [[ -n "${generated_output_files[${output_filename}]+_}" ]]; then
                 printf '\n' >> "${output_file}"
                 cat "${table_output_file}" >> "${output_file}"
                 rm "${table_output_file}"
             else
-                rm -f "${output_file}"
                 mv "${table_output_file}" "${output_file}"
                 generated_output_files["${output_filename}"]=1
             fi
