@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     volumes:
-      - ../examples/quick-start/initdir:/docker-entrypoint-initdb.d:ro
+      - ./fixtures/external_db:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 2s
@@ -48,4 +48,4 @@ services:
       - bash
       - -lc
       - |
-        pgp-run-lifecycle -c examples/quick-start/partition-lifecycle.yaml
+        pgp-run-lifecycle -c tests/fixtures/external_db/partition-lifecycle.yaml
