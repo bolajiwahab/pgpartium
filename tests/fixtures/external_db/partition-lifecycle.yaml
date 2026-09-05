@@ -1,6 +1,6 @@
 ---
 lifecycle:
-  directory: examples/quick-start/migrations
+  directory: tests/fixtures/external_db
   timezone: UTC
   description:
     make: "Make partitions for {parent_table_schema}.{parent_table_name} table"

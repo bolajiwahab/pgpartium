@@ -444,6 +444,7 @@ EOF
             else
                 rm -f "${output_file}"
                 mv "${table_output_file}" "${output_file}"
+                chmod 644 "${output_file}"
                 generated_output_files["${output_filename}"]=1
             fi
 
@@ -682,7 +683,11 @@ function run_lifecycle_for_config() {
     echo "INFO: Expiring partitions"
     expire_partitions "${config}"
 
-    cp -rf "${temp_migration_directory}/." "${directory}/"
+    for output_filename in "${!generated_output_files[@]}"; do
+        cp -f \
+            "${temp_migration_directory}/${output_filename}" \
+            "${directory}/${output_filename}"
+    done
 
     if [[ "${#make_failed_tables[@]}" -gt 0 || "${#expire_failed_tables[@]}" -gt 0 ]]; then
         if [[ "${#make_failed_tables[@]}" -gt 0 ]]; then

@@ -76,9 +76,9 @@ pg_ctl \
 if [[ -d "${init_dir}" ]]; then
     echo "INFO: Applying init scripts from ${init_dir}"
 
-    find "${init_dir}" -type f \
+    find -L "${init_dir}" -type f \
         \( -iname "*.sh" -o -iname "*.sql" -o -iname "*.sql.gz" \) \
-        | sort \
+        | sort -V \
         | while IFS= read -r file; do
             case "${file}" in
                 *.sh)

@@ -127,7 +127,7 @@ jobs:
       - name: Start PostgreSQL and load the application schema
         id: start
         if: inputs.db_host == ''
-        run: pgp-start
+        run: runuser -u pgpuser -- pgp-start
 
       # A lifecycle run may generate valid migrations for some tables
       # while returning exit-code 1 because other tables failed.
