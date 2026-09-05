@@ -16,6 +16,18 @@ The packaged container supplies PostgreSQL setup utilities, the pgpartix CLIs, p
 
 To persist migration files generated inside the container onto the host filesystem, a bind mount is used. The bind-mounted directory must be writable so that `pgpartix` can create and persist the generated migration files on the host.
 
+## Running pgpartix as root
+
+`pgpartix` uses `initdb` when creating an ephemeral PostgreSQL cluster. PostgreSQL does not allow `initdb` to run as `root`.
+
+If the container or execution environment runs as `root`, run `pgp-start` as the unprivileged `pgpuser` user instead:
+
+```bash
+runuser -u pgpuser -- pgp-start
+```
+
+The `pgpartix` container runs as `pgpuser` by default, so this is only required when the container user is overridden to `root` or the execution environment starts the container as `root`.
+
 ## Install the image
 
 ```bash
@@ -39,8 +51,8 @@ The repository contains a complete runnable example:
 ```text
 examples/quick-start
 ├── initdir
-│   └── 01_schema.sql
-│   └── 02_schema.sql
+│   └── 01_init.sql
+│   └── migrations # a symlink to the actual migration folder, this allows applying current migrations to the ephemeral cluster
 ├── migrations
 │   └── .gitignore
 └── partition-lifecycle.yaml
@@ -60,7 +72,7 @@ docker run --rm \
   '
 ```
 
-`pgp-start` uses the PostgreSQL major bundled in the selected image and supplies the local cluster connection settings. `PGP_INIT_DIR` is the only database setup input here and loads the example schema. `--workdir /repository` makes repository-relative configuration and output paths resolve inside the mounted host directory. The generated migration appears at `examples/quick-start/migrations/pgpartix_output.sql` on the host.
+`pgp-start` uses the PostgreSQL major bundled in the selected image and supplies the local cluster connection settings. `PGP_INIT_DIR` is the only database setup input here and loads the example schema. `--workdir /repository` makes repository-relative configuration and output paths resolve inside the mounted host directory. The generated migration files appear at `examples/quick-start/migrations/` on the host.
 
 To adapt the example, copy its configuration and initialization layout into the application repository. Change `lifecycle.directory`, the configured tables, and the initialization SQL or scripts to match the application's schema migration setup. The output directory must already exist. For all available options, inheritance rules, and naming placeholders, use the [configuration reference](https://pgpartix.azellar.com/configuration) and [annotated sample](https://pgpartix.azellar.com/config.sample.yaml).
 
@@ -72,7 +84,7 @@ pgpartix needs an accurate PostgreSQL database. It supports two practical approa
 
 This is the recommended mode for local evaluation and automated environments. Provide an initialization directory that recreates the schema pgpartix should inspect.
 
-`pgp-start -i` processes files in lexical order:
+`pgp-start -i` processes files in natural order:
 
 - executable or sourceable `.sh` scripts;
 - `.sql` files;
@@ -84,11 +96,10 @@ Example repository layout:
 
 ```text
 .
+├── initdir
+│   └── 01_init.sql
+│   └── migrations # a symlink to the actual migration folder, this allows applying current migrations to the ephemeral cluster
 ├── migrations
-│   ├── initdir
-│   │   ├── 01_schema.sql
-│   │   └── 02_template_tables.sql
-│   └── partitions
 └── partition-lifecycle.yaml
 ```
 
@@ -98,7 +109,7 @@ For an application repository, the equivalent command is:
 docker run --rm \
   --volume "$PWD:/repository" \
   --workdir /repository \
-  --env PGP_INIT_DIR=migrations/initdir \
+  --env PGP_INIT_DIR=initdir \
   ghcr.io/bolajiwahab/pgpartix:latest \
   bash -lc '
     pgp-start &&
@@ -106,7 +117,7 @@ docker run --rm \
   '
 ```
 
-The generated SQL appears in `migrations/partitions` on the host.
+The generated migration files appear in `migrations` folder on the host.
 
 ### Existing external database
 

@@ -2,6 +2,13 @@
 lifecycle:
   directory: examples/quick-start/migrations
   timezone: UTC
+  description:
+    make: "Make partitions for {parent_table_schema}.{parent_table_name} table"
+    expire: "Expire partitions for {parent_table_schema}.{parent_table_name} table"
+  output:
+    file:
+      naming:
+        template: "V{integer:5}__{description}.sql"
   partition:
     naming:
       template: "{parent_table_schema}__{parent_table_name}__YYYY_MM"

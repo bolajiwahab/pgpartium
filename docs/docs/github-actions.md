@@ -103,11 +103,11 @@ jobs:
 
     container:
       image: ghcr.io/bolajiwahab/pgpartix:latest
-      # See "Running as root" below.
+      # See "Running as root" above.
       options: --user root
 
     env:
-      PGP_INIT_DIR: migrations/initdir
+      PGP_INIT_DIR: initdir
 
     steps:
       - name: Create partition-lifecycle App token
@@ -133,7 +133,7 @@ jobs:
 
       - name: Start PostgreSQL and load the application schema
         id: start
-        run: pgp-start
+        run: runuser -u pgpuser -- pgp-start
 
       # A command may publish valid tables and still return 1 for other tables.
       # Preserve that partial progress long enough to open/update the PR.
@@ -216,7 +216,7 @@ pgpartix needs a PostgreSQL database that represents the schema being maintained
 
 ### Ephemeral cluster from repository migrations
 
-The complete workflow above starts PostgreSQL inside the job and applies an initialization directory. `pgp-start -i` processes supported files in lexical order:
+The complete workflow above starts PostgreSQL inside the job and applies an initialization directory. `pgp-start -i` processes supported files in natural order:
 
 - executable or sourceable `.sh` scripts;
 - `.sql` files;
