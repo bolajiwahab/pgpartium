@@ -51,8 +51,8 @@ The repository contains a complete runnable example:
 ```text
 examples/quick-start
 ├── initdir
-│   └── 01_init.sql
-│   └── migrations # a symlink to the actual migration folder, this allows applying current migrations to the ephemeral cluster
+│   ├── 01_init.sql
+│   └── migrations # a symlink to the actual migration folder; this allows applying current migrations to the ephemeral cluster
 ├── migrations
 │   └── .gitignore
 └── partition-lifecycle.yaml
@@ -97,8 +97,8 @@ Example repository layout:
 ```text
 .
 ├── initdir
-│   └── 01_init.sql
-│   └── migrations # a symlink to the actual migration folder, this allows applying current migrations to the ephemeral cluster
+│   ├── 01_init.sql
+│   └── migrations # a symlink to the actual migration folder; this allows applying current migrations to the ephemeral cluster
 ├── migrations
 └── partition-lifecycle.yaml
 ```
@@ -117,7 +117,7 @@ docker run --rm \
   '
 ```
 
-The generated migration files appear in `migrations` folder on the host.
+The generated migration files appear in the `migrations` folder on the host.
 
 ### Existing external database
 
