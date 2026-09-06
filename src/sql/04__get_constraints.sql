@@ -14,6 +14,25 @@ RETURNS TABLE (
 LANGUAGE SQL
 AS $BODY$
 
+/*
+    * @param p_table_schema (text): The schema of the table.
+    * @param p_table_name (text): The name of the table.
+    * @param p_constraint_name_templates (jsonb): A JSONB object containing templates for constraint names.
+        The keys are constraint types ('primary_key', 'unique_key', 'foreign_key', 'check', 'exclusion')
+        and the values are the corresponding templates. A generic template can also be specified with `template`
+        which will be used for every constraint type.
+        If a template is not provided for a constraint type and no generic template, a default template will be used.
+
+    * @return constraint_name (text): The name of the constraint.
+    * @return constraint_type ("char"): The type of the constraint
+        ('p' for primary key, 'u' for unique key, 'f' for foreign key, 'c' for check, 'x' for exclusion).
+    * @return constraint_name_template (text): The template used to generate the constraint name.
+    * @return constraint_keys (text): The keys of the constraint, concatenated with underscores.
+    * @return ordinal (integer): The ordinal number of the constraint, when there are two or more constraints
+        with the same constraint_type and constraint_keys.
+    * @return constraint_definition (text): The definition of the constraint.
+*/
+
     WITH constraints AS (
         SELECT c.oid AS constraint_oid
              , c.conname AS constraint_name

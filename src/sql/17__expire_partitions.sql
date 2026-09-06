@@ -12,6 +12,24 @@ RETURNS SETOF text
 LANGUAGE plpgsql
 AS $BODY$
 
+/*
+    * @param p_table_schema (text): The schema of the partitioned table.
+    * @param p_table_name (text): The name of the partitioned table.
+    * @param p_retention (interval): The retention period for partitions.
+        Partitions older than this interval will be considered expired.
+    * @param p_detach_only (boolean): If TRUE, expired partitions will be detached from the parent table
+        instead of being dropped. Default is FALSE.
+    * @param p_detach_first (boolean): If TRUE, expired partitions will be detached from the parent table
+        before being dropped. Default is FALSE.
+    * @param p_detach_concurrently (boolean): If TRUE, expired partitions will be detached concurrently.
+        This option is only applicable if p_detach_only or p_detach_first is TRUE. Default is FALSE.
+    * @param p_timezone (text): The timezone to use for timestamp calculations. Default is 'Etc/UTC'.
+    * @param p_idempotent (boolean): If TRUE, the generated SQL statements will include "IF EXISTS"
+        to avoid errors if the partition does not exist. Default is FALSE.
+
+    * @return SETOF text: A set of SQL statements to detach or drop the expired partitions.
+*/
+
 BEGIN
 
     PERFORM set_config('timezone', p_timezone, TRUE);
@@ -32,7 +50,7 @@ BEGIN
                  WHEN p_detach_only
                    THEN format(
                             E'ALTER TABLE %1$s%2$I.%3$I\n    DETACH PARTITION %4$I.%5$I%6$s;\n'
-                          , CASE p_idempotent                                   -- <1>
+                          , CASE p_idempotent                                     -- <1>
                               WHEN TRUE
                                 THEN 'IF EXISTS '
                               ELSE ''
@@ -50,7 +68,7 @@ BEGIN
                  WHEN p_detach_first
                    THEN format(
                             E'ALTER TABLE %1$s%2$I.%3$I\n    DETACH PARTITION %4$I.%5$I%6$s;\n\nDROP TABLE %1$s%4$I.%5$I;\n'
-                          , CASE p_idempotent                                   -- <1>
+                          , CASE p_idempotent                                      -- <1>
                               WHEN TRUE
                                 THEN 'IF EXISTS '
                               ELSE ''

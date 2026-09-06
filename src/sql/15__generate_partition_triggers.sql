@@ -12,6 +12,21 @@ RETURNS text
 LANGUAGE SQL
 AS $BODY$
 
+/*
+    * @param p_parent_table_schema (text): The schema of the parent partitioned table.
+    * @param p_parent_table_name (text): The name of the parent partitioned table.
+    * @param p_partition_schema (text): The schema of the partition.
+    * @param p_partition_name (text): The name of the partition.
+    * @param p_template_table_schema (text): The schema of the template table.
+    * @param p_template_table_name (text): The name of the template table.
+    * @param p_trigger_name_template (text): A template for generating trigger names.
+        The placeholders in the template will be replaced with the corresponding values for each trigger.
+    * @param p_idempotent (boolean): If TRUE, the generated trigger creation statements will
+        include "OR REPLACE" to avoid errors if the trigger already exists.
+
+    * @return text: A string containing the SQL statements to create the triggers for the partition.
+*/
+
     WITH template_triggers AS (
         SELECT trigger_name
              , is_trigger_enabled
@@ -37,8 +52,8 @@ AS $BODY$
     )
     , partition_triggers AS (
         SELECT pgpartix.render_template(
-                   p_trigger_name_template,
-                   jsonb_build_object(
+                   p_template => p_trigger_name_template
+                 , p_values => jsonb_build_object(
                        '{parent_table_schema}', p_parent_table_schema,
                        '{parent_table_name}',   p_parent_table_name,
                        '{partition_schema}',    p_partition_schema,

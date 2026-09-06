@@ -13,6 +13,20 @@ RETURNS TABLE (
 LANGUAGE SQL
 AS $BODY$
 
+/*
+    * @param p_table_schema (text): The schema of the partitioned table.
+    * @param p_table_name (text): The name of the partitioned table.
+    * @param p_retention (interval): The retention period for partitions.
+        Partitions older than this interval will be considered expired.
+
+    * @return partition_schema (text): The schema of the expired partition.
+    * @return partition_name (text): The name of the expired partition.
+    * @return lower_bound (timestamptz): The lower bound of the partition.
+    * @return upper_bound (timestamptz): The upper bound of the partition.
+    * @return age (interval): The age of the partition.
+        Calculated as the difference between the current timestamp and the upper bound of the partition.
+*/
+
     SELECT cn.nspname AS partition_schema
          , c.relname AS partition_name
          , CASE keys_data_types

@@ -7,6 +7,14 @@ CREATE OR REPLACE FUNCTION pgpartix.table_exists (
 RETURNS boolean
 LANGUAGE SQL
 AS $BODY$
+
+/*
+    * @param p_table_schema (text): The schema of the table.
+    * @param p_table_name (text): The name of the table.
+
+    * @return boolean: True if the table exists, false otherwise.
+*/
+
     SELECT EXISTS (
         SELECT NULL
           FROM pg_catalog.pg_namespace AS n
@@ -23,6 +31,13 @@ CREATE OR REPLACE FUNCTION pgpartix.tablespace_exists (
 RETURNS boolean
 LANGUAGE SQL
 AS $BODY$
+
+/*
+    * @param p_tablespace (text): The name of the tablespace.
+
+    * @return boolean: True if the tablespace exists, false otherwise.
+*/
+
     SELECT EXISTS (
         SELECT NULL
           FROM pg_catalog.pg_tablespace
@@ -37,6 +52,14 @@ CREATE OR REPLACE FUNCTION pgpartix.get_relation_tablespace (
 RETURNS text
 LANGUAGE SQL
 AS $BODY$
+
+/*
+    * @param p_relation_schema (text): The schema of the relation.
+    * @param p_relation_name (text): The name of the relation.
+
+    * @return text: The name of the tablespace of the relation.
+*/
+
     SELECT ts.spcname AS tablespace_name
       FROM pg_catalog.pg_namespace AS n
      INNER JOIN pg_catalog.pg_class AS c
@@ -61,11 +84,21 @@ LANGUAGE plpgsql
 STRICT
 IMMUTABLE
 AS $BODY$
+
+/*
+    * @param p_template (text): The template string containing placeholders to be replaced.
+    * @param p_values (jsonb): A JSONB object containing key-value pairs for
+        replacing placeholders in the template string.
+
+    * @return text: The rendered string with placeholders replaced by corresponding values from the JSONB object.
+*/
+
 DECLARE
     v_result text := p_template;
     v_key text;
     v_value text;
 BEGIN
+
     FOR v_key, v_value IN
         SELECT t.v_key
              , t.v_value
@@ -79,6 +112,7 @@ BEGIN
     END LOOP;
 
     RETURN v_result;
+
 END;
 $BODY$;
 
@@ -90,6 +124,14 @@ RETURNS boolean
 LANGUAGE SQL
 STRICT
 AS $BODY$
+
+/*
+    * @param p_table_schema (text): The schema of the table.
+    * @param p_table_name (text): The name of the table.
+
+    * @return boolean: True if the table is partitioned, false otherwise.
+*/
+
     SELECT EXISTS (
         SELECT 1
           FROM pg_catalog.pg_namespace AS n
@@ -114,6 +156,17 @@ RETURNS TABLE (
 LANGUAGE SQL
 STRICT
 AS $BODY$
+
+/*
+    * @param p_table_schema (text): The schema of the table.
+    * @param p_table_name (text): The name of the table.
+
+    * @return number_of_keys: The number of partitioning keys.
+    * @return strategy: The partitioning strategy (RANGE, LIST, or HASH).
+    * @return keys: The names of the partitioning keys.
+    * @return keys_data_types: The data types of the partitioning keys.
+*/
+
     SELECT p.partnatts AS number_of_keys
          , CASE p.partstrat
              WHEN 'r'
@@ -158,6 +211,17 @@ RETURNS TABLE (
 LANGUAGE SQL
 STRICT
 AS $BODY$
+
+/*
+    * @param p_relation_schema (text): The schema of the relation.
+    * @param p_relation_name (text): The name of the relation.
+
+    * @return source_order: The order of the source (1 for relation, 2 for toast).
+    * @return source_kind: The kind of the source (relation or toast).
+    * @return parameter_position: The position of the parameter in the source.
+    * @return parameter_key: The key of the storage parameter.
+    * @return parameter_value: The value of the storage parameter.
+*/
 
     WITH relation_options AS (
         SELECT 1 AS source_order
@@ -214,6 +278,16 @@ CREATE OR REPLACE FUNCTION pgpartix.render_storage_parameters (
 RETURNS text
 LANGUAGE SQL
 AS $BODY$
+
+/*
+    * @param p_relation_schema (text): The schema of the relation.
+    * @param p_relation_name (text): The name of the relation.
+    * @param p_user_config (jsonb): A JSONB object containing user-defined storage parameters to override the default ones.
+    * @param p_format (text): A format string for rendering the storage parameters.
+        The default format is '%1$s = %2$s', where %1$s is the parameter key and %2$s is the parameter value.
+
+    * @return text: A string representation of the storage parameters in the specified format.
+*/
 
     WITH base_parameters AS (
         SELECT source_order

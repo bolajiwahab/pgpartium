@@ -26,6 +26,60 @@ CREATE OR REPLACE FUNCTION pgpartix.make_partitions (
 RETURNS SETOF text
 LANGUAGE plpgsql
 AS $BODY$
+
+/*
+    * @param p_table_schema (text): The schema of the partitioned table.
+    * @param p_table_name (text): The name of the partitioned table.
+    * @param p_partition_name_template (text): A template for generating partition names.
+        Required when p_interval is specified.
+        The placeholders in the template will be replaced with the corresponding values for each partition.
+    * @param p_interval (interval): The interval for generating partitions.
+        If NULL, no new partitions will be generated.
+    * @param p_start_timestamp (timestamptz): The starting timestamp for generating partitions.
+        Overridden by the latest partition's upper bound if it exists.
+    * @param p_past (integer): The number of past partitions to generate.
+        If 0, no past partitions will be generated.
+    * @param p_future (integer): The number of future partitions to generate.
+        If 0, no future partitions will be generated.
+    * @param p_default_partition_name_template (text): A template for generating the default partition name.
+        Required when p_create_default_partition is TRUE.
+        The placeholders in the template will be replaced with the corresponding values for the default partition.
+    * @param p_create_default_partition (boolean): Whether to create a default partition if it does not exist.
+    * @param p_partition_schema (text): The schema for the new partitions.
+        If NULL, the parent table's schema will be used.
+    * @param p_partition_tablespace (text): The tablespace for the new partitions.
+        If NULL, the default tablespace in the respective environment will be used.
+    * @param p_partition_storage_mode (text): The storage settings application's mode for the new partitions.
+        Supported values are:
+            1. inherit - inherit from the template table
+            2. override - override with user-defined storage parameters, do not inherit from template table
+            3. merge - merge user-defined storage parameters with template table's storage parameters,
+                        user-defined parameters take precedence
+    * @param p_partition_storage_parameters (jsonb): A JSONB object containing storage parameters for the new partitions.
+    * @param p_index_name_template (text): A template for generating index names for the new partitions.
+        The placeholders in the template will be replaced with the corresponding values for each index.
+    * @param p_index_tablespace (text): The tablespace for the indexes of the new partitions.
+        If NULL, the default tablespace in the respective environment will be used.
+    * @param p_constraint_name_templates (jsonb): A JSONB object containing templates for constraint names.
+        The keys are constraint types ('primary_key', 'unique_key', 'foreign_key', 'check', 'exclusion')
+        and the values are the corresponding templates. A generic template can also be specified with `template`
+        which will be used for every constraint type.
+        If a template is not provided for a constraint type and no generic template, a default template will be used.
+    * @param p_trigger_name_template (text): A template for generating trigger names for the new partitions.
+        The placeholders in the template will be replaced with the corresponding values for each trigger.
+    * @param p_template_table_schema (text): The schema of the template table for the new partitions.
+    * @param p_template_table_name (text): The name of the template table for the new partitions.
+    * @param p_retention (interval): The retention period for the partitions.
+        If NULL, no retention policy will be applied.
+    * @param p_timezone (text): The timezone to use for timestamp calculations.
+        Default is 'Etc/UTC'.
+    * @param p_skip_overlapping (boolean): Whether to skip creating partitions that overlap with existing partitions.
+    * @param p_idempotent (boolean): If TRUE, the generated partition creation statements will include
+        "IF NOT EXISTS" to avoid errors if the partition already exists.
+
+    * @return SETOF text: A set of SQL statements to create the partitions, indexes, constraints, and triggers.
+*/
+
 DECLARE
     v_partition                record;
     v_partitioning_details     record;

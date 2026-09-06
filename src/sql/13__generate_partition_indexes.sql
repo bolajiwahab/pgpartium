@@ -13,6 +13,24 @@ RETURNS text
 LANGUAGE SQL
 AS $BODY$
 
+/*
+    * @param p_parent_table_schema (text): The schema of the parent partitioned table.
+    * @param p_parent_table_name (text): The name of the parent partitioned table.
+    * @param p_partition_schema (text): The schema of the partition.
+    * @param p_partition_name (text): The name of the partition.
+    * @param p_template_table_schema (text): The schema of the template table.
+    * @param p_template_table_name (text): The name of the template table.
+    * @param p_index_tablespace (text): The tablespace for the indexes.
+        If NULL, the default tablespace in the respective environment will be used.
+    * @param p_idempotent (boolean): If TRUE, the generated index creation statements
+        will include "IF NOT EXISTS" to avoid errors if the index already exists.
+        Only valid in the case of explicitly named indexes.
+    * @param p_index_name_template (text): A template for generating index names.
+        The placeholders in the template will be replaced with the corresponding values for each index.
+
+    * @return text: A string containing the SQL statements to create the indexes for the partition.
+*/
+
     WITH template_indexes AS (
         SELECT index_name
              , is_unique_index
@@ -28,8 +46,8 @@ AS $BODY$
     )
     , partition_indexes AS (
         SELECT pgpartix.render_template(
-                   p_index_name_template
-                 , jsonb_build_object(
+                   p_template => p_index_name_template
+                 , p_values => jsonb_build_object(
                        '{parent_table_schema}', p_parent_table_schema
                      , '{parent_table_name}', p_parent_table_name
                      , '{partition_schema}', p_partition_schema

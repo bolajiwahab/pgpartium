@@ -12,8 +12,8 @@ plugins:
 theme:
   variant: classic
   name: material
-  logo: assets/favicon.svg
-  favicon: assets/favicon.svg
+  logo: assets/pgpartix_logo.svg
+  favicon: assets/pgpartix_logo.svg
   features:
     - navigation.sections
     - navigation.indexes

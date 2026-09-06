@@ -14,6 +14,14 @@ VOLATILE
 PARALLEL SAFE
 SET search_path = pg_catalog
 AS $BODY$
+
+/*
+    * @param p_timestamptz (timestamptz): The timestamp to be used for generating the UUIDv7.
+    *     Defaults to the current clock timestamp if not provided.
+
+    * @return uuid: A UUIDv7 value generated based on the provided timestamp.
+*/
+
     -- Replace the first 48 bits of a uuidv4 with the current
     -- number of milliseconds since 1970-01-01 UTC
     -- and set the "version" field to 7 by flipping the 2 and 1 bit.

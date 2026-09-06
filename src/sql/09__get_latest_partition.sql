@@ -10,6 +10,17 @@ RETURNS TABLE (
 )
 LANGUAGE SQL
 AS $BODY$
+
+/*
+    * @param p_table_schema (text): The schema of the partitioned table.
+    * @param p_table_name (text): The name of the partitioned table.
+
+    * @return partition_schema (text): The schema of the latest partition.
+    * @return partition_name (text): The name of the latest partition.
+    * @return lower_bound (timestamptz): The lower bound of the latest partition.
+    * @return upper_bound (timestamptz): The upper bound of the latest partition.
+*/
+
     SELECT cn.nspname AS partition_schema
          , c.relname AS partition_name
          , CASE keys_data_types
