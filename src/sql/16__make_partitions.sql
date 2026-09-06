@@ -67,12 +67,13 @@ AS $BODY$
         If a template is not provided for a constraint type and no generic template, a default template will be used.
     * @param p_trigger_name_template (text): A template for generating trigger names for the new partitions.
         The placeholders in the template will be replaced with the corresponding values for each trigger.
+        Default is '{partition_name}_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}'.
     * @param p_template_table_schema (text): The schema of the template table for the new partitions.
     * @param p_template_table_name (text): The name of the template table for the new partitions.
     * @param p_retention (interval): The retention period for the partitions.
         If NULL, no retention policy will be applied.
     * @param p_timezone (text): The timezone to use for timestamp calculations.
-        Default is 'Etc/UTC'.
+        Default is 'Etc/UTC'. If NULL, the current timezone is used.
     * @param p_skip_overlapping (boolean): Whether to skip creating partitions that overlap with existing partitions.
     * @param p_idempotent (boolean): If TRUE, the generated partition creation statements will include
         "IF NOT EXISTS" to avoid errors if the partition already exists.

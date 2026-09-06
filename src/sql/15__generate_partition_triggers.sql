@@ -5,7 +5,7 @@ CREATE OR REPLACE FUNCTION pgpartix.generate_partition_triggers (
   , p_partition_name text
   , p_template_table_schema text
   , p_template_table_name text
-  , p_trigger_name_template text DEFAULT NULL
+  , p_trigger_name_template text NULL
   , p_idempotent boolean DEFAULT FALSE
 )
 RETURNS text
@@ -21,6 +21,7 @@ AS $BODY$
     * @param p_template_table_name (text): The name of the template table.
     * @param p_trigger_name_template (text): A template for generating trigger names.
         The placeholders in the template will be replaced with the corresponding values for each trigger.
+        If NULL, the default template '{partition_name}_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}' will be used.
     * @param p_idempotent (boolean): If TRUE, the generated trigger creation statements will
         include "OR REPLACE" to avoid errors if the trigger already exists.
 
@@ -52,7 +53,7 @@ AS $BODY$
     )
     , partition_triggers AS (
         SELECT pgpartix.render_template(
-                   p_template => p_trigger_name_template
+                   p_template => COALESCE(p_trigger_name_template, '{partition_name}_{event_timing}_{trigger_event}_{trigger_function_name}{ordinal}')
                  , p_values => jsonb_build_object(
                        '{parent_table_schema}', p_parent_table_schema,
                        '{parent_table_name}',   p_parent_table_name,
