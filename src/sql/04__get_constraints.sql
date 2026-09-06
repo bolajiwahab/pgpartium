@@ -28,7 +28,8 @@ AS $BODY$
         ('p' for primary key, 'u' for unique key, 'f' for foreign key, 'c' for check, 'x' for exclusion).
     * @return constraint_name_template (text): The template used to generate the constraint name.
     * @return constraint_keys (text): The keys of the constraint, concatenated with underscores.
-    * @return ordinal (integer): The ordinal number of the constraint, when there are two or more constraints with the same definition.
+    * @return ordinal (integer): The ordinal number of the constraint, when there are two or more constraints
+        with the same constraint_type and constraint_keys.
     * @return constraint_definition (text): The definition of the constraint.
 */
 

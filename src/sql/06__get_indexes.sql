@@ -23,7 +23,7 @@ AS $BODY$
     * @return is_unique_index: Whether the index is unique.
     * @return index_type: The type of the index (such as b-tree, hash, etc.).
     * @return index_keys: The keys of the index.
-    * @return ordinal: The ordinal number of the index, when there are two or more indexes with the same definition.
+    * @return ordinal: The ordinal number of the index, when there are two or more indexes with the same index_keys.
     * @return index_definition: The definition of the index.
     * @return index_tablespace: The tablespace of the index.
 */
