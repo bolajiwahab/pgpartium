@@ -5,7 +5,7 @@ CREATE OR REPLACE FUNCTION pgpartix.generate_partition_triggers (
   , p_partition_name text
   , p_template_table_schema text
   , p_template_table_name text
-  , p_trigger_name_template text
+  , p_trigger_name_template text DEFAULT NULL
   , p_idempotent boolean DEFAULT FALSE
 )
 RETURNS text

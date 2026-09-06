@@ -79,7 +79,7 @@ AS $BODY$
          WHERE n.nspname = p_table_schema
            AND t.relname = p_table_name
            -- Exclude NOT NULL constraints
-           AND c.contype != 'n'
+           AND c.contype <> 'n'
          GROUP BY c.conname
                 , c.contype
                 , c.oid
