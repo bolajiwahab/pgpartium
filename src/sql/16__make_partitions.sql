@@ -72,7 +72,7 @@ AS $BODY$
     * @param p_retention (interval): The retention period for the partitions.
         If NULL, no retention policy will be applied.
     * @param p_timezone (text): The timezone to use for timestamp calculations.
-        Default is 'Etc/UTC'.
+        Default is 'Etc/UTC'. If NULL, the current timezone is used.
     * @param p_skip_overlapping (boolean): Whether to skip creating partitions that overlap with existing partitions.
     * @param p_idempotent (boolean): If TRUE, the generated partition creation statements will include
         "IF NOT EXISTS" to avoid errors if the partition already exists.
