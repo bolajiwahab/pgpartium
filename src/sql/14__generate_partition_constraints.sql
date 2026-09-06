@@ -11,6 +11,22 @@ RETURNS text
 LANGUAGE SQL
 AS $BODY$
 
+/*
+    * @param p_parent_table_schema (text): The schema of the parent partitioned table.
+    * @param p_parent_table_name (text): The name of the parent partitioned table.
+    * @param p_partition_schema (text): The schema of the partition.
+    * @param p_partition_name (text): The name of the partition.
+    * @param p_template_table_schema (text): The schema of the template table.
+    * @param p_template_table_name (text): The name of the template table.
+    * @param p_constraint_name_templates (jsonb): A JSONB object containing templates for constraint names.
+        The keys are constraint types ('primary_key', 'unique_key', 'foreign_key', 'check', 'exclusion')
+        and the values are the corresponding templates. A generic template can also be specified with `template`
+        which will be used for every constraint type.
+        If a template is not provided for a constraint type and no generic template, a default template will be used.
+
+    * @return text: A string containing the SQL statements to create the constraints for the partition.
+*/
+
     WITH template_constraints AS (
         SELECT constraint_name
              , constraint_type
@@ -30,8 +46,8 @@ AS $BODY$
     )
     , partition_constraints AS (
         SELECT pgpartix.render_template(
-                   template_constraints.constraint_name_template
-                 , jsonb_build_object(
+                   p_template => template_constraints.constraint_name_template
+                 , p_values => jsonb_build_object(
                        '{parent_table_schema}', p_parent_table_schema
                      , '{parent_table_name}', p_parent_table_name
                      , '{partition_schema}', p_partition_schema
@@ -61,7 +77,6 @@ AS $BODY$
     SELECT string_agg(
                format(
                    '        CONSTRAINT %1$s%2$s'
-                --  , partition_constraints.final_constraint_name              --<1: final_constraint_name>
                    -- We are using CASE here instead of COALESCE because we need to escape the identifier only if there is
                    -- a final_constraint_name.
                  , CASE                                                     --<1: final_constraint_name>

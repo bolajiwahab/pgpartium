@@ -16,6 +16,21 @@ RETURNS TABLE (
 LANGUAGE SQL
 AS $BODY$
 
+/*
+    * @param p_table_schema (text): The schema of the table.
+    * @param p_table_name (text): The name of the table.
+
+    * @return trigger_name (text): The name of the trigger.
+    * @return is_trigger_enabled (boolean): True if the trigger is enabled, false otherwise.
+    * @return is_constraint_trigger (boolean): True if the trigger is a constraint trigger, false otherwise.
+    * @return trigger_function_schema (text): The schema of the trigger function.
+    * @return trigger_function_name (text): The name of the trigger function.
+    * @return event_timing (text): The timing of the trigger event ('BEFORE', 'AFTER', or 'INSTEAD OF').
+    * @return trigger_event (text): The event that fires the trigger ('INSERT', 'UPDATE', 'DELETE', or 'TRUNCATE').
+    * @return ordinal (integer): The ordinal number of the trigger, when there are two or more triggers with the same event timing, event and body.
+    * @return trigger_body (text): The body of the trigger function.
+*/
+
     WITH triggers AS (
         SELECT tg.oid AS trigger_oid
              , tg.tgname AS trigger_name

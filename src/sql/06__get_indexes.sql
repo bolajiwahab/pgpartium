@@ -15,17 +15,18 @@ LANGUAGE SQL
 AS $BODY$
 
 
-    /*
+/*
     * @param p_table_schema: The schema of the table.
     * @param p_table_name: The name of the table.
 
     * @return index_name: The name of the index.
     * @return is_unique_index: Whether the index is unique.
+    * @return index_type: The type of the index (such as b-tree, hash, etc.).
     * @return index_keys: The keys of the index.
-    * @return ordinal: The ordinal of the index.
+    * @return ordinal: The ordinal number of the index, when there are two or more indexes with the same definition.
     * @return index_definition: The definition of the index.
     * @return index_tablespace: The tablespace of the index.
-    */
+*/
 
     WITH indexes AS (
         SELECT ix.oid AS index_oid
